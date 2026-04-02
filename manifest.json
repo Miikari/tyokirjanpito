@@ -1,8 +1,8 @@
 {
   "name": "Työtuntiseuranta",
-  "short_name": "Työtunnit",
+  "short_name": "Työkirjanpito",
   "description": "Seuraa työtunteja ja kokoa laskuja",
-  "start_url": "/index.html",
+  "start_url": "tyokirjanpito/index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5f5f5",
