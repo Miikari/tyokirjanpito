@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1976D2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Työtunnit">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Työtunnit</title>
+<style>
+:root {
+  --bg: #f4f4f6;
+  --surface: #ffffff;
+  --surface2: #efefef;
+  --text: #111111;
+  --text2: #666666;
+  --text3: #aaaaaa;
+  --blue: #1976D2;
+  --blue-dk: #1256a0;
+  --blue-bg: #e3f0fc;
+  --blue-txt: #0c3d7a;
+  --green: #2e7d32;
+  --green-bg: #e8f5e9;
+  --amber: #b45309;
+  --amber-bg: #fef3c7;
+  --red: #b91c1c;
+  --red-bg: #fee2e2;
+  --border: rgba(0,0,0,0.09);
+  --border2: rgba(0,0,0,0.15);
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --r: 14px;
+  --r-sm: 10px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  padding: 52px 20px 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; padding-bottom: 12px; }
+.tabs { display: flex; }
+.tab {
+  flex: 1; padding: 10px 4px 11px; font-size: 13px; font-weight: 500;
+  border: none; background: none; color: var(--text2);
+  border-bottom: 2.5px solid transparent; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ── SCROLL AREA ── */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px calc(20px + var(--safe-bottom));
+}
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── CLOCK CARD ── */
+.clock-card {
+  background: var(--blue);
+  border-radius: var(--r);
+  padding: 32px 20px 24px;
+  text-align: center;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 16px rgba(25,118,210,0.3);
+}
+.timer {
+  font-size: 62px; font-weight: 200; letter-spacing: 3px;
+  font-variant-numeric: tabular-nums; color: #fff; line-height: 1;
+  margin-bottom: 6px; font-feature-settings: "tnum";
+}
+.timer-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 14px; min-height: 18px; }
+.clock-badge {
+  display: inline-block; font-size: 12px; font-weight: 600;
+  padding: 4px 16px; border-radius: 99px; margin-bottom: 20px;
+  letter-spacing: 0.03em;
+}
+.cb-idle    { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); }
+.cb-running { background: rgba(255,255,255,0.25); color: #fff; }
+.cb-paused  { background: rgba(255,200,0,0.25); color: #ffe082; }
+
+/* Customer pills on blue bg */
+.pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px; min-height: 0; }
+.pill {
+  padding: 7px 18px; border-radius: 99px; font-size: 13px; font-weight: 500;
+  border: 1.5px solid rgba(255,255,255,0.4); color: rgba(255,255,255,0.85);
+  background: transparent; cursor: pointer; transition: all 0.15s;
+}
+.pill.active { background: #fff; color: var(--blue); border-color: #fff; font-weight: 600; }
+
+/* Action buttons */
+.btn-row { display: flex; gap: 10px; justify-content: center; }
+.btn {
+  padding: 13px 28px; border-radius: var(--r-sm); font-size: 15px; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.btn:active { opacity: 0.82; transform: scale(0.97); }
+.btn-signin  { background: #fff; color: var(--blue); }
+.btn-pause   { background: rgba(255,255,255,0.15); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+.btn-signout { background: rgba(220,53,69,0.18); color: #ffcdd2; border: 1.5px solid rgba(220,53,69,0.35); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.card-label {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px;
+}
+
+/* ── FORM ── */
+.fg { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.fg label { font-size: 12px; font-weight: 600; color: var(--text2); }
+.fg input, .fg select {
+  padding: 12px 13px; border: 1.5px solid var(--border2);
+  border-radius: var(--r-sm); font-size: 16px;
+  background: var(--bg); color: var(--text);
+  -webkit-appearance: none; appearance: none;
+  transition: border-color 0.15s;
+}
+.fg input:focus, .fg select:focus { outline: none; border-color: var(--blue); background: #fff; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-add {
+  width: 100%; padding: 13px; border-radius: var(--r-sm);
+  font-size: 15px; font-weight: 600;
+  background: var(--blue-bg); color: var(--blue-txt);
+  border: none; cursor: pointer; margin-top: 4px;
+  transition: opacity 0.15s;
+}
+.btn-add:active { opacity: 0.75; }
+
+/* ── SUMMARY GRID ── */
+.sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.sum-card { background: var(--surface); border-radius: var(--r-sm); padding: 13px 14px; box-shadow: var(--shadow); }
+.sum-label { font-size: 11px; color: var(--text2); margin-bottom: 3px; font-weight: 500; }
+.sum-val { font-size: 21px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+
+/* ── ACTION BAR ── */
+.action-bar { display: flex; gap: 10px; margin-bottom: 14px; }
+.btn-outline {
+  flex: 1; padding: 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 600;
+  background: var(--surface); border: 1.5px solid var(--border2); color: var(--text);
+  cursor: pointer; box-shadow: var(--shadow);
+}
+.btn-invoice {
+  flex: 1; padding: 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 600;
+  background: var(--blue); color: #fff; border: none; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(25,118,210,0.3);
+}
+.btn-invoice:active, .btn-outline:active { opacity: 0.8; transform: scale(0.98); }
+
+/* ── ENTRY ROW ── */
+.entry {
+  background: var(--surface); border-radius: var(--r-sm);
+  padding: 14px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow);
+}
+.ecb {
+  width: 23px; height: 23px; border-radius: 6px;
+  border: 2px solid var(--border2); cursor: pointer;
+  -webkit-appearance: none; appearance: none; flex-shrink: 0;
+  background: var(--bg); transition: all 0.15s;
+}
+.ecb:checked {
+  background: var(--blue); border-color: var(--blue);
+  background-image: url("data:image/svg+xml,%3Csvg width='13' height='10' viewBox='0 0 13 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 5L5 8.5L11.5 1.5' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: center;
+}
+.entry-info { flex: 1; min-width: 0; }
+.entry-meta { font-size: 12px; color: var(--text2); margin-bottom: 3px; }
+.entry-dur { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+.entry-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
+.tag-cust  { background: var(--blue-bg); color: var(--blue-txt); }
+.tag-open  { background: var(--surface2); color: var(--text2); }
+.tag-inv   { background: var(--green-bg); color: var(--green); }
+.entry-eur { font-size: 15px; font-weight: 700; color: var(--text); }
+.empty { text-align: center; padding: 48px 20px; color: var(--text2); font-size: 15px; line-height: 1.6; }
+
+/* ── ARCHIVE ── */
+.inv-card {
+  background: var(--surface); border-radius: var(--r);
+  margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow);
+}
+.inv-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px; cursor: pointer;
+}
+.inv-num  { font-size: 16px; font-weight: 700; }
+.inv-sub  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.inv-right { text-align: right; }
+.inv-total { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
+.inv-tag  { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: var(--green-bg); color: var(--green); display: inline-block; margin-top: 4px; }
+.inv-body { display: none; border-top: 1px solid var(--border); padding: 0 16px 16px; }
+.inv-body.open { display: block; }
+.inv-meta { font-size: 12px; color: var(--text2); padding: 12px 0 10px; }
+.inv-row-line { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.inv-row-line:last-of-type { border-bottom: none; }
+.inv-row-left {}
+.inv-row-title { font-weight: 600; margin-bottom: 2px; }
+.inv-row-sub { font-size: 12px; color: var(--text2); }
+.inv-row-val { font-weight: 700; flex-shrink: 0; margin-left: 12px; }
+.inv-subtotals { padding-top: 10px; }
+.inv-subtotal-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--text2); padding: 3px 0; }
+.inv-grand { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; margin-top: 8px; border-top: 2px solid var(--border2); }
+.inv-grand-label { font-size: 15px; font-weight: 700; }
+.inv-grand-val { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+
+/* ── SETTINGS ── */
+.set-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.set-row:last-child { border-bottom: none; }
+.set-label { font-size: 15px; font-weight: 600; }
+.set-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.set-input-wrap { display: flex; align-items: center; gap: 6px; }
+.set-input-wrap input { width: 90px; padding: 9px 12px; border: 1.5px solid var(--border2); border-radius: var(--r-sm); font-size: 18px; font-weight: 700; text-align: right; background: var(--bg); color: var(--text); }
+.set-input-wrap input:focus { outline: none; border-color: var(--blue); background: #fff; }
+.cust-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 99px; background: var(--blue-bg); color: var(--blue-txt); font-size: 13px; font-weight: 600; margin: 4px; }
+.cust-rm { font-size: 16px; cursor: pointer; opacity: 0.5; line-height: 1; }
+.cust-rm:hover { opacity: 1; }
+.rec-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.rec-item:last-child { border-bottom: none; }
+.rec-name { font-size: 15px; font-weight: 600; }
+.rec-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.rec-right { display: flex; align-items: center; gap: 12px; }
+.rec-eur { font-size: 15px; font-weight: 700; }
+.rec-rm { font-size: 13px; font-weight: 600; color: var(--red); cursor: pointer; padding: 4px; }
+
+/* ── MODAL ── */
+.modal-wrap {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 100;
+  align-items: flex-end; justify-content: center;
+}
+.modal-wrap.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  padding: 28px 20px calc(28px + var(--safe-bottom));
+  width: 100%; max-width: 500px;
+}
+.modal-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--border2); margin: 0 auto 20px; }
+.modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.modal p  { font-size: 14px; color: var(--text2); margin-bottom: 22px; line-height: 1.55; }
+.modal-opt {
+  width: 100%; padding: 16px; border-radius: var(--r-sm);
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  border: 1.5px solid var(--border2); background: var(--surface);
+  color: var(--text); text-align: left; margin-bottom: 10px;
+  display: block; transition: background 0.12s;
+}
+.modal-opt:active { background: var(--bg); }
+.modal-opt.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+.modal-opt.primary:active { opacity: 0.85; }
+.modal-cancel { color: var(--text2); border-color: transparent; background: transparent; font-weight: 500; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: calc(28px + var(--safe-bottom));
+  left: 50%; transform: translateX(-50%);
+  background: #1a1a1a; color: #fff;
+  padding: 11px 22px; border-radius: 99px;
+  font-size: 14px; font-weight: 500;
+  opacity: 0; transition: opacity 0.2s;
+  pointer-events: none; white-space: nowrap; z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.toast.show { opacity: 1; }
+
+/* ── INSTALL BANNER ── */
+.install-banner {
+  display: none; background: var(--blue); color: #fff;
+  padding: 12px 16px; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+.install-banner.visible { display: flex; }
+.install-banner span { flex: 1; font-size: 14px; font-weight: 500; }
+.install-banner button { padding: 8px 16px; border-radius: 8px; border: none; background: #fff; color: var(--blue); font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.install-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 20px; padding: 4px 8px; }
+</style>
+</head>
+<body>
+
+<div class="install-banner" id="install-banner">
+  <span>📲 Lisää aloitusnäytölle käyttääksesi sovelluksena</span>
+  <button onclick="installApp()">Asenna</button>
+  <button class="dismiss" onclick="dismissInstall()">×</button>
+</div>
+
+<div class="header">
+  <h1>Työtunnit</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('kello',this)">Kello</button>
+    <button class="tab" onclick="showTab('kirjanpito',this)">Kirjanpito</button>
+    <button class="tab" onclick="showTab('arkisto',this)">Arkisto</button>
+    <button class="tab" onclick="showTab('asetukset',this)">Asetukset</button>
+  </div>
+</div>
+
+<div class="scroll">
+
+  <!-- ── KELLO ── -->
+  <div class="panel active" id="panel-kello">
+    <div class="clock-card">
+      <div class="timer" id="timer">00:00:00</div>
+      <div class="timer-sub" id="timer-sub">—</div>
+      <span class="clock-badge cb-idle" id="clock-badge">Ei käynnissä</span>
+      <div class="pills" id="pills"></div>
+      <div class="btn-row" id="main-btns">
+        <button class="btn btn-signin" onclick="clockIn()">Kirjaudu sisään</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Manuaalinen kirjaus</div>
+      <div class="fg"><label>Päivämäärä</label><input type="date" id="m-date"></div>
+      <div class="fg"><label>Asiakas</label><select id="m-customer"></select></div>
+      <div class="row2">
+        <div class="fg"><label>Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0"></div>
+        <div class="fg"><label>Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0"></div>
+      </div>
+      <button class="btn-add" onclick="addManual()">+ Lisää kirjaus</button>
+    </div>
+  </div>
+
+  <!-- ── KIRJANPITO ── -->
+  <div class="panel" id="panel-kirjanpito">
+    <div class="sum-grid">
+      <div class="sum-card"><div class="sum-label">Kirjauksia</div><div class="sum-val" id="s-count">0</div></div>
+      <div class="sum-card"><div class="sum-label">Valittuna</div><div class="sum-val" id="s-sel">0</div></div>
+      <div class="sum-card"><div class="sum-label">Yhteensä</div><div class="sum-val" id="s-total">0:00</div></div>
+      <div class="sum-card"><div class="sum-label">Arvo</div><div class="sum-val" id="s-val">0€</div></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-outline" onclick="selectAll()">Valitse kaikki</button>
+      <button class="btn-invoice" onclick="startInvoice()">Kokoa lasku ↗</button>
+    </div>
+    <div id="entries-list"></div>
+  </div>
+
+  <!-- ── ARKISTO ── -->
+  <div class="panel" id="panel-arkisto">
+    <div id="archive-list"><div class="empty">Ei arkistoituja laskuja vielä.</div></div>
+  </div>
+
+  <!-- ── ASETUKSET ── -->
+  <div class="panel" id="panel-asetukset">
+    <div class="card">
+      <div class="card-label">Hinnoittelu</div>
+      <div class="set-row">
+        <div>
+          <div class="set-label">Tuntihinta</div>
+          <div class="set-sub" id="hourly-hint">—</div>
+        </div>
+        <div class="set-input-wrap">
+          <input type="number" id="set-hourly" min="0" step="0.5" oninput="previewHourly()">
+          <span style="font-size:15px;font-weight:600;color:var(--text2);">€/h</span>
+        </div>
+      </div>
+      <button class="btn-add" onclick="saveHourly()">Tallenna tuntihinta</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Kuukausiveloitukset</div>
+      <div id="rec-list"></div>
+      <div style="margin-top:12px;">
+        <div class="fg"><label>Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu"></div>
+        <div class="row2">
+          <div class="fg"><label>Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00"></div>
+          <div class="fg"><label>Asiakas</label><select id="rec-customer"></select></div>
+        </div>
+        <button class="btn-add" onclick="addRecurring()">+ Lisää kuukausiveloitus</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Asiakkaat</div>
+      <div id="cust-chips" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:10px;">
+        <div class="fg" style="flex:1;margin:0;"><input type="text" id="new-cust" placeholder="Asiakkaan nimi" style="width:100%;"></div>
+        <button class="btn-invoice" style="padding:12px 18px;border-radius:var(--r-sm);flex-shrink:0;" onclick="addCustomer()">Lisää</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scroll -->
+
+<!-- ── MODAL ── -->
+<div class="modal-wrap" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Kuukausiveloitukset</h2>
+    <p id="modal-text"></p>
+    <button class="modal-opt primary" onclick="finishInvoice(true)">Lisää kaikki kuukausiveloitukset</button>
+    <button class="modal-opt" onclick="finishInvoice('customer')">Lisää vain asiakkaalle merkityt</button>
+    <button class="modal-opt" onclick="finishInvoice(false)">Ei kuukausiveloituksia</button>
+    <button class="modal-opt modal-cancel" onclick="closeModal()">Peruuta</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+const SK = 'tyotunnit_v1';
+let timerRaf = null, startTime = null, elapsedMs = 0;
+let state = 'idle', clockInDate = null, activeCustomer = null;
+let entries = [], invoices = [], eId = 0, iId = 0;
+let cfg = { hourly: 50, customers: [], recurring: [] };
+let pending = null;
+let deferredPrompt = null;
+
+// ── PERSIST ──
+function save() {
+  try { localStorage.setItem(SK, JSON.stringify({ entries, invoices, eId, iId, cfg })); } catch(e){}
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SK) || '{}');
+    if (d.entries)  entries  = d.entries;
+    if (d.invoices) invoices = d.invoices;
+    if (d.eId)      eId      = d.eId;
+    if (d.iId)      iId      = d.iId;
+    if (d.cfg)      cfg      = Object.assign(cfg, d.cfg);
+  } catch(e) {}
+}
+
+// ── UTILS ──
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmtDur(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return pad(h)+':'+pad(m)+':'+pad(sec);
+}
+function fmtShort(s) { return pad(Math.floor(s/3600))+':'+pad(Math.floor((s%3600)/60)); }
+function fmtDate(d) { return new Date(d).toLocaleDateString('fi-FI',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function fmtEur(n) { return n.toFixed(2).replace('.',',') + ' €'; }
+function esc(s) { return s.replace(/'/g,"\\'"); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ── TABS ──
+function showTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab === 'kirjanpito') renderEntries();
+  if (tab === 'arkisto')    renderArchive();
+  if (tab === 'asetukset')  renderSettings();
+}
+function goTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => { if (t.textContent.trim().toLowerCase() === tab) t.classList.add('active'); });
+}
+
+// ── TIMER ──
+function tick() {
+  const total = Math.floor((elapsedMs + (Date.now() - startTime)) / 1000);
+  document.getElementById('timer').textContent = fmtDur(total);
+  timerRaf = requestAnimationFrame(tick);
+}
+function clockIn() {
+  state = 'running'; clockInDate = new Date(); startTime = Date.now(); elapsedMs = 0;
+  timerRaf = requestAnimationFrame(tick);
+  const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
+  setBadge('running','● Töissä'); renderMainBtns();
+  toast('Kirjauduttu sisään' + (activeCustomer ? ' — ' + activeCustomer : ''));
+}
+function togglePause() {
+  if (state === 'running') {
+    state = 'paused'; elapsedMs += Date.now() - startTime;
+    cancelAnimationFrame(timerRaf);
+    setBadge('paused','⏸ Tauolla'); renderMainBtns(); toast('Tauko käynnistetty');
+  } else {
+    state = 'running'; startTime = Date.now();
+    timerRaf = requestAnimationFrame(tick);
+    setBadge('running','● Töissä'); renderMainBtns(); toast('Jatketaan');
+  }
+}
+function clockOut() {
+  if (state === 'running') elapsedMs += Date.now() - startTime;
+  cancelAnimationFrame(timerRaf);
+  const secs = Math.floor(elapsedMs / 1000);
+  if (secs < 1) { toast('Ei aikaa kirjattavana'); return; }
+  addEntry(clockInDate, secs, activeCustomer || null, 'kello');
+  state = 'idle'; elapsedMs = 0; startTime = null;
+  document.getElementById('timer').textContent = '00:00:00';
+  document.getElementById('timer-sub').textContent = '—';
+  setBadge('idle','Ei käynnissä'); renderMainBtns();
+  save(); toast('Kirjattu ' + fmtDur(secs));
+}
+function setBadge(type, txt) {
+  const el = document.getElementById('clock-badge');
+  el.className = 'clock-badge cb-' + type; el.textContent = txt;
+}
+function renderMainBtns() {
+  const r = document.getElementById('main-btns');
+  if (state === 'idle') {
+    r.innerHTML = '<button class="btn btn-signin" onclick="clockIn()">Kirjaudu sisään</button>';
+  } else {
+    const pauseLabel = state === 'paused' ? '▶ Jatka' : '⏸ Tauko';
+    r.innerHTML = `<button class="btn btn-pause" onclick="togglePause()">${pauseLabel}</button>
+                   <button class="btn btn-signout" onclick="clockOut()">Kirjaudu ulos</button>`;
+  }
+}
+function renderPills() {
+  const el = document.getElementById('pills');
+  if (!cfg.customers.length) { el.innerHTML = ''; return; }
+  el.innerHTML = cfg.customers.map(c =>
+    `<div class="pill ${activeCustomer===c?'active':''}" onclick="selCust('${esc(c)}')">${c}</div>`
+  ).join('');
+}
+function selCust(n) { activeCustomer = activeCustomer === n ? null : n; renderPills(); }
+
+// ── ENTRIES ──
+function addEntry(date, secs, customer, src) {
+  entries.unshift({ id: ++eId, date: new Date(date).toISOString(), secs, customer, src, selected: false, invoiced: false });
+}
+function addManual() {
+  const d = document.getElementById('m-date').value;
+  const h = parseInt(document.getElementById('m-h').value) || 0;
+  const m = parseInt(document.getElementById('m-m').value) || 0;
+  const total = h * 3600 + m * 60;
+  if (total < 1) { toast('Syötä aika'); return; }
+  const cust = document.getElementById('m-customer').value;
+  addEntry(d ? new Date(d+'T12:00:00') : new Date(), total, cust === '—' ? null : cust, 'manuaalinen');
+  document.getElementById('m-h').value = '';
+  document.getElementById('m-m').value = '';
+  save(); toast('Kirjaus lisätty');
+}
+function toggleEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (e && !e.invoiced) e.selected = !e.selected;
+  renderEntries();
+}
+function selectAll() {
+  const u = entries.filter(e => !e.invoiced);
+  const all = u.length && u.every(e => e.selected);
+  u.forEach(e => e.selected = !all);
+  renderEntries();
+}
+function renderEntries() {
+  const list = document.getElementById('entries-list');
+  const active = entries.filter(e => !e.invoiced);
+  // summary
+  const sel = active.filter(e => e.selected);
+  document.getElementById('s-count').textContent = active.length;
+  document.getElementById('s-sel').textContent = sel.length;
+  document.getElementById('s-total').textContent = fmtShort(active.reduce((a,e) => a+e.secs, 0));
+  document.getElementById('s-val').textContent = fmtEur(active.reduce((a,e) => a+(e.secs/3600)*cfg.hourly, 0));
+  if (!active.length) { list.innerHTML = '<div class="empty">Ei kirjauksia vielä.<br><br>Kirjaudu sisään tai lisää manuaalisesti.</div>'; return; }
+  list.innerHTML = active.map(e => `
+    <div class="entry">
+      <input type="checkbox" class="ecb" ${e.selected?'checked':''} onchange="toggleEntry(${e.id})">
+      <div class="entry-info">
+        <div class="entry-meta">${fmtDate(e.date)} · ${e.src}</div>
+        <div class="entry-dur">${fmtDur(e.secs)}</div>
+      </div>
+      <div class="entry-right">
+        ${e.customer ? `<span class="tag tag-cust">${e.customer}</span>` : ''}
+        <span class="entry-eur">${fmtEur((e.secs/3600)*cfg.hourly)}</span>
+        <span class="tag tag-open">Avoin</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── INVOICE ──
+function startInvoice() {
+  const sel = entries.filter(e => e.selected && !e.invoiced);
+  if (!sel.length) { toast('Valitse kirjauksia ensin'); return; }
+  pending = sel;
+  if (!cfg.recurring.length) { finishInvoice(false); return; }
+  const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
+  document.getElementById('modal-text').textContent =
+    `Valitsit ${sel.length} kirjausta${custs.length ? ' (' + custs.join(', ') + ')' : ''}. Lisätäänkö kuukausiveloitukset?`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); pending = null; }
+function finishInvoice(mode) {
+  document.getElementById('modal').classList.remove('open');
+  const sel = pending; if (!sel) return; pending = null;
+  let rec = [];
+  if (mode === true) rec = [...cfg.recurring];
+  else if (mode === 'customer') {
+    const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
+    rec = cfg.recurring.filter(r => r.customer && custs.includes(r.customer));
+  }
+  const totalSecs = sel.reduce((a,e) => a+e.secs, 0);
+  const hourly = (totalSecs/3600) * cfg.hourly;
+  const monthly = rec.reduce((a,r) => a+r.amount, 0);
+  invoices.unshift({
+    id: ++iId, date: new Date().toISOString(),
+    entries: sel.map(e => ({...e})), totalSecs, hourly, monthly,
+    total: hourly + monthly, recurring: rec
+  });
+  sel.forEach(e => { e.invoiced = true; e.selected = false; });
+  save(); renderEntries();
+  toast('Lasku #' + String(iId).padStart(3,'0') + ' arkistoitu');
+  goTab('arkisto'); setTimeout(() => renderArchive(iId), 80);
+}
+
+function renderArchive(highlightId) {
+  const el = document.getElementById('archive-list');
+  if (!invoices.length) { el.innerHTML = '<div class="empty">Ei arkistoituja laskuja vielä.</div>'; return; }
+  el.innerHTML = invoices.map(inv => {
+    const isOpen = highlightId === inv.id;
+    const rows = inv.entries.map(e => `
+      <div class="inv-row-line">
+        <div class="inv-row-left">
+          <div class="inv-row-title">${fmtDur(e.secs)}</div>
+          <div class="inv-row-sub">${fmtDate(e.date)}${e.customer?' · '+e.customer:''} · ${e.src}</div>
+        </div>
+        <div class="inv-row-val">${fmtEur((e.secs/3600)*cfg.hourly)}</div>
+      </div>`).join('');
+    const recRows = inv.recurring.map(r => `
+      <div class="inv-row-line">
+        <div class="inv-row-left">
+          <div class="inv-row-title">${r.name}</div>
+          <div class="inv-row-sub">${r.customer || 'Kuukausiveloitus'}</div>
+        </div>
+        <div class="inv-row-val">${fmtEur(r.amount)}</div>
+      </div>`).join('');
+    const subtotals = inv.monthly > 0 ? `
+      <div class="inv-subtotals">
+        <div class="inv-subtotal-line"><span>Tunnit yhteensä</span><span>${fmtEur(inv.hourly)}</span></div>
+        <div class="inv-subtotal-line"><span>Kuukausiveloitukset</span><span>${fmtEur(inv.monthly)}</span></div>
+      </div>` : '';
+    return `
+      <div class="inv-card">
+        <div class="inv-header" onclick="toggleInv('inv-${inv.id}')">
+          <div>
+            <div class="inv-num">Lasku #${String(inv.id).padStart(3,'0')}</div>
+            <div class="inv-sub">${fmtDate(inv.date)} · ${inv.entries.length} kirjausta</div>
+          </div>
+          <div class="inv-right">
+            <div class="inv-total">${fmtEur(inv.total)}</div>
+            <span class="inv-tag">Arkistoitu</span>
+          </div>
+        </div>
+        <div class="inv-body ${isOpen?'open':''}" id="inv-${inv.id}">
+          <div class="inv-meta">Tuntihinta: ${fmtEur(cfg.hourly)}/h</div>
+          ${rows}${recRows}${subtotals}
+          <div class="inv-grand">
+            <span class="inv-grand-label">Loppusumma</span>
+            <span class="inv-grand-val">${fmtEur(inv.total)}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+function toggleInv(id) { const el = document.getElementById(id); if(el) el.classList.toggle('open'); }
+
+// ── SETTINGS ──
+function renderSettings() {
+  document.getElementById('set-hourly').value = cfg.hourly;
+  previewHourly();
+  renderRecList(); renderCustChips(); renderAllSelects();
+}
+function previewHourly() {
+  const v = parseFloat(document.getElementById('set-hourly').value) || 0;
+  document.getElementById('hourly-hint').textContent = '8h = ' + fmtEur(8*v) + ' · 160h = ' + fmtEur(160*v);
+}
+function saveHourly() {
+  const v = parseFloat(document.getElementById('set-hourly').value);
+  if (isNaN(v)||v<0) { toast('Virheellinen hinta'); return; }
+  cfg.hourly = v; save(); previewHourly(); toast('Tallennettu: ' + fmtEur(v) + '/h');
+}
+function addCustomer() {
+  const n = document.getElementById('new-cust').value.trim();
+  if (!n) { toast('Syötä nimi'); return; }
+  if (cfg.customers.includes(n)) { toast('Asiakas on jo olemassa'); return; }
+  cfg.customers.push(n); document.getElementById('new-cust').value = '';
+  save(); renderCustChips(); renderAllSelects(); renderPills(); toast('Asiakas lisätty');
+}
+function removeCustomer(n) {
+  cfg.customers = cfg.customers.filter(c => c !== n);
+  if (activeCustomer === n) activeCustomer = null;
+  save(); renderCustChips(); renderAllSelects(); renderPills();
+}
+function renderCustChips() {
+  const el = document.getElementById('cust-chips');
+  if (!cfg.customers.length) { el.innerHTML = '<div style="font-size:14px;color:var(--text2);padding:4px 0">Ei asiakkaita vielä.</div>'; return; }
+  el.innerHTML = cfg.customers.map(c =>
+    `<span class="cust-chip">${c}<span class="cust-rm" onclick="removeCustomer('${esc(c)}')">×</span></span>`
+  ).join('');
+}
+function addRecurring() {
+  const n = document.getElementById('rec-name').value.trim();
+  const a = parseFloat(document.getElementById('rec-amount').value);
+  const c = document.getElementById('rec-customer').value;
+  if (!n || isNaN(a) || a <= 0) { toast('Täytä kuvaus ja summa'); return; }
+  cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c==='—'?null:c });
+  document.getElementById('rec-name').value = '';
+  document.getElementById('rec-amount').value = '';
+  save(); renderRecList(); toast('Lisätty');
+}
+function removeRecurring(id) {
+  cfg.recurring = cfg.recurring.filter(r => r.id !== id);
+  save(); renderRecList();
+}
+function renderRecList() {
+  const el = document.getElementById('rec-list');
+  if (!cfg.recurring.length) { el.innerHTML = '<div style="font-size:14px;color:var(--text2);padding:4px 0">Ei kuukausiveloituksia.</div>'; return; }
+  el.innerHTML = cfg.recurring.map(r => `
+    <div class="rec-item">
+      <div>
+        <div class="rec-name">${r.name}</div>
+        <div class="rec-sub">${r.customer || 'Kaikki asiakkaat'}</div>
+      </div>
+      <div class="rec-right">
+        <span class="rec-eur">${fmtEur(r.amount)}/kk</span>
+        <span class="rec-rm" onclick="removeRecurring(${r.id})">Poista</span>
+      </div>
+    </div>`).join('');
+}
+function renderAllSelects() {
+  const opts = ['<option value="—">— Ei asiakasta —</option>',
+    ...cfg.customers.map(c => `<option value="${c}">${c}</option>`)].join('');
+  ['m-customer','rec-customer'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = opts; });
+}
+
+// ── PWA INSTALL ──
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('visible');
+});
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissInstall(); });
+}
+function dismissInstall() { document.getElementById('install-banner').classList.remove('visible'); }
+window.addEventListener('appinstalled', () => { dismissInstall(); toast('Sovellus asennettu! 🎉'); });
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── INIT ──
+load();
+document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
+renderAllSelects(); renderPills();
+renderEntries();
+</script>
+</body>
+</html>
