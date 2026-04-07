@@ -10,6 +10,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Työtunnit</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #f4f4f6;
@@ -293,6 +296,41 @@ body {
 }
 .toast.show { opacity: 1; }
 
+/* ── LOGIN SCREEN ── */
+.login-screen {
+  display: none; position: fixed; inset: 0;
+  background: var(--blue); z-index: 300;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 32px;
+}
+.login-screen.visible { display: flex; }
+.login-logo { font-size: 56px; margin-bottom: 16px; }
+.login-title { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.5px; }
+.login-sub { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 48px; text-align: center; line-height: 1.5; }
+.btn-google {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; color: #1a1a1a;
+  padding: 14px 28px; border-radius: 99px;
+  font-size: 16px; font-weight: 700; border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: all 0.15s;
+}
+.btn-google:active { transform: scale(0.97); opacity: 0.9; }
+.btn-google svg { flex-shrink: 0; }
+.login-footer { position: absolute; bottom: 32px; font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; }
+
+/* ── USER BAR ── */
+.user-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px 12px; gap: 10px;
+}
+.user-info { display: flex; align-items: center; gap: 8px; }
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue-bg); object-fit: cover;
+}
+.user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.btn-logout { font-size: 12px; color: var(--text2); background: none; border: none; cursor: pointer; padding: 4px 8px; }
+
 /* ── INSTALL BANNER ── */
 .install-banner {
   display: none; background: var(--blue); color: #fff;
@@ -307,6 +345,18 @@ body {
 </head>
 <body>
 
+<!-- ── LOGIN SCREEN ── -->
+<div class="login-screen visible" id="login-screen">
+  <div class="login-logo">⏱</div>
+  <div class="login-title">Työtunnit</div>
+  <div class="login-sub">Seuraa työtunteja ja kokoa laskuja.<br>Kirjaudu sisään päästäksesi alkuun.</div>
+  <button class="btn-google" onclick="signInWithGoogle()">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    Kirjaudu Google-tilillä
+  </button>
+  <div class="login-footer">Tietosi tallennetaan turvallisesti pilveen.<br>Käytä samalla tilillä puhelimella ja tietokoneella.</div>
+</div>
+
 <div class="install-banner" id="install-banner">
   <span>📲 Lisää aloitusnäytölle käyttääksesi sovelluksena</span>
   <button onclick="installApp()">Asenna</button>
@@ -314,7 +364,13 @@ body {
 </div>
 
 <div class="header">
-  <h1>Työtunnit</h1>
+  <div class="user-bar">
+    <div class="user-info">
+      <img class="user-avatar" id="user-avatar" src="" alt="">
+      <span class="user-name" id="user-name"></span>
+    </div>
+    <button class="btn-logout" onclick="signOut()">Kirjaudu ulos</button>
+  </div>
   <div class="tabs">
     <button class="tab active" onclick="showTab('kello',this)">Kello</button>
     <button class="tab" onclick="showTab('kirjanpito',this)">Kirjanpito</button>
@@ -357,7 +413,8 @@ body {
       <div class="sum-card"><div class="sum-label">Yhteensä</div><div class="sum-val" id="s-total">0:00</div></div>
       <div class="sum-card"><div class="sum-label">Arvo</div><div class="sum-val" id="s-val">0€</div></div>
     </div>
-    <div class="action-bar">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="filter-pills"></div>
+  <div class="action-bar">
       <button class="btn-outline" onclick="selectAll()">Valitse kaikki</button>
       <button class="btn-invoice" onclick="startInvoice()">Kokoa lasku ↗</button>
     </div>
@@ -427,28 +484,81 @@ body {
 <div class="toast" id="toast"></div>
 
 <script>
+// ── FIREBASE ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCdkjsJbFqk0NWgmGxocRu80HtpMV8XP48",
+  authDomain: "tyoaikakirjanpito.firebaseapp.com",
+  projectId: "tyoaikakirjanpito",
+  storageBucket: "tyoaikakirjanpito.firebasestorage.app",
+  messagingSenderId: "766298930930",
+  appId: "1:766298930930:web:3e58d6ba7d5ffb2b025a6b"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+let uid = null;
+
 // ── STATE ──
-const SK = 'tyotunnit_v1';
 let timerRaf = null, startTime = null, elapsedMs = 0;
 let state = 'idle', clockInDate = null, activeCustomer = null;
 let entries = [], invoices = [], eId = 0, iId = 0;
 let cfg = { hourly: 50, customers: [], recurring: [] };
 let pending = null;
 let deferredPrompt = null;
+let filterCustomer = null;
+let saveTimer = null;
 
-// ── PERSIST ──
-function save() {
-  try { localStorage.setItem(SK, JSON.stringify({ entries, invoices, eId, iId, cfg })); } catch(e){}
+// ── AUTH ──
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(e => toast('Kirjautuminen epäonnistui'));
 }
-function load() {
+function signOut() { auth.signOut(); }
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    uid = user.uid;
+    document.getElementById('login-screen').classList.remove('visible');
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    const av = document.getElementById('user-avatar');
+    if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
+    else av.style.display = 'none';
+    loadFromFirestore();
+  } else {
+    uid = null;
+    entries = []; invoices = []; eId = 0; iId = 0;
+    cfg = { hourly: 50, customers: [], recurring: [] };
+    document.getElementById('login-screen').classList.add('visible');
+  }
+});
+
+// ── FIRESTORE ──
+async function loadFromFirestore() {
   try {
-    const d = JSON.parse(localStorage.getItem(SK) || '{}');
-    if (d.entries)  entries  = d.entries;
-    if (d.invoices) invoices = d.invoices;
-    if (d.eId)      eId      = d.eId;
-    if (d.iId)      iId      = d.iId;
-    if (d.cfg)      cfg      = Object.assign(cfg, d.cfg);
-  } catch(e) {}
+    const doc = await db.collection('users').doc(uid).collection('data').doc('main').get();
+    if (doc.exists) {
+      const d = doc.data();
+      if (d.entries)  entries  = d.entries;
+      if (d.invoices) invoices = d.invoices;
+      if (d.eId)      eId      = d.eId;
+      if (d.iId)      iId      = d.iId;
+      if (d.cfg)      cfg      = Object.assign(cfg, d.cfg);
+    }
+  } catch(e) { toast('Latausvirhe: ' + e.message); }
+  document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
+  renderAllSelects(); renderPills(); renderEntries();
+}
+
+function save() {
+  if (!uid) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await db.collection('users').doc(uid).collection('data').doc('main').set(
+        { entries, invoices, eId, iId, cfg }, { merge: true }
+      );
+    } catch(e) { toast('Tallennusvirhe'); }
+  }, 800);
 }
 
 // ── UTILS ──
@@ -493,12 +603,13 @@ function tick() {
   timerRaf = requestAnimationFrame(tick);
 }
 function clockIn() {
+  if (!activeCustomer) { toast('Valitse ensin asiakas'); return; }
   state = 'running'; clockInDate = new Date(); startTime = Date.now(); elapsedMs = 0;
   timerRaf = requestAnimationFrame(tick);
   const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
   setBadge('running','● Töissä'); renderMainBtns();
-  toast('Kirjauduttu sisään' + (activeCustomer ? ' — ' + activeCustomer : ''));
+  toast('Kirjauduttu sisään — ' + activeCustomer);
 }
 function togglePause() {
   if (state === 'running') {
@@ -551,13 +662,14 @@ function addEntry(date, secs, customer, src) {
   entries.unshift({ id: ++eId, date: new Date(date).toISOString(), secs, customer, src, selected: false, invoiced: false });
 }
 function addManual() {
+  const cust = document.getElementById('m-customer').value;
+  if (!cust || cust === '—') { toast('Valitse ensin asiakas'); return; }
   const d = document.getElementById('m-date').value;
   const h = parseInt(document.getElementById('m-h').value) || 0;
   const m = parseInt(document.getElementById('m-m').value) || 0;
   const total = h * 3600 + m * 60;
   if (total < 1) { toast('Syötä aika'); return; }
-  const cust = document.getElementById('m-customer').value;
-  addEntry(d ? new Date(d+'T12:00:00') : new Date(), total, cust === '—' ? null : cust, 'manuaalinen');
+  addEntry(d ? new Date(d+'T12:00:00') : new Date(), total, cust, 'manuaalinen');
   document.getElementById('m-h').value = '';
   document.getElementById('m-m').value = '';
   save(); toast('Kirjaus lisätty');
@@ -568,21 +680,41 @@ function toggleEntry(id) {
   renderEntries();
 }
 function selectAll() {
-  const u = entries.filter(e => !e.invoiced);
+  const u = entries.filter(e => !e.invoiced && (!filterCustomer || e.customer === filterCustomer));
   const all = u.length && u.every(e => e.selected);
   u.forEach(e => e.selected = !all);
   renderEntries();
 }
+function setFilter(c) {
+  filterCustomer = filterCustomer === c ? null : c;
+  entries.filter(e => !e.invoiced).forEach(e => e.selected = false);
+  renderEntries();
+}
+function renderFilterPills() {
+  const customers = [...new Set(entries.filter(e => !e.invoiced && e.customer).map(e => e.customer))];
+  const el = document.getElementById('filter-pills');
+  if (!el) return;
+  if (!customers.length) { el.innerHTML = ''; return; }
+  el.innerHTML = customers.map(c => `
+    <div class="pill ${filterCustomer===c?'active':''}"
+      style="background:${filterCustomer===c?'var(--blue)':'var(--surface)'};color:${filterCustomer===c?'#fff':'var(--text2)'};border-color:${filterCustomer===c?'var(--blue)':'var(--border2)'};"
+      onclick="setFilter('${esc(c)}')">${c}</div>`
+  ).join('');
+}
 function renderEntries() {
   const list = document.getElementById('entries-list');
-  const active = entries.filter(e => !e.invoiced);
-  // summary
-  const sel = active.filter(e => e.selected);
+  const active = entries.filter(e => !e.invoiced && (!filterCustomer || e.customer === filterCustomer));
+  const all = entries.filter(e => !e.invoiced);
+  const sel = all.filter(e => e.selected);
   document.getElementById('s-count').textContent = active.length;
   document.getElementById('s-sel').textContent = sel.length;
-  document.getElementById('s-total').textContent = fmtShort(active.reduce((a,e) => a+e.secs, 0));
-  document.getElementById('s-val').textContent = fmtEur(active.reduce((a,e) => a+(e.secs/3600)*cfg.hourly, 0));
-  if (!active.length) { list.innerHTML = '<div class="empty">Ei kirjauksia vielä.<br><br>Kirjaudu sisään tai lisää manuaalisesti.</div>'; return; }
+  document.getElementById('s-total').textContent = fmtShort(all.reduce((a,e) => a+e.secs, 0));
+  document.getElementById('s-val').textContent = fmtEur(all.reduce((a,e) => a+(e.secs/3600)*cfg.hourly, 0));
+  renderFilterPills();
+  if (!active.length) {
+    list.innerHTML = `<div class="empty">Ei kirjauksia${filterCustomer?' asiakkaalle '+filterCustomer:' vielä'}.<br><br>${!filterCustomer?'Kirjaudu sisään tai lisää manuaalisesti.':''}</div>`;
+    return;
+  }
   list.innerHTML = active.map(e => `
     <div class="entry">
       <input type="checkbox" class="ecb" ${e.selected?'checked':''} onchange="toggleEntry(${e.id})">
@@ -769,12 +901,6 @@ window.addEventListener('appinstalled', () => { dismissInstall(); toast('Sovellu
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
-
-// ── INIT ──
-load();
-document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
-renderAllSelects(); renderPills();
-renderEntries();
 </script>
 </body>
 </html>
