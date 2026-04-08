@@ -511,9 +511,11 @@ let saveTimer = null;
 // ── AUTH ──
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(e => toast('Kirjautuminen epäonnistui'));
+  auth.signInWithRedirect(provider).catch(e => toast('Kirjautuminen epäonnistui'));
 }
 function signOut() { auth.signOut(); }
+
+auth.getRedirectResult().catch(() => {});
 
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -547,6 +549,20 @@ async function loadFromFirestore() {
   } catch(e) { toast('Latausvirhe: ' + e.message); }
   document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
   renderAllSelects(); renderPills(); renderEntries();
+  // Lisää loadFromFirestore-funktion loppuun:
+  const activeDoc = await db.collection('users').doc(uid).collection('data').doc('active').get();
+  if (activeDoc.exists) {
+    const a = activeDoc.data();
+    startTime = a.startTime;
+    clockInDate = new Date(a.clockInDate);
+    activeCustomer = a.customer;
+    elapsedMs = 0;
+    state = 'running';
+    timerRaf = requestAnimationFrame(tick);
+    const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
+    setBadge('running','● Töissä'); renderMainBtns(); renderPills();
+  }
 }
 
 function save() {
@@ -605,6 +621,12 @@ function tick() {
 function clockIn() {
   if (!activeCustomer) { toast('Valitse ensin asiakas'); return; }
   state = 'running'; clockInDate = new Date(); startTime = Date.now(); elapsedMs = 0;
+  // Tallennetaan aloitusaika Firestoreen
+  if (uid) {
+    db.collection('users').doc(uid).collection('data').doc('active').set({
+      startTime: startTime, clockInDate: clockInDate.toISOString(), customer: activeCustomer
+    });
+  }
   timerRaf = requestAnimationFrame(tick);
   const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
@@ -623,16 +645,8 @@ function togglePause() {
   }
 }
 function clockOut() {
-  if (state === 'running') elapsedMs += Date.now() - startTime;
-  cancelAnimationFrame(timerRaf);
-  const secs = Math.floor(elapsedMs / 1000);
-  if (secs < 1) { toast('Ei aikaa kirjattavana'); return; }
-  addEntry(clockInDate, secs, activeCustomer || null, 'kello');
-  state = 'idle'; elapsedMs = 0; startTime = null;
-  document.getElementById('timer').textContent = '00:00:00';
-  document.getElementById('timer-sub').textContent = '—';
-  setBadge('idle','Ei käynnissä'); renderMainBtns();
-  save(); toast('Kirjattu ' + fmtDur(secs));
+  if (uid) db.collection('users').doc(uid).collection('data').doc('active').delete();
+  // ...rest of clockOut
 }
 function setBadge(type, txt) {
   const el = document.getElementById('clock-badge');
