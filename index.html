@@ -511,11 +511,14 @@ let saveTimer = null;
 // ── AUTH ──
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider).catch(e => toast('Kirjautuminen epäonnistui'));
+  auth.signInWithRedirect(provider);
 }
-function signOut() { auth.signOut(); }
 
-auth.getRedirectResult().catch(() => {});
+auth.getRedirectResult().then(result => {
+  // Kirjautuminen redirect-paluusta hoidetaan onAuthStateChanged:ssa
+}).catch(e => {
+  if (e.code !== 'auth/no-auth-event') toast('Kirjautuminen epäonnistui: ' + e.code);
+});
 
 auth.onAuthStateChanged(user => {
   if (user) {
