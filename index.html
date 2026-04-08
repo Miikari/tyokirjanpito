@@ -194,7 +194,9 @@ body {
 .ecb:checked {
   background: var(--blue); border-color: var(--blue);
   background-image: url("data:image/svg+xml,%3Csvg width='13' height='10' viewBox='0 0 13 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 5L5 8.5L11.5 1.5' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: center;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 13px 10px;
 }
 .entry-info { flex: 1; min-width: 0; }
 .entry-meta { font-size: 12px; color: var(--text2); margin-bottom: 3px; }
@@ -795,6 +797,21 @@ function renderFilterPills() {
   const customers = [...new Set(entries.filter(e => !e.invoiced && e.customer).map(e => e.customer))];
   const el = document.getElementById('filter-pills');
   if (!el) return;
+  
+  // Jos samat asiakkaat kuin ennen, päivitä vain active-luokat
+  const existing = el.querySelectorAll('.pill');
+  if (existing.length === customers.length) {
+    existing.forEach(pill => {
+      const isActive = pill.textContent.trim() === filterCustomer;
+      pill.classList.toggle('active', isActive);
+      pill.style.background = isActive ? 'var(--blue)' : 'var(--surface)';
+      pill.style.color = isActive ? '#fff' : 'var(--text2)';
+      pill.style.borderColor = isActive ? 'var(--blue)' : 'var(--border2)';
+    });
+    return;
+  }
+  
+  // Muuten piirrä uudelleen
   if (!customers.length) { el.innerHTML = ''; return; }
   el.innerHTML = customers.map(c => `
     <div class="pill ${filterCustomer===c?'active':''}"
@@ -940,6 +957,13 @@ function renderArchive(highlightId) {
 function toggleInv(id) { const el = document.getElementById(id); if(el) el.classList.toggle('open'); }
 
 // ── SETTINGS ──
+function showConfirm(title, text, onOk) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-text').textContent = text;
+  document.getElementById('confirm-ok').onclick = () => { closeConfirm(); onOk(); };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
 function renderSettings() {
   document.getElementById('set-hourly').value = cfg.hourly;
   previewHourly();
@@ -968,18 +992,12 @@ function removeCustomer(name) {
   if (openEntries.length > 0) {
     showConfirm(
       'Poista asiakas',
-      `Asiakkaalla "${name}" on ${openEntries.length} koostamaton kirjaus. Haluatko poistaa myös ne? Jos ei, hoida kirjaukset ensin laskuksi.`,
+      `Asiakkaalla "${name}" on ${openEntries.length} koostamaton kirjaus. Poistetaan asiakas ja kaikki sen kirjaukset pysyvästi?`,
       () => {
-        showConfirm(
-          'Oletko varma?',
-          `Poistetaan asiakas "${name}" ja ${openEntries.length} kirjausta pysyvästi.`,
-          () => {
-            entries = entries.filter(e => !(e.customer === name && !e.invoiced));
-            cfg.customers = cfg.customers.filter(c => c !== name);
-            if (activeCustomer === name) activeCustomer = null;
-            save(); renderCustChips(); renderAllSelects(); renderPills(); toast('Asiakas poistettu');
-          }
-        );
+        entries = entries.filter(e => !(e.customer === name && !e.invoiced));
+        cfg.customers = cfg.customers.filter(c => c !== name);
+        if (activeCustomer === name) activeCustomer = null;
+        save(); renderCustChips(); renderAllSelects(); renderPills(); toast('Asiakas poistettu');
       }
     );
   } else {
@@ -1131,12 +1149,7 @@ function closeEditInvModal() {
   editingInvId = null;
 }
 
-function showConfirm(title, text, onOk) {
-  document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-text').textContent = text;
-  document.getElementById('confirm-ok').onclick = () => { closeConfirm(); onOk(); };
-  document.getElementById('modal-confirm').classList.add('open');
-}
+
 function closeConfirm() {
   document.getElementById('modal-confirm').classList.remove('open');
 }
