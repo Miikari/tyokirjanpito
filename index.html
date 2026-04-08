@@ -440,6 +440,14 @@ body {
   <!-- ── ASETUKSET ── -->
   <div class="panel" id="panel-asetukset">
     <div class="card">
+      <div class="card-label" id="label-language">Kieli</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;">🇫🇮 Suomi</button>
+        <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;">🇬🇧 English</button>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-label">Hinnoittelu</div>
       <div class="set-row">
         <div>
@@ -567,6 +575,108 @@ let saveTimer = null;
 let editingEntryId = null;
 let editingInvId = null;
 let pendingRecurring = null;
+let lang = localStorage.getItem('lang') || 'fi';
+
+// ── LOCALE ── 
+const i18n = {
+  fi: {
+    appName: 'Työtunnit', 
+    latausVirhe: 'Latausvirhe', kelloVirhe: 'Virhe kellon latauksessa', tallennusVirhe: 'Tallennusvirhe',
+    kello: 'Kello', kirjanpito: 'Kirjanpito', arkisto: 'Arkisto', asetukset: 'Asetukset', clockedIn: 'Kirjauduttu sisään — ',
+    clockIn: 'Kirjaudu sisään', clockOut: 'Kirjaudu ulos', pause: '⏸ Tauko', resume: '▶ Jatka',
+    idle: 'Ei käynnissä', working: '● Töissä', onBreak: '⏸ Tauolla', taukoAlkaa: 'Tauko käynnistetty',
+    jatko: 'Jatketaan',  selectCustomer: 'Valitse ensin asiakas', noTime: 'Ei aikaa kirjattavana',
+    addNotes: 'Lisää merkintöjä', notesPlaceholder: 'Merkintöjä tähän kirjaukseen...', kirjattu: 'Kirjattu ',
+    manualEntry: 'Manuaalinen kirjaus', date: 'Päivämäärä', customer: 'Asiakas', hours: 'Tunnit', minutes: 'Minuutit', 
+    notes: 'Merkintöjä', addEntry: '+ Lisää kirjaus', loginFail: 'Kirjautuminen epäonnistui: ', loginFail2: 'Kirjautuminen epäonnistui',
+    entries: 'Kirjauksia', selected: 'Valittuna', total: 'Yhteensä', value: 'Arvo',
+    selectAll: 'Valitse kaikki', buildInvoice: 'Kokoa lasku ↗',
+    noEntries: 'Ei kirjauksia vielä.', loginFirst: 'Kirjaudu sisään tai lisää manuaalisesti.',
+    noEntriesFor: 'Ei kirjauksia asiakkaalle', yet:'vielä',
+    pricing: 'Hinnoittelu', hourlyRate: 'Tuntihinta', saveRate: 'Tallenna tuntihinta',
+    recurring: 'Kuukausiveloitukset', noRecurring: 'Ei kuukausiveloituksia.', doAddRecurring:'Lisätäänkö kuukausiveloitukset?',
+    description: 'Kuvaus', amount: 'Summa (€)', addRecurring: '+ Lisää kuukausiveloitus',
+    customers: 'Asiakkaat', noCustomers: 'Ei asiakkaita vielä.', customerName: 'Asiakkaan nimi',
+    add: 'Lisää', remove: 'Poista', logout: 'Kirjaudu ulos',
+    invoice: 'Lasku', invoicePrefix:'Lasku #', archived: 'Arkistoitu', hourlyTotal: 'Tunnit yhteensä',
+    monthlyTotal: 'Kuukausiveloitukset', grandTotal: 'Loppusumma', hourlyPrice: 'Tuntihinta',
+    addAllRecurring: 'Lisää kaikki kuukausiveloitukset',
+    addCustomerRecurring: 'Lisää vain asiakkaalle merkityt',
+    noRecurringInvoice: 'Ei kuukausiveloituksia', cancel: 'Peruuta',
+    monthlyCharge: 'Kuukausiveloitus', allCustomers: 'Kaikki asiakkaat',
+    noInvoices: 'Ei arkistoituja laskuja vielä.',
+    saved: 'Tallennettu: ', customerAdded: 'Asiakas lisätty', customerExists: 'Asiakas on jo olemassa',
+    entryAdded: 'Kirjaus lisätty', enterTime: 'Syötä aika', enterName: 'Syötä nimi',
+    fillDesc: 'Täytä kuvaus ja summa', invalidPrice: 'Virheellinen hinta', added:'Lisätty',
+    selectEntries: 'Valitse kirjauksia ensin', invoiceArchived: 'arkistoitu',
+    confirm: 'Vahvista', yes: 'Kyllä', has:'on', customerHas:'Asiakkaalla',
+    deleteEntry: 'Poista kirjaus', deleteEntryConfirm: 'Haluatko varmasti poistaa tämän kirjauksen?',
+    deleteCustomer: 'Poista asiakas', deleteCustomerConfirm: 'Haluatko varmasti poistaa asiakkaan',
+    deleteCustomerEntries: 'Poistetaan asiakas ja kaikki sen kirjaukset pysyvästi?',
+    customerHasEntries: 'koostamaton kirjaus. Poistetaan asiakas ja kaikki sen kirjaukset pysyvästi?',
+    customerRemoved: 'Asiakas poistettu', entryRemoved: 'Kirjaus poistettu',
+    entryUpdated: 'Kirjaus päivitetty', invoiceUpdated: 'Lasku päivitetty',
+    editEntry: 'Muokkaa kirjausta', saveChanges: 'Tallenna muutokset',
+    editInvoice: 'Muokkaa laskua', edit: '+ Muokkaa',
+    loginTitle: 'Työtunnit', loginSub: 'Seuraa työtunteja ja kokoa laskuja.',
+    loginBtn: 'Kirjaudu Google-tilillä', loginFooter: 'Tietosi tallennetaan turvallisesti pilveen.',
+    loginFooter2: 'Käytä samalla tilillä puhelimella ja tietokoneella.',
+    noCustomer: '— Ei asiakasta —', perMonth: '/kk', perHour: '€/h',
+    clockedIn: 'Kirjauduttu sisään', recorded: 'Kirjattu', pauseStarted: 'Tauko käynnistetty',
+    resumed: 'Jatketaan', cannotSwitch: 'Vaihda asiakas ensin kirjautumalla ulos',
+    language: 'Kieli', appInstalled:'Sovellus asennettu! 🎉', installBanner: '📲 Lisää aloitusnäytölle käyttääksesi sovelluksena',
+    install: 'Asenna', loginSub2: 'Kirjaudu sisään päästäksesi alkuun.', loginFooter2: 'Käytä samalla tilillä puhelimella ja tietokoneella.',
+  },
+  en: {
+    appName: 'Work Hours', latausVirhe: 'Loading error',kelloVirhe: 'Error loading clock', tallennusVirhe: 'Save error',
+    kello: 'Clock', kirjanpito: 'Log', arkisto: 'Archive', asetukset: 'Settings', clockedIn: 'Clocked in — ',
+    clockIn: 'Clock in', clockOut: 'Clock out', pause: '⏸ Pause', resume: '▶ Resume',
+    idle: 'Not running', working: '● Working', onBreak: '⏸ On break', taukoAlkaa: 'Pause started',
+    jatko: 'Continuing...', selectCustomer: 'Select a customer first', noTime: 'No time recorded',
+    addNotes: 'Add notes', notesPlaceholder: 'Notes for this entry...', kirjattu: 'Clocked Out ',
+    manualEntry: 'Manual entry', date: 'Date', customer: 'Customer', loginFail: 'Login failed: ', loginFail2: 'Login failed',
+    hours: 'Hours', minutes: 'Minutes', notes: 'Notes', addEntry: '+ Add entry',
+    entries: 'Entries', selected: 'Selected', total: 'Total', value: 'Value',
+    selectAll: 'Select all', buildInvoice: 'Build invoice ↗', added:'Added',
+    noEntries: 'No entries yet.', loginFirst: 'Clock in or add manually.',
+    noEntriesFor: 'No entries for', yet:'yet',
+    pricing: 'Pricing', hourlyRate: 'Hourly rate', saveRate: 'Save hourly rate',
+    recurring: 'Monthly charges', noRecurring: 'No monthly charges.', doAddRecurring:'Do you want to add recurring costs?',
+    description: 'Description', amount: 'Amount (€)', addRecurring: '+ Add monthly charge',
+    customers: 'Customers', noCustomers: 'No customers yet.', customerName: 'Customer name',
+    add: 'Add', remove: 'Remove', logout: 'Sign out',
+    invoice: 'Invoice', invoicePrefix: 'Invoice #', archived: 'Archived', hourlyTotal: 'Hours total',
+    monthlyTotal: 'Monthly charges', grandTotal: 'Total', hourlyPrice: 'Hourly rate',
+    addAllRecurring: 'Add all monthly charges',
+    addCustomerRecurring: 'Add only customer charges',
+    noRecurringInvoice: 'No monthly charges', cancel: 'Cancel',
+    monthlyCharge: 'Monthly charge', allCustomers: 'All customers',
+    noInvoices: 'No archived invoices yet.',
+    saved: 'Saved: ', customerAdded: 'Customer added', customerExists: 'Customer already exists',
+    entryAdded: 'Entry added', enterTime: 'Enter time', enterName: 'Enter name',
+    fillDesc: 'Fill in description and amount', invalidPrice: 'Invalid price',
+    selectEntries: 'Select entries first', invoiceArchived: 'archived',
+    confirm: 'Confirm', yes: 'Yes', has:'has', customerHas:'Customer',
+    deleteEntry: 'Delete entry', deleteEntryConfirm: 'Are you sure you want to delete this entry?',
+    deleteCustomer: 'Delete customer', deleteCustomerConfirm: 'Are you sure you want to delete customer',
+    deleteCustomerEntries: 'Delete customer and all their entries permanently?',
+    customerHasEntries: 'unbuilt entries. Delete customer and all entries permanently?',
+    customerRemoved: 'Customer removed', entryRemoved: 'Entry deleted',
+    entryUpdated: 'Entry updated', invoiceUpdated: 'Invoice updated',
+    editEntry: 'Edit entry', saveChanges: 'Save changes',
+    editInvoice: 'Edit invoice', edit: '+ Edit',
+    loginTitle: 'Work Hours', loginSub: 'Track work hours and build invoices.',
+    loginBtn: 'Sign in with Google', loginFooter: 'Your data is stored securely in the cloud.',
+    loginFooter2: 'Use the same account on phone and computer.',
+    noCustomer: '— No customer —', perMonth: '/mo', perHour: '€/h',
+    clockedIn: 'Clocked in', recorded: 'Recorded', pauseStarted: 'Break started',
+    resumed: 'Resumed', cannotSwitch: 'Clock out before switching customer',
+    language: 'Language', appInstalled:'App Installed! 🎉', installBanner: '📲 Add to home screen to use as an app',
+    install: 'Install',loginSub2: 'Sign in to get started.', loginFooter2: 'Use the same account on phone and computer.',
+  }
+};
+function t(key) { return i18n[lang][key] || i18n['fi'][key] || key; }
+
 
 // ── AUTH ──
 function signInWithGoogle() {
@@ -579,13 +689,13 @@ function signInWithGoogle() {
       // Popup ei toimi, kokeillaan redirect
       auth.signInWithRedirect(provider);
     } else {
-      toast('Kirjautuminen epäonnistui: ' + err.code);
+      toast(t('loginFail') + err.code);
     }
   });
 }
 
 auth.getRedirectResult().then(() => {}).catch(e => {
-  if (e.code !== 'auth/no-auth-event') toast('Kirjautuminen epäonnistui');
+  if (e.code !== 'auth/no-auth-event') toast(t('loginFail2'));
 });
 
 auth.onAuthStateChanged(user => {
@@ -605,6 +715,71 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+// ── LANG FUNCS ──
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('lang', l);
+  applyLang();
+}
+function applyLang() {
+  // Login
+  document.querySelector('.login-title').textContent = t('loginTitle');
+  document.querySelector('.login-sub').innerHTML = t('loginSub') + '<br>' + t('loginSub2');
+  document.querySelector('.btn-google span') // ei toimi suoraan, käytetään alla olevaa
+  document.querySelector('.btn-google').lastChild.textContent = ' ' + t('loginBtn');
+  document.querySelector('.login-footer').innerHTML = t('loginFooter') + '<br>' + t('loginFooter2');
+  
+  // Install banner
+  document.querySelector('.install-banner span').textContent = t('installBanner');
+  document.querySelector('#install-banner button').textContent = t('install');
+
+  // Header
+  document.querySelector('.btn-logout').textContent = t('logout');
+  document.querySelectorAll('.tab')[0].textContent = t('kello');
+  document.querySelectorAll('.tab')[1].textContent = t('kirjanpito');
+  document.querySelectorAll('.tab')[2].textContent = t('arkisto');
+  document.querySelectorAll('.tab')[3].textContent = t('asetukset');
+
+  // Kello
+  document.querySelector('.card-label').textContent = t('manualEntry');
+  document.querySelector('#notes-toggle-icon').nextSibling.textContent = ' ' + t('addNotes');
+  document.getElementById('clock-notes').placeholder = t('notesPlaceholder');
+
+  // Summary
+  document.querySelectorAll('.sum-label')[0].textContent = t('entries');
+  document.querySelectorAll('.sum-label')[1].textContent = t('selected');
+  document.querySelectorAll('.sum-label')[2].textContent = t('total');
+  document.querySelectorAll('.sum-label')[3].textContent = t('value');
+  document.querySelector('.btn-outline').textContent = t('selectAll');
+  document.querySelector('.btn-invoice').textContent = t('buildInvoice');
+
+  // Modaalit
+  document.querySelector('#modal h2').textContent = t('recurring');
+  document.querySelectorAll('#modal .modal-opt')[0].textContent = t('addAllRecurring');
+  document.querySelectorAll('#modal .modal-opt')[1].textContent = t('addCustomerRecurring');
+  document.querySelectorAll('#modal .modal-opt')[2].textContent = t('noRecurringInvoice');
+  document.querySelectorAll('#modal .modal-opt')[3].textContent = t('cancel');
+  document.querySelector('#modal-edit h2').textContent = t('editEntry');
+  document.querySelector('#modal-edit .modal-opt.primary').textContent = t('saveChanges');
+  document.querySelector('#modal-edit .modal-cancel').textContent = t('cancel');
+  document.querySelector('#modal-edit-inv h2').textContent = t('editInvoice');
+  document.querySelector('#modal-edit-inv .modal-opt.primary').textContent = t('saveChanges');
+  document.querySelector('#modal-edit-inv .modal-cancel').textContent = t('cancel');
+  document.getElementById('confirm-ok').textContent = t('yes');
+  document.querySelector('#modal-confirm .modal-cancel').textContent = t('cancel');
+
+  // Asetukset
+  document.getElementById('label-language').textContent = t('language');
+
+  // Lang-napit
+  document.getElementById('btn-fi').style.fontWeight = lang==='fi' ? '800' : '600';
+  document.getElementById('btn-en').style.fontWeight = lang==='en' ? '800' : '600';
+
+  // Re-render
+  renderMainBtns(); renderPills(); renderEntries(); renderArchive();
+  if (document.getElementById('panel-asetukset').classList.contains('active')) renderSettings();
+}
+
 // ── FIRESTORE ──
 async function loadFromFirestore() {
   try {
@@ -617,7 +792,7 @@ async function loadFromFirestore() {
       if (d.iId)      iId      = d.iId;
       if (d.cfg)      cfg      = Object.assign(cfg, d.cfg);
     }
-  } catch(e) { toast('Latausvirhe: ' + e.message); }
+  } catch(e) { toast(t('latausVirhe') + e.message); }
 
   document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
   renderAllSelects(); renderPills(); renderEntries();
@@ -636,7 +811,7 @@ async function loadFromFirestore() {
       document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
       setBadge('running','● Töissä'); renderMainBtns(); renderPills();
     }
-  } catch(e) { toast('Virhe kellon latauksessa'); }
+  } catch(e) { toast(t('latausVirhe')); }
 }
 
 function save() {
@@ -647,7 +822,7 @@ function save() {
       await db.collection('users').doc(uid).collection('data').doc('main').set(
         { entries, invoices, eId, iId, cfg }, { merge: true }
       );
-    } catch(e) { toast('Tallennusvirhe'); }
+    } catch(e) { toast(t('tallennusVirhe')); }
   }, 800);
 }
 
@@ -701,7 +876,7 @@ function tick() {
   timerRaf = requestAnimationFrame(tick);
 }
 function clockIn() {
-  if (!activeCustomer) { toast('Valitse ensin asiakas'); return; }
+  if (!activeCustomer) { toast(t('selectCustomer')); return; }
   state = 'running'; clockInDate = new Date(); startTime = Date.now(); elapsedMs = 0;
   // Tallennetaan aloitusaika Firestoreen
   if (uid) {
@@ -713,24 +888,24 @@ function clockIn() {
   const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
   setBadge('running','● Töissä'); renderMainBtns();
-  toast('Kirjauduttu sisään — ' + activeCustomer);
+  toast(t('clockedIn') + activeCustomer);
 }
 function togglePause() {
   if (state === 'running') {
     state = 'paused'; elapsedMs += Date.now() - startTime;
     cancelAnimationFrame(timerRaf);
-    setBadge('paused','⏸ Tauolla'); renderMainBtns(); toast('Tauko käynnistetty');
+    setBadge('paused',t('onBreak')); renderMainBtns(); toast(t('taukoAlkaa'));
   } else {
     state = 'running'; startTime = Date.now();
     timerRaf = requestAnimationFrame(tick);
-    setBadge('running','● Töissä'); renderMainBtns(); toast('Jatketaan');
+    setBadge('running',t('working')); renderMainBtns(); toast(t('jatko'));
   }
 }
 function clockOut() {
-  if (state === 'running' && activeCustomer) elapsedMs += Date.now() - startTime;
+  if (state === 'running') elapsedMs += Date.now() - startTime;
   cancelAnimationFrame(timerRaf);
   const secs = Math.floor(elapsedMs / 1000);
-  if (secs < 1) { toast('Ei aikaa kirjattavana'); return; }
+  if (secs < 1) { toast(t('noTime')); return; }
   const notes = document.getElementById('clock-notes').value.trim();
   addEntry(clockInDate, secs, activeCustomer, 'kello', notes);
   document.getElementById('clock-notes').value = '';
@@ -739,9 +914,9 @@ function clockOut() {
   state = 'idle'; elapsedMs = 0; startTime = null;
   document.getElementById('timer').textContent = '00:00:00';
   document.getElementById('timer-sub').textContent = '—';
-  setBadge('idle','Ei käynnissä'); renderMainBtns();
+  setBadge('idle',t('idle')); renderMainBtns();
   if (uid) db.collection('users').doc(uid).collection('data').doc('active').delete();
-  save(); toast('Kirjattu ' + fmtDur(secs));
+  save(); toast(t('kirjattu') + fmtDur(secs));
 }
 function setBadge(type, txt) {
   const el = document.getElementById('clock-badge');
@@ -750,11 +925,11 @@ function setBadge(type, txt) {
 function renderMainBtns() {
   const r = document.getElementById('main-btns');
   if (state === 'idle') {
-    r.innerHTML = '<button class="btn btn-signin" onclick="clockIn()">Kirjaudu sisään</button>';
+    r.innerHTML = `<button class="btn btn-signin" onclick="clockIn()">${t('clockIn')}</button>`;
   } else {
     const pauseLabel = state === 'paused' ? '▶ Jatka' : '⏸ Tauko';
     r.innerHTML = `<button class="btn btn-pause" onclick="togglePause()">${pauseLabel}</button>
-                   <button class="btn btn-signout" onclick="clockOut()">Kirjaudu ulos</button>`;
+                   <button class="btn btn-signout" onclick="clockOut()">${t('logout')}s</button>`;
   }
 }
 function renderPills() {
@@ -766,7 +941,7 @@ function renderPills() {
 }
 function selCust(n) {
   if (state === 'running' || state === 'paused') {
-    toast('Vaihda asiakas ensin kirjautumalla ulos');
+    toast(t('cannotSwtich'));
     return;
   }
   activeCustomer = activeCustomer === n ? null : n;
@@ -778,18 +953,18 @@ function addEntry(date, secs, customer, src, notes = '') {
 }
 function addManual() {
   const cust = document.getElementById('m-customer').value;
-  if (!cust || cust === '—') { toast('Valitse ensin asiakas'); return; }
+  if (!cust || cust === '—') { toast(t('selectCustomer')); return; }
   const d = document.getElementById('m-date').value;
   const h = parseInt(document.getElementById('m-h').value) || 0;
   const m = parseInt(document.getElementById('m-m').value) || 0;
   const total = h * 3600 + m * 60;
   const notes = document.getElementById('m-notes').value;
-  if (total < 1) { toast('Syötä aika'); return; }
+  if (total < 1) { toast(t('enterTime')); return; }
   addEntry(d ? new Date(d+'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes);
   document.getElementById('m-h').value = '';
   document.getElementById('m-m').value = '';
   document.getElementById('m-notes').value = '';
-  save(); toast('Kirjaus lisätty');
+  save(); toast(t('entryAdded'));
 }
 function toggleEntry(id) {
   const e = entries.find(x => x.id === id);
@@ -850,32 +1025,31 @@ function renderEntries() {
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a,e) => a+(e.secs/3600)*cfg.hourly, 0));
   renderFilterPills();
   if (!active.length) {
-    list.innerHTML = `<div class="empty">Ei kirjauksia${filterCustomer?' asiakkaalle '+filterCustomer:' vielä'}.<br><br>${!filterCustomer?'Kirjaudu sisään tai lisää manuaalisesti.':''}</div>`;
-    return;
+  list.innerHTML = `<div class="empty">${filterCustomer ? t('noEntriesFor') + ' ' + filterCustomer : t('noEntries')}<br><br>${!filterCustomer ? t('loginFirst') : ''}</div>`;    return;
+    list.innerHTML = active.map(e => `
+      <div class="entry">
+        <input type="checkbox" class="ecb" ${e.selected?'checked':''} onchange="toggleEntry(${e.id})">
+        <div class="entry-info">
+          <div class="entry-meta">${fmtDate(e.date)} · ${e.src}</div>
+          <div class="entry-dur">${fmtDur(e.secs)}</div>
+          ${e.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;">📝 ${e.notes}</div>` : ''}
+        </div>
+        <div class="entry-right">
+          ${e.customer ? `<span class="tag tag-cust">${e.customer}</span>` : ''}
+          <span class="entry-eur">${fmtEur((e.secs/3600)*cfg.hourly)}</span>
+          <span class="tag tag-open">Avoin</span>
+        </div>
+        <button onclick="openEditEntry(${e.id})" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>`).join('');
   }
-  list.innerHTML = active.map(e => `
-    <div class="entry">
-      <input type="checkbox" class="ecb" ${e.selected?'checked':''} onchange="toggleEntry(${e.id})">
-      <div class="entry-info">
-        <div class="entry-meta">${fmtDate(e.date)} · ${e.src}</div>
-        <div class="entry-dur">${fmtDur(e.secs)}</div>
-        ${e.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;">📝 ${e.notes}</div>` : ''}
-      </div>
-      <div class="entry-right">
-        ${e.customer ? `<span class="tag tag-cust">${e.customer}</span>` : ''}
-        <span class="entry-eur">${fmtEur((e.secs/3600)*cfg.hourly)}</span>
-        <span class="tag tag-open">Avoin</span>
-      </div>
-      <button onclick="openEditEntry(${e.id})" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);flex-shrink:0;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
-    </div>`).join('');
 }
 
 // ── INVOICE ──
 function startInvoice() {
   const sel = entries.filter(e => e.selected && !e.invoiced);
-  if (!sel.length) { toast('Valitse kirjauksia ensin'); return; }
+  if (!sel.length) { toast(t('selectEntries')); return; }
   pending = sel;
   if (!cfg.recurring.length) { finishInvoice(false); return; }
   
@@ -889,7 +1063,7 @@ function startInvoice() {
   if (!relevantRecurring.length) { finishInvoice(false); return; }
   
   document.getElementById('modal-text').textContent =
-    `Valitsit ${sel.length} kirjausta${custs.length ? ' (' + custs.join(', ') + ')' : ''}. Lisätäänkö kuukausiveloitukset?`;
+    `Valitsit ${sel.length} kirjausta${custs.length ? ' (' + custs.join(', ') + ')' : ''}.  ${t('doAddRecurring')}`;
   
   // Tallenna filtteröidyt veloitukset käyttöä varten
   pendingRecurring = relevantRecurring;
@@ -918,13 +1092,13 @@ function finishInvoice(mode) {
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
   filterCustomer = null;
   save(); renderEntries();
-  toast('Lasku #' + String(iId).padStart(3,'0') + ' arkistoitu');
+  toast(t('invoicePrefix') + String(iId).padStart(3,'0') + ' arkistoitu');
   goTab('arkisto'); setTimeout(() => renderArchive(iId), 80);
 }
 
 function renderArchive(highlightId) {
   const el = document.getElementById('archive-list');
-  if (!invoices.length) { el.innerHTML = '<div class="empty">Ei arkistoituja laskuja vielä.</div>'; return; }
+  if (!invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
   el.innerHTML = invoices.map(inv => {
     const isOpen = highlightId === inv.id;
     const rows = inv.entries.map(e => `
@@ -939,14 +1113,14 @@ function renderArchive(highlightId) {
       <div class="inv-row-line">
         <div class="inv-row-left">
           <div class="inv-row-title">${r.name}</div>
-          <div class="inv-row-sub">${r.customer || 'Kuukausiveloitus'}</div>
+          <div class="inv-row-sub">${r.customer || t('monthlyCharge')}</div>
         </div>
         <div class="inv-row-val">${fmtEur(r.amount)}</div>
       </div>`).join('');
     const subtotals = inv.monthly > 0 ? `
       <div class="inv-subtotals">
-        <div class="inv-subtotal-line"><span>Tunnit yhteensä</span><span>${fmtEur(inv.hourly)}</span></div>
-        <div class="inv-subtotal-line"><span>Kuukausiveloitukset</span><span>${fmtEur(inv.monthly)}</span></div>
+        <div class="inv-subtotal-line"><span>${t('hourlyTotal')}</span><span>${fmtEur(inv.hourly)}</span></div>
+        <div class="inv-subtotal-line"><span>${t('monthlyTotal')}</span><span>${fmtEur(inv.monthly)}</span></div>
       </div>` : '';
     return `
       <div class="inv-card">
@@ -963,7 +1137,7 @@ function renderArchive(highlightId) {
         <div class="inv-body ${isOpen?'open':''}" id="inv-${inv.id}">
           <div class="inv-meta" style="display:flex;justify-content:space-between;align-items:center;">
             <span>Tuntihinta: ${fmtEur(cfg.hourly)}/h</span>
-            <button onclick="openEditInvoice(${inv.id})" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;">+ Muokkaa</button>
+            <button onclick="openEditInvoice(${inv.id})" style="background:none;border:none;color:blue;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;">+ Muokkaa</button>
           </div>
           ${rows}${recRows}${subtotals}
           <div class="inv-grand">
@@ -997,15 +1171,15 @@ function previewHourly() {
 }
 function saveHourly() {
   const v = parseFloat(document.getElementById('set-hourly').value);
-  if (isNaN(v)||v<0) { toast('Virheellinen hinta'); return; }
-  cfg.hourly = v; save(); previewHourly(); toast('Tallennettu: ' + fmtEur(v) + '/h');
+  if (isNaN(v)||v<0) { toast(t('invalidPrice')); return; }
+  cfg.hourly = v; save(); previewHourly(); toast(t('saved') + fmtEur(v) + '/h');
 }
 function addCustomer() {
   const n = document.getElementById('new-cust').value.trim();
-  if (!n) { toast('Syötä nimi'); return; }
-  if (cfg.customers.includes(n)) { toast('Asiakas on jo olemassa'); return; }
+  if (!n) { toast(t('enterName')); return; }
+  if (cfg.customers.includes(n)) { toast(t('customerExists')); return; }
   cfg.customers.push(n); document.getElementById('new-cust').value = '';
-  save(); renderCustChips(); renderAllSelects(); renderPills(); toast('Asiakas lisätty');
+  save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerAdded'));
 }
 
 function removeCustomer(name) {
@@ -1013,23 +1187,23 @@ function removeCustomer(name) {
   
   if (openEntries.length > 0) {
     showConfirm(
-      'Poista asiakas',
-      `Asiakkaalla "${name}" on ${openEntries.length} koostamaton kirjaus. Poistetaan asiakas ja kaikki sen kirjaukset pysyvästi?`,
+      t('deleteCustomer'),
+      `${t('customerHas')} "${name}" ${t('has')} ${openEntries.length} ${t('customerHasEntries')}`,
       () => {
         entries = entries.filter(e => !(e.customer === name && !e.invoiced));
         cfg.customers = cfg.customers.filter(c => c !== name);
         if (activeCustomer === name) activeCustomer = null;
-        save(); renderCustChips(); renderAllSelects(); renderPills(); toast('Asiakas poistettu');
+        save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
   } else {
     showConfirm(
-      'Poista asiakas',
-      `Haluatko varmasti poistaa asiakkaan "${name}"?`,
+      t('deleteCustomer'),
+      `${t('deleteCustomerConfirm')} "${name}" ?`,
       () => {
         cfg.customers = cfg.customers.filter(c => c !== name);
         if (activeCustomer === name) activeCustomer = null;
-        save(); renderCustChips(); renderAllSelects(); renderPills(); toast('Asiakas poistettu');
+        save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
   }
@@ -1046,11 +1220,11 @@ function addRecurring() {
   const n = document.getElementById('rec-name').value.trim();
   const a = parseFloat(document.getElementById('rec-amount').value);
   const c = document.getElementById('rec-customer').value;
-  if (!n || isNaN(a) || a <= 0) { toast('Täytä kuvaus ja summa'); return; }
+  if (!n || isNaN(a) || a <= 0) { toast(t('fillDesc')); return; }
   cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c==='—'?null:c });
   document.getElementById('rec-name').value = '';
   document.getElementById('rec-amount').value = '';
-  save(); renderRecList(); toast('Lisätty');
+  save(); renderRecList(); toast(t('added'));
 }
 function removeRecurring(id) {
   cfg.recurring = cfg.recurring.filter(r => r.id !== id);
@@ -1063,7 +1237,7 @@ function renderRecList() {
     <div class="rec-item">
       <div>
         <div class="rec-name">${r.name}</div>
-        <div class="rec-sub">${r.customer || 'Kaikki asiakkaat'}</div>
+        <div class="rec-sub">${r.customer || t('allCustomers')}</div>
       </div>
       <div class="rec-right">
         <span class="rec-eur">${fmtEur(r.amount)}/kk</span>
@@ -1072,7 +1246,7 @@ function renderRecList() {
     </div>`).join('');
 }
 function renderAllSelects() {
-  const opts = ['<option value="—">— Ei asiakasta —</option>',
+  const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
     ...cfg.customers.map(c => `<option value="${c}">${c}</option>`)].join('');
   ['m-customer','rec-customer'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = opts; });
 }
@@ -1088,7 +1262,7 @@ function openEditEntry(id) {
   document.getElementById('edit-m').value = Math.floor((e.secs % 3600) / 60);
   document.getElementById('edit-notes').value = e.notes || '';
   // Päivitä asiakas-select
-  const opts = ['<option value="—">— Ei asiakasta —</option>',
+  const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
     ...cfg.customers.map(c => `<option value="${c}" ${e.customer===c?'selected':''}>${c}</option>`)].join('');
   document.getElementById('edit-customer').innerHTML = opts;
   document.getElementById('modal-edit').classList.add('open');
@@ -1103,23 +1277,23 @@ function saveEditEntry() {
   const cust = document.getElementById('edit-customer').value;
   const notes = document.getElementById('edit-notes').value.trim();
   const total = h * 3600 + m * 60;
-  if (total < 1) { toast('Syötä aika'); return; }
+  if (total < 1) { toast(t('enterTime')); return; }
   e.date = d ? new Date(d+'T12:00:00').toISOString() : e.date;
   e.secs = total;
   e.customer = cust === '—' ? null : cust;
   e.notes = notes;
   closeEditModal();
-  save(); renderEntries(); toast('Kirjaus päivitetty');
+  save(); renderEntries(); toast(t('entryUpdated'));
 }
 
 function deleteEntry() {
   showConfirm(
-    'Poista kirjaus',
-    'Haluatko varmasti poistaa tämän kirjauksen?',
+    t('deleteEntry'),
+    t('deleteEntryConfirm'),
     () => {
       entries = entries.filter(x => x.id !== editingEntryId);
       closeEditModal();
-      save(); renderEntries(); toast('Kirjaus poistettu');
+      save(); renderEntries(); toast(t('entryRemoved'));
     }
   );
 }
@@ -1163,7 +1337,7 @@ function saveEditInvoice() {
   inv.hourly = hourly;
   inv.total = hourly + inv.monthly;
   closeEditInvModal();
-  save(); renderArchive(); toast('Lasku päivitetty');
+  save(); renderArchive(); toast(t('invoiceUpdated'));
 }
 
 function closeEditInvModal() {
@@ -1181,7 +1355,7 @@ function installApp() {
   deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissInstall(); });
 }
 function dismissInstall() { document.getElementById('install-banner').classList.remove('visible'); }
-window.addEventListener('appinstalled', () => { dismissInstall(); toast('Sovellus asennettu! 🎉'); });
+window.addEventListener('appinstalled', () => { dismissInstall(); toast(t('appInstalled')); });
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
