@@ -963,7 +963,9 @@ function showConfirm(title, text, onOk) {
   document.getElementById('confirm-ok').onclick = () => { closeConfirm(); onOk(); };
   document.getElementById('modal-confirm').classList.add('open');
 }
-
+function closeConfirm() {
+  document.getElementById('modal-confirm').classList.remove('open');
+}
 function renderSettings() {
   document.getElementById('set-hourly').value = cfg.hourly;
   previewHourly();
@@ -1147,11 +1149,6 @@ function saveEditInvoice() {
 function closeEditInvModal() {
   document.getElementById('modal-edit-inv').classList.remove('open');
   editingInvId = null;
-}
-
-
-function closeConfirm() {
-  document.getElementById('modal-confirm').classList.remove('open');
 }
 
 // ── PWA INSTALL ──
