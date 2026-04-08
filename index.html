@@ -571,13 +571,21 @@ let pendingRecurring = null;
 // ── AUTH ──
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider);
+  // Kokeillaan ensin popup, fallback redirectiin
+  auth.signInWithPopup(provider).catch(err => {
+    if (err.code === 'auth/popup-blocked' || 
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/cancelled-popup-request') {
+      // Popup ei toimi, kokeillaan redirect
+      auth.signInWithRedirect(provider);
+    } else {
+      toast('Kirjautuminen epäonnistui: ' + err.code);
+    }
+  });
 }
 
-auth.getRedirectResult().then(result => {
-  // Kirjautuminen redirect-paluusta hoidetaan onAuthStateChanged:ssa
-}).catch(e => {
-  if (e.code !== 'auth/no-auth-event') toast('Kirjautuminen epäonnistui: ' + e.code);
+auth.getRedirectResult().then(() => {}).catch(e => {
+  if (e.code !== 'auth/no-auth-event') toast('Kirjautuminen epäonnistui');
 });
 
 auth.onAuthStateChanged(user => {
