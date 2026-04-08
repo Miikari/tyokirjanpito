@@ -558,7 +558,7 @@ let filterCustomer = null;
 let saveTimer = null;
 let editingEntryId = null;
 let editingInvId = null;
-
+let pendingRecurring = null;
 
 // ── AUTH ──
 function signInWithGoogle() {
@@ -602,22 +602,25 @@ async function loadFromFirestore() {
       if (d.cfg)      cfg      = Object.assign(cfg, d.cfg);
     }
   } catch(e) { toast('Latausvirhe: ' + e.message); }
+
   document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
   renderAllSelects(); renderPills(); renderEntries();
-  // Lisää loadFromFirestore-funktion loppuun:
-  const activeDoc = await db.collection('users').doc(uid).collection('data').doc('active').get();
-  if (activeDoc.exists) {
-    const a = activeDoc.data();
-    startTime = a.startTime;
-    clockInDate = new Date(a.clockInDate);
-    activeCustomer = a.customer;
-    elapsedMs = 0;
-    state = 'running';
-    timerRaf = requestAnimationFrame(tick);
-    const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
-    setBadge('running','● Töissä'); renderMainBtns(); renderPills();
-  }
+
+  try {
+    const activeDoc = await db.collection('users').doc(uid).collection('data').doc('active').get();
+    if (activeDoc.exists) {
+      const a = activeDoc.data();
+      startTime = a.startTime;
+      clockInDate = new Date(a.clockInDate);
+      activeCustomer = a.customer;
+      elapsedMs = 0;
+      state = 'running';
+      timerRaf = requestAnimationFrame(tick);
+      const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
+      setBadge('running','● Töissä'); renderMainBtns(); renderPills();
+    }
+  } catch(e) { toast('Virhe kellon latauksessa'); }
 }
 
 function save() {
@@ -769,7 +772,10 @@ function addManual() {
 function toggleEntry(id) {
   const e = entries.find(x => x.id === id);
   if (e && !e.invoiced) e.selected = !e.selected;
-  renderEntries();
+  // Päivitä vain summary, älä renderöi koko listaa
+  const all = entries.filter(e => !e.invoiced);
+  const sel = all.filter(e => e.selected);
+  document.getElementById('s-sel').textContent = sel.length;
 }
 function selectAll() {
   const u = entries.filter(e => !e.invoiced && (!filterCustomer || e.customer === filterCustomer));
@@ -780,6 +786,9 @@ function selectAll() {
 function setFilter(c) {
   filterCustomer = filterCustomer === c ? null : c;
   entries.filter(e => !e.invoiced).forEach(e => e.selected = false);
+  if (filterCustomer) {
+    entries.filter(e => !e.invoiced && e.customer === filterCustomer).forEach(e => e.selected = true);
+  }
   renderEntries();
 }
 function renderFilterPills() {
@@ -832,20 +841,34 @@ function startInvoice() {
   if (!sel.length) { toast('Valitse kirjauksia ensin'); return; }
   pending = sel;
   if (!cfg.recurring.length) { finishInvoice(false); return; }
+  
   const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
+  
+  // Jos vain yksi asiakas, näytetään vain sen asiakkaan veloitukset
+  const relevantRecurring = custs.length === 1
+    ? cfg.recurring.filter(r => !r.customer || r.customer === custs[0])
+    : cfg.recurring;
+  
+  if (!relevantRecurring.length) { finishInvoice(false); return; }
+  
   document.getElementById('modal-text').textContent =
     `Valitsit ${sel.length} kirjausta${custs.length ? ' (' + custs.join(', ') + ')' : ''}. Lisätäänkö kuukausiveloitukset?`;
+  
+  // Tallenna filtteröidyt veloitukset käyttöä varten
+  pendingRecurring = relevantRecurring;
   document.getElementById('modal').classList.add('open');
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); pending = null; }
 function finishInvoice(mode) {
   document.getElementById('modal').classList.remove('open');
   const sel = pending; if (!sel) return; pending = null;
+  const recurring = pendingRecurring || cfg.recurring;
+  pendingRecurring = null;
   let rec = [];
-  if (mode === true) rec = [...cfg.recurring];
+  if (mode === true) rec = [...recurring];
   else if (mode === 'customer') {
     const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
-    rec = cfg.recurring.filter(r => r.customer && custs.includes(r.customer));
+    rec = recurring.filter(r => r.customer && custs.includes(r.customer));
   }
   const totalSecs = sel.reduce((a,e) => a+e.secs, 0);
   const hourly = (totalSecs/3600) * cfg.hourly;
@@ -856,6 +879,7 @@ function finishInvoice(mode) {
     total: hourly + monthly, recurring: rec
   });
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
+  filterCustomer = null;
   save(); renderEntries();
   toast('Lasku #' + String(iId).padStart(3,'0') + ' arkistoitu');
   goTab('arkisto'); setTimeout(() => renderArchive(iId), 80);
