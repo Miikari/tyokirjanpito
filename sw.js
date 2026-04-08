@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v7';
+const CACHE = 'tyotunnit-v8';
 const FILES = [
   '/tyokirjanpito/',
   '/tyokirjanpito/index.html',

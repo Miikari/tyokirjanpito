@@ -87,6 +87,8 @@ body {
   text-align: center;
   margin-bottom: 14px;
   box-shadow: 0 4px 16px rgba(25,118,210,0.3);
+  position: relative; 
+  overflow: hidden; 
 }
 .timer {
   font-size: 62px; font-weight: 200; letter-spacing: 3px;
@@ -242,7 +244,7 @@ body {
 .set-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
 .set-row:last-child { border-bottom: none; }
 .set-label { font-size: 15px; font-weight: 600; }
-.set-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.set-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
 .set-input-wrap { display: flex; align-items: center; gap: 6px; }
 .set-input-wrap input { width: 90px; padding: 9px 12px; border: 1.5px solid var(--border2); border-radius: var(--r-sm); font-size: 18px; font-weight: 700; text-align: right; background: var(--bg); color: var(--text); }
 .set-input-wrap input:focus { outline: none; border-color: var(--blue); background: #fff; }
@@ -256,6 +258,15 @@ body {
 .rec-right { display: flex; align-items: center; gap: 12px; }
 .rec-eur { font-size: 15px; font-weight: 700; }
 .rec-rm { font-size: 13px; font-weight: 600; color: var(--red); cursor: pointer; padding: 4px; }
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.settings-grid .card { margin-bottom: 0; }
+@media (max-width: 600px) {
+  .settings-grid { grid-template-columns: 1fr; }
+}
 
 /* ── MODAL ── */
 .modal-wrap {
@@ -386,6 +397,7 @@ body {
   <!-- ── KELLO ── -->
   <div class="panel active" id="panel-kello">
     <div class="clock-card">
+      <div id="clock-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;border-radius:var(--r);transition:opacity 0.5s;opacity:0.25;pointer-events:none;"></div>
       <div class="timer" id="timer">00:00:00</div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge">Ei käynnissä</span>
@@ -421,8 +433,8 @@ body {
     <div class="sum-grid">
       <div class="sum-card"><div class="sum-label">Kirjauksia</div><div class="sum-val" id="s-count">0</div></div>
       <div class="sum-card"><div class="sum-label">Valittuna</div><div class="sum-val" id="s-sel">0</div></div>
-      <div class="sum-card"><div class="sum-label">Yhteensä</div><div class="sum-val" id="s-total">0:00</div></div>
-      <div class="sum-card"><div class="sum-label">Arvo</div><div class="sum-val" id="s-val">0€</div></div>
+      <div class="sum-card"><div class="sum-label">Laskuttamattomat tunnit</div><div class="sum-val" id="s-total">0:00</div></div>
+      <div class="sum-card"><div class="sum-label">Laskutukseen tuleva summa</div><div class="sum-val" id="s-val">0€</div></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="filter-pills"></div>
   <div class="action-bar">
@@ -439,43 +451,71 @@ body {
 
   <!-- ── ASETUKSET ── -->
   <div class="panel" id="panel-asetukset">
+
+  <!-- Rivi 1: Yritystiedot + Hinnoittelu -->
+  <div class="settings-grid" style="margin-bottom:14px;">
     <div class="card">
-      <div class="card-label" id="label-language">Kieli</div>
-      <div style="display:flex;gap:10px;">
-        <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;">🇫🇮 Suomi</button>
-        <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;">🇬🇧 English</button>
+      <div class="card-label">Yritystiedot</div>
+      <!-- kieli tähän pienempänä -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language">Kieli</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;flex:1;">🇫🇮 Suomi</button>
+          <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;flex:1;">🇬🇧 English</button>
+        </div>
       </div>
+      <div class="fg"><label>Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy"></div>
+      <div class="fg"><label>Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki"></div>
+      <div class="fg"><label>Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567"></div>
+      <div class="fg"><label>Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi"></div>
+      <button class="btn-add" onclick="saveCompany()">Tallenna</button>
     </div>
 
     <div class="card">
       <div class="card-label">Hinnoittelu</div>
       <div class="set-row">
-        <div>
-          <div class="set-label">Tuntihinta</div>
-          <div class="set-sub" id="hourly-hint">—</div>
-        </div>
+        <div><div class="set-label">Tuntihinta</div><div class="set-sub" id="hourly-hint">—</div></div>
         <div class="set-input-wrap">
           <input type="number" id="set-hourly" min="0" step="0.5" oninput="previewHourly()">
           <span style="font-size:15px;font-weight:600;color:var(--text2);">€/h</span>
         </div>
       </div>
+      <div class="set-row">
+        <div><div class="set-label">Pyöristys</div><div class="set-sub">Pyöristää tunnit ylöspäin</div></div>
+        <div class="set-input-wrap">
+          <select id="set-rounding" onchange="saveRounding()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="1">Ei pyöristystä</option>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">60 min</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row">
+        <div><div class="set-label">ALV</div><div class="set-sub">Lisätään laskun loppusummaan</div></div>
+        <div class="set-input-wrap">
+          <select id="set-vat" onchange="saveVat()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="14">14%</option>
+            <option value="25.5">25,5%</option>
+          </select>
+        </div>
+      </div>
       <button class="btn-add" onclick="saveHourly()">Tallenna tuntihinta</button>
     </div>
+  </div>
 
+  <!-- Rivi 2: Kuukausiveloitukset + Asiakkaat -->
+  <div class="settings-grid">
     <div class="card">
       <div class="card-label">Kuukausiveloitukset</div>
       <div id="rec-list"></div>
       <div style="margin-top:12px;">
-        <div class="fg"><label>Kuvaus</label><input type="text" size="50" id="rec-name" placeholder="esim. Ylläpitomaksu"></div>
-          <div style="display:flex;gap:10px;margin-bottom:10px;">
-          <div class="fg" style="flex:1;min-width:0;margin:0;">
-            <label>Summa (€)</label>
-            <input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;">
-          </div>
-          <div class="fg" style="flex:1;min-width:0;margin:0;">
-            <label>Asiakas</label>
-            <select id="rec-customer" style="width:100%;"></select>
-          </div>
+        <div class="fg"><label>Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu"></div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div class="fg" style="flex:1;min-width:0;margin:0;"><label>Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;"></div>
+          <div class="fg" style="flex:1;min-width:0;margin:0;"><label>Asiakas</label><select id="rec-customer" style="width:100%;"></select></div>
         </div>
         <button class="btn-add" onclick="addRecurring()">+ Lisää kuukausiveloitus</button>
       </div>
@@ -567,15 +607,16 @@ let uid = null;
 let timerRaf = null, startTime = null, elapsedMs = 0;
 let state = 'idle', clockInDate = null, activeCustomer = null;
 let entries = [], invoices = [], eId = 0, iId = 0;
-let cfg = { hourly: 50, customers: [], recurring: [] };
-let pending = null;
-let deferredPrompt = null;
-let filterCustomer = null;
-let saveTimer = null;
+let cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', rounding: 15, vat: 0 };let saveTimer = null;
 let editingEntryId = null;
 let editingInvId = null;
 let pendingRecurring = null;
+let pending = null;
+let deferredPrompt = null;
+let filterCustomer = null;
 let lang = localStorage.getItem('lang') || 'fi';
+const STILL_IMG = 'images/still.jpg';
+const ANIM_GIF  = 'images/working.gif';
 
 // ── LOCALE ── 
 const i18n = {
@@ -589,8 +630,8 @@ const i18n = {
     addNotes: 'Lisää merkintöjä', notesPlaceholder: 'Merkintöjä tähän kirjaukseen...', kirjattu: 'Kirjattu ',
     manualEntry: 'Manuaalinen kirjaus', date: 'Päivämäärä', customer: 'Asiakas', hours: 'Tunnit', minutes: 'Minuutit', 
     notes: 'Merkintöjä', addEntry: '+ Lisää kirjaus', loginFail: 'Kirjautuminen epäonnistui: ', loginFail2: 'Kirjautuminen epäonnistui',
-    entries: 'Kirjauksia', selected: 'Valittuna', total: 'Yhteensä', value: 'Arvo',
-    selectAll: 'Valitse kaikki', buildInvoice: 'Kokoa lasku ↗',
+    entries: 'Kirjauksia', selected: 'Valittuna', total: 'Tehdyt tunnit', value: 'Laskutukseen tuleva summa',
+    selectAll: 'Valitse kaikki', buildInvoice: 'Kokoa lasku ↗',printPdf: 'Tulosta / Tallenna PDF',
     noEntries: 'Ei kirjauksia vielä.', loginFirst: 'Kirjaudu sisään tai lisää manuaalisesti.',
     noEntriesFor: 'Ei kirjauksia asiakkaalle', yet:'vielä',
     pricing: 'Hinnoittelu', hourlyRate: 'Tuntihinta', saveRate: 'Tallenna tuntihinta',
@@ -621,7 +662,7 @@ const i18n = {
     loginTitle: 'Työtunnit', loginSub: 'Seuraa työtunteja ja kokoa laskuja.',
     loginBtn: 'Kirjaudu Google-tilillä', loginFooter: 'Tietosi tallennetaan turvallisesti pilveen.',
     loginFooter2: 'Käytä samalla tilillä puhelimella ja tietokoneella.',
-    noCustomer: '— Ei asiakasta —', perMonth: '/kk', perHour: '€/h',
+    noCustomer: 'Ei asiakasta', perMonth: '/kk', perHour: '€/h',
     clockedIn: 'Kirjauduttu sisään', recorded: 'Kirjattu', pauseStarted: 'Tauko käynnistetty',
     resumed: 'Jatketaan', cannotSwitch: 'Vaihda asiakas ensin kirjautumalla ulos',
     language: 'Kieli', appInstalled:'Sovellus asennettu! 🎉', installBanner: '📲 Lisää aloitusnäytölle käyttääksesi sovelluksena',
@@ -636,10 +677,10 @@ const i18n = {
     addNotes: 'Add notes', notesPlaceholder: 'Notes for this entry...', kirjattu: 'Clocked Out ',
     manualEntry: 'Manual entry', date: 'Date', customer: 'Customer', loginFail: 'Login failed: ', loginFail2: 'Login failed',
     hours: 'Hours', minutes: 'Minutes', notes: 'Notes', addEntry: '+ Add entry',
-    entries: 'Entries', selected: 'Selected', total: 'Total', value: 'Value',
+    entries: 'Entries', selected: 'Selected', total: 'Hours', value: 'Amount to invoice',
     selectAll: 'Select all', buildInvoice: 'Build invoice ↗', added:'Added',
     noEntries: 'No entries yet.', loginFirst: 'Clock in or add manually.',
-    noEntriesFor: 'No entries for', yet:'yet',
+    noEntriesFor: 'No entries for', yet:'yet', printPdf: 'Print / Save as PDF',
     pricing: 'Pricing', hourlyRate: 'Hourly rate', saveRate: 'Save hourly rate',
     recurring: 'Monthly charges', noRecurring: 'No monthly charges.', doAddRecurring:'Do you want to add recurring costs?',
     description: 'Description', amount: 'Amount (€)', addRecurring: '+ Add monthly charge',
@@ -668,7 +709,7 @@ const i18n = {
     loginTitle: 'Work Hours', loginSub: 'Track work hours and build invoices.',
     loginBtn: 'Sign in with Google', loginFooter: 'Your data is stored securely in the cloud.',
     loginFooter2: 'Use the same account on phone and computer.',
-    noCustomer: '— No customer —', perMonth: '/mo', perHour: '€/h',
+    noCustomer: 'No customer', perMonth: '/mo', perHour: '€/h',
     clockedIn: 'Clocked in', recorded: 'Recorded', pauseStarted: 'Break started',
     resumed: 'Resumed', cannotSwitch: 'Clock out before switching customer',
     language: 'Language', appInstalled:'App Installed! 🎉', installBanner: '📲 Add to home screen to use as an app',
@@ -710,8 +751,7 @@ auth.onAuthStateChanged(user => {
   } else {
     uid = null;
     entries = []; invoices = []; eId = 0; iId = 0;
-    cfg = { hourly: 50, customers: [], recurring: [] };
-    document.getElementById('login-screen').classList.add('visible');
+    cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', rounding: 15, vat: 0 };    document.getElementById('login-screen').classList.add('visible');
   }
 });
 
@@ -807,9 +847,10 @@ async function loadFromFirestore() {
       elapsedMs = 0;
       state = 'running';
       timerRaf = requestAnimationFrame(tick);
-      const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
-      document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
+      const th = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + th;
       setBadge('running','● Töissä'); renderMainBtns(); renderPills();
+      updateClockBg();
     }
   } catch(e) { toast(t('latausVirhe')); }
 }
@@ -862,6 +903,15 @@ function goTab(tab) {
 }
 
 // ── TIMER ──
+function updateClockBg() {
+  const bg = document.getElementById('clock-bg');
+  if (!bg) return;
+  if (state === 'running' || state === 'paused') {
+    bg.style.backgroundImage = `url('${ANIM_GIF}?t=${Date.now()}')`;
+  } else {
+    bg.style.backgroundImage = `url('${STILL_IMG}')`;
+  }
+}
 function toggleNotes() {
   const box = document.getElementById('notes-box');
   const icon = document.getElementById('notes-toggle-icon');
@@ -885,27 +935,33 @@ function clockIn() {
     });
   }
   timerRaf = requestAnimationFrame(tick);
-  const t = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + t;
+  const th = clockInDate.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + th;
   setBadge('running','● Töissä'); renderMainBtns();
   toast(t('clockedIn') + activeCustomer);
+  updateClockBg();
 }
 function togglePause() {
   if (state === 'running') {
     state = 'paused'; elapsedMs += Date.now() - startTime;
     cancelAnimationFrame(timerRaf);
     setBadge('paused',t('onBreak')); renderMainBtns(); toast(t('taukoAlkaa'));
+    updateClockBg();
   } else {
     state = 'running'; startTime = Date.now();
     timerRaf = requestAnimationFrame(tick);
     setBadge('running',t('working')); renderMainBtns(); toast(t('jatko'));
+    updateClockBg();
   }
 }
 function clockOut() {
   if (state === 'running') elapsedMs += Date.now() - startTime;
   cancelAnimationFrame(timerRaf);
-  const secs = Math.floor(elapsedMs / 1000);
-  if (secs < 1) { toast(t('noTime')); return; }
+  const rawSecs = Math.floor(elapsedMs / 1000);
+  if (rawSecs < 1) { toast(t('noTime')); return; }
+  // Pyöristä ylöspäin seuraavaan 15 minuuttiin
+  const interval = (cfg.rounding || 15) * 60;
+  const secs = cfg.rounding === 1 ? rawSecs : Math.ceil(rawSecs / interval) * interval;
   const notes = document.getElementById('clock-notes').value.trim();
   addEntry(clockInDate, secs, activeCustomer, 'kello', notes);
   document.getElementById('clock-notes').value = '';
@@ -917,6 +973,7 @@ function clockOut() {
   setBadge('idle',t('idle')); renderMainBtns();
   if (uid) db.collection('users').doc(uid).collection('data').doc('active').delete();
   save(); toast(t('kirjattu') + fmtDur(secs));
+  updateClockBg();
 }
 function setBadge(type, txt) {
   const el = document.getElementById('clock-badge');
@@ -957,7 +1014,10 @@ function addManual() {
   const d = document.getElementById('m-date').value;
   const h = parseInt(document.getElementById('m-h').value) || 0;
   const m = parseInt(document.getElementById('m-m').value) || 0;
-  const total = h * 3600 + m * 60;
+  const rawTotal = h * 3600 + m * 60;
+  if (rawTotal < 1) { toast(t('enterTime')); return; }
+  const interval = (cfg.rounding || 15) * 60;
+  const total = cfg.rounding === 1 ? rawTotal : Math.ceil(rawTotal / interval) * interval;
   const notes = document.getElementById('m-notes').value;
   if (total < 1) { toast(t('enterTime')); return; }
   addEntry(d ? new Date(d+'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes);
@@ -1085,10 +1145,13 @@ function finishInvoice(mode) {
   const totalSecs = sel.reduce((a,e) => a+e.secs, 0);
   const hourly = (totalSecs/3600) * cfg.hourly;
   const monthly = rec.reduce((a,r) => a+r.amount, 0);
+  const subtotal = hourly + monthly;
+  const vatAmount = subtotal * (cfg.vat || 0) / 100;
   invoices.unshift({
     id: ++iId, date: new Date().toISOString(),
     entries: sel.map(e => ({...e})), totalSecs, hourly, monthly,
-    total: hourly + monthly, recurring: rec
+    subtotal, vatAmount, vat: cfg.vat || 0,
+    total: subtotal + vatAmount, recurring: rec
   });
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
   filterCustomer = null;
@@ -1118,40 +1181,132 @@ function renderArchive(highlightId) {
         </div>
         <div class="inv-row-val">${fmtEur(r.amount)}</div>
       </div>`).join('');
-    const subtotals = inv.monthly > 0 ? `
+    const subtotals = `
       <div class="inv-subtotals">
-        <div class="inv-subtotal-line"><span>${t('hourlyTotal')}</span><span>${fmtEur(inv.hourly)}</span></div>
-        <div class="inv-subtotal-line"><span>${t('monthlyTotal')}</span><span>${fmtEur(inv.monthly)}</span></div>
-      </div>` : '';
+        ${inv.monthly > 0 ? `
+          <div class="inv-subtotal-line"><span>${t('hourlyTotal')}</span><span>${fmtEur(inv.hourly)}</span></div>
+          <div class="inv-subtotal-line"><span>${t('monthlyTotal')}</span><span>${fmtEur(inv.monthly)}</span></div>
+        ` : ''}
+        ${inv.vat > 0 ? `
+          <div class="inv-subtotal-line"><span>Veroton summa</span><span>${fmtEur(inv.subtotal)}</span></div>
+          <div class="inv-subtotal-line"><span>ALV ${inv.vat}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+        ` : ''}
+      </div>`;
     return `
       <div class="inv-card">
-        <div class="inv-header" onclick="toggleInv('inv-${inv.id}')">
-          <div>
-            <div class="inv-num">Lasku #${String(inv.id).padStart(3,'0')}</div>
-            <div class="inv-sub">${fmtDate(inv.date)} · ${inv.entries.length} kirjausta</div>
-          </div>
-          <div class="inv-right">
-            <div class="inv-total">${fmtEur(inv.total)}</div>
-            <span class="inv-tag">Arkistoitu</span>
-          </div>
-        </div>
-        <div class="inv-body ${isOpen?'open':''}" id="inv-${inv.id}">
-          <div class="inv-meta">
-            <span>${t('hourlyPrice')}: ${fmtEur(cfg.hourly)}/h</span>
-          </div>
-          ${rows}${recRows}${subtotals}
-          <div class="inv-grand">
-            <span class="inv-grand-label">${t('grandTotal')}</span>
-            <div style="display:flex;align-items:baseline;gap:16px;">
-              <button onclick="openEditInvoice(${inv.id})" style="background:var(--blue);color:#fff;border:none;border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;">${t('edit')}</button>
-              <span class="inv-grand-val">${fmtEur(inv.total)}</span>
+          <div class="inv-header" onclick="toggleInv('inv-${inv.id}')">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="inv-num">${t('invoice')} #${String(inv.id).padStart(3,'0')}</div>
+                <button onclick="event.stopPropagation();openEditInvoice(${inv.id})" style="background:none;border:none;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;padding:0;">${t('edit')}</button>
+              </div>
+              <div class="inv-sub">${fmtDate(inv.date)} · ${inv.entries.length} kirjausta</div>
+            </div>
+            <div class="inv-right">
+              <div class="inv-total">${fmtEur(inv.total)}</div>
+              <span class="inv-tag">${t('archived')}</span>
             </div>
           </div>
-        </div>
+          <div class="inv-body ${isOpen?'open':''}" id="inv-${inv.id}">
+            <div class="inv-meta">
+              <span>${t('hourlyPrice')}: ${fmtEur(cfg.hourly)}/h</span>
+            </div>
+            ${rows}${recRows}${subtotals}
+            <div class="inv-grand">
+              <span class="inv-grand-label">${t('grandTotal')}</span>
+              <span class="inv-grand-val">${fmtEur(inv.total)}</span>
+            </div>
+            <button onclick="printInvoice(${inv.id})" style="width:100%;margin-top:12px;padding:12px;border-radius:var(--r-sm);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">🖨 ${t('printPdf')}</button>
+          </div>
       </div>`;
   }).join('');
 }
 function toggleInv(id) { const el = document.getElementById(id); if(el) el.classList.toggle('open'); }
+
+function printInvoice(id) {
+  const inv = invoices.find(x => x.id === id);
+  if (!inv) return;
+  const rows = inv.entries.map(e => `
+    <tr>
+      <td>${fmtDate(e.date)}</td>
+      <td>${fmtEur(cfg.hourly)}</td>
+      <td>${fmtHours(e.secs)}</td>
+      <td>${e.notes || '—'}</td>
+      <td style="text-align:right">${fmtEur((e.secs/3600)*cfg.hourly)}</td>
+    </tr>`).join('');
+  const recRows = inv.recurring.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td>${1}</td>
+      <td></td>
+      <td></td>
+      <td style="text-align:right">${fmtEur(r.amount)}</td>
+    </tr>`).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Lasku #${String(inv.id).padStart(3,'0')}</title>
+    <style>
+      body { font-family: -apple-system, sans-serif; padding: 40px; color: #111; max-width: 760px; margin: 0 auto; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+      h1 { font-size: 24px; margin-bottom: 2px; }
+      .inv-customer { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 2px; }
+      .sub { color: #666; font-size: 14px; }
+      .company { font-size: 18px; font-weight: 700; text-align: right; color: #111; }
+      .company-sub { font-size: 13px; color: #666; text-align: right; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 24px; table-layout: fixed; }
+      th { text-align: left; border-bottom: 2px solid #111; padding: 8px 4px; font-size: 13px; }
+      td { padding: 10px 4px; border-bottom: 1px solid #ddd; font-size: 14px; vertical-align: top; word-wrap: break-word; }
+      th:nth-child(1), td:nth-child(1) { width: 100px; }
+      th:nth-child(2), td:nth-child(2) { width: 75px; }
+      th:nth-child(3), td:nth-child(3) { width: 85px; }
+      th:nth-child(4), td:nth-child(4) { width: auto; }
+      th:nth-child(5), td:nth-child(5) { width: 90px; text-align: right; }
+      .total-section { padding-top: 8px; }
+      .total-line { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color: #666; }
+      .grand { display: flex; justify-content: space-between; padding-top: 8px; margin-top: 8px; border-top: 2px solid #111; }
+      .grand-label { font-size: 18px; font-weight: 700; }
+      .grand-val { font-size: 24px; font-weight: 800; }
+      @media print { button { display: none; } }
+    </style>
+  </head><body>
+    <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">
+      <div style="margin-top:0;padding-top:0;">
+        <h1 style="font-size:20px;font-weight:700;margin:0 0 2px 0;line-height:1;">${t('invoice')} #${String(inv.id).padStart(3,'0')}</h1>
+        <div class="inv-customer">${[...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', ') || '—'}</div>
+        <div class="sub">${fmtDate(inv.date)}</div>
+      </div>
+      ${cfg.company ? `
+      <div style="text-align:right;">
+        <div style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">${cfg.company}</div>
+        ${cfg.address ? `<div style="font-size:13px;color:#666;">${cfg.address}</div>` : ''}
+        ${cfg.phone ? `<div style="font-size:13px;color:#666;">${cfg.phone}</div>` : ''}
+        ${cfg.email ? `<div style="font-size:13px;color:#666;">${cfg.email}</div>` : ''}
+      </div>` : ''}
+    </div>
+    <table>
+      <thead><tr>
+        <th>${t('date')}</th>
+        <th>${t('hourlyRate')}</th>
+        <th>${t('total')}</th>
+        <th>${t('notes')}</th>
+        <th style="text-align:right">${t('amount')}</th>
+      </tr></thead>
+      <tbody>${rows}${recRows}</tbody>
+    </table>
+    <div class="total-section">
+      ${inv.vat > 0 ? `
+        <div class="total-line"><span>Veroton summa</span><span>${fmtEur(inv.subtotal)}</span></div>
+        <div class="total-line"><span>ALV ${inv.vat}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+      ` : ''}
+      <div class="grand">
+        <span class="grand-label">${t('grandTotal')}</span>
+        <span class="grand-val">${fmtEur(inv.total)}</span>
+      </div>
+    </div>
+    <br><button onclick="window.print()" style="padding:12px 24px;background:#1976D2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">🖨 ${t('printPdf')}</button>
+  </body></html>`);
+  win.document.close();
+}
 
 // ── SETTINGS ──
 function showConfirm(title, text, onOk) {
@@ -1163,8 +1318,31 @@ function showConfirm(title, text, onOk) {
 function closeConfirm() {
   document.getElementById('modal-confirm').classList.remove('open');
 }
+
+function saveRounding() {
+  cfg.rounding = parseInt(document.getElementById('set-rounding').value);
+  save(); toast(t('saved'));
+}
+
+function saveCompany() {
+  cfg.company = document.getElementById('set-company').value.trim();
+  cfg.address = document.getElementById('set-address').value.trim();
+  cfg.phone = document.getElementById('set-phone').value.trim();
+  cfg.email = document.getElementById('set-email').value.trim();
+  save(); toast(t('saved'));
+}
+function saveVat() {
+  cfg.vat = parseFloat(document.getElementById('set-vat').value);
+  save(); toast(t('saved'));
+}
 function renderSettings() {
+  document.getElementById('set-company').value = cfg.company || '';
+  document.getElementById('set-address').value = cfg.address || '';
+  document.getElementById('set-phone').value = cfg.phone || '';
+  document.getElementById('set-email').value = cfg.email || '';
+  document.getElementById('set-rounding').value = cfg.rounding || 15;
   document.getElementById('set-hourly').value = cfg.hourly;
+  document.getElementById('set-vat').value = cfg.vat || 0;
   previewHourly();
   renderRecList(); renderCustChips(); renderAllSelects();
 }
@@ -1183,6 +1361,10 @@ function addCustomer() {
   if (cfg.customers.includes(n)) { toast(t('customerExists')); return; }
   cfg.customers.push(n); document.getElementById('new-cust').value = '';
   save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerAdded'));
+}
+
+function fmtHours(secs) {
+  return (secs / 3600).toFixed(2).replace('.', ',') + ' h';
 }
 
 function removeCustomer(name) {
@@ -1336,9 +1518,13 @@ function saveEditInvoice() {
   });
   const totalSecs = inv.entries.reduce((a,e) => a+e.secs, 0);
   const hourly = (totalSecs/3600) * cfg.hourly;
+  const subtotal = hourly + inv.monthly;
+  const vatAmount = subtotal * (inv.vat || 0) / 100;
   inv.totalSecs = totalSecs;
   inv.hourly = hourly;
-  inv.total = hourly + inv.monthly;
+  inv.subtotal = subtotal;
+  inv.vatAmount = vatAmount;
+  inv.total = subtotal + vatAmount;
   closeEditInvModal();
   save(); renderArchive(); toast(t('invoiceUpdated'));
 }
