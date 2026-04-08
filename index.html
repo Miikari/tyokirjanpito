@@ -1136,14 +1136,16 @@ function renderArchive(highlightId) {
           </div>
         </div>
         <div class="inv-body ${isOpen?'open':''}" id="inv-${inv.id}">
-          <div class="inv-meta" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>Tuntihinta: ${fmtEur(cfg.hourly)}/h</span>
-            <button onclick="openEditInvoice(${inv.id})" style="background:none;border:none;color:blue;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;">+ Muokkaa</button>
+          <div class="inv-meta">
+            <span>${t('hourlyPrice')}: ${fmtEur(cfg.hourly)}/h</span>
           </div>
           ${rows}${recRows}${subtotals}
           <div class="inv-grand">
-            <span class="inv-grand-label">Loppusumma</span>
-            <span class="inv-grand-val">${fmtEur(inv.total)}</span>
+            <span class="inv-grand-label">${t('grandTotal')}</span>
+            <div style="display:flex;align-items:baseline;gap:16px;">
+              <button onclick="openEditInvoice(${inv.id})" style="background:var(--blue);color:#fff;border:none;border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;">${t('edit')}</button>
+              <span class="inv-grand-val">${fmtEur(inv.total)}</span>
+            </div>
           </div>
         </div>
       </div>`;
