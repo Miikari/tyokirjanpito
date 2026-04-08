@@ -51,7 +51,7 @@ body {
 /* ── HEADER ── */
 .header {
   background: var(--surface);
-  padding: 52px 20px 0;
+  padding: 10px 20px 0;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   position: relative;
@@ -727,12 +727,12 @@ function togglePause() {
   }
 }
 function clockOut() {
-  if (state === 'running') elapsedMs += Date.now() - startTime;
+  if (state === 'running' && activeCustomer) elapsedMs += Date.now() - startTime;
   cancelAnimationFrame(timerRaf);
   const secs = Math.floor(elapsedMs / 1000);
   if (secs < 1) { toast('Ei aikaa kirjattavana'); return; }
   const notes = document.getElementById('clock-notes').value.trim();
-  addEntry(clockInDate, secs, activeCustomer || null, 'kello', notes);
+  addEntry(clockInDate, secs, activeCustomer, 'kello', notes);
   document.getElementById('clock-notes').value = '';
   document.getElementById('notes-box').style.display = 'none';
   document.getElementById('notes-toggle-icon').textContent = '+';
@@ -764,8 +764,14 @@ function renderPills() {
     `<div class="pill ${activeCustomer===c?'active':''}" onclick="selCust('${esc(c)}')">${c}</div>`
   ).join('');
 }
-function selCust(n) { activeCustomer = activeCustomer === n ? null : n; renderPills(); }
-
+function selCust(n) {
+  if (state === 'running' || state === 'paused') {
+    toast('Vaihda asiakas ensin kirjautumalla ulos');
+    return;
+  }
+  activeCustomer = activeCustomer === n ? null : n;
+  renderPills();
+}
 // ── ENTRIES ──
 function addEntry(date, secs, customer, src, notes = '') {
   entries.unshift({ id: ++eId, date: new Date(date).toISOString(), secs, customer, src, notes, selected: false, invoiced: false });
@@ -957,7 +963,7 @@ function renderArchive(highlightId) {
         <div class="inv-body ${isOpen?'open':''}" id="inv-${inv.id}">
           <div class="inv-meta" style="display:flex;justify-content:space-between;align-items:center;">
             <span>Tuntihinta: ${fmtEur(cfg.hourly)}/h</span>
-            <button onclick="openEditInvoice(${inv.id})" style="background:var(--blue);color:#fff;border:none;border-radius:99px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;">+ Muokkaa</button>
+            <button onclick="openEditInvoice(${inv.id})" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;">+ Muokkaa</button>
           </div>
           ${rows}${recRows}${subtotals}
           <div class="inv-grand">
