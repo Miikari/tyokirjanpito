@@ -81,12 +81,12 @@ body {
 
 /* ── CLOCK CARD ── */
 .clock-card {
-  background: var(--blue);
+  background: rgba(25, 118, 210, 0.15);
   border-radius: var(--r);
   padding: 32px 20px 24px;
   text-align: center;
   margin-bottom: 14px;
-  box-shadow: 0 4px 16px rgba(25,118,210,0.3);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.05);
   position: relative; 
   overflow: hidden; 
 }
@@ -94,8 +94,9 @@ body {
   font-size: 62px; font-weight: 200; letter-spacing: 3px;
   font-variant-numeric: tabular-nums; color: #fff; line-height: 1;
   margin-bottom: 6px; font-feature-settings: "tnum";
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
-.timer-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 14px; min-height: 18px; }
+.timer-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 14px; min-height: 18px;text-shadow: 0 2px 8px rgba(0,0,0,0.4);}
 .clock-badge {
   display: inline-block; font-size: 12px; font-weight: 600;
   padding: 4px 16px; border-radius: 99px; margin-bottom: 20px;
@@ -267,7 +268,8 @@ body {
 @media (max-width: 600px) {
   .settings-grid { grid-template-columns: 1fr; }
 }
-
+#clock-bg { z-index: 0; }
+.clock-card > *:not(#clock-bg) { position: relative; z-index: 2; }
 /* ── MODAL ── */
 .modal-wrap {
   display: none; position: fixed; inset: 0;
@@ -397,8 +399,7 @@ body {
   <!-- ── KELLO ── -->
   <div class="panel active" id="panel-kello">
     <div class="clock-card">
-      <div id="clock-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;border-radius:var(--r);transition:opacity 0.5s;opacity:0.25;pointer-events:none;"></div>
-      <div class="timer" id="timer">00:00:00</div>
+      <div id="clock-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;border-radius:var(--r);transition:opacity 0.5s;opacity:0.9;pointer-events:none;z-index:0;"></div>      <div class="timer" id="timer">00:00:00</div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge">Ei käynnissä</span>
       <div class="pills" id="pills"></div>
@@ -615,8 +616,8 @@ let pending = null;
 let deferredPrompt = null;
 let filterCustomer = null;
 let lang = localStorage.getItem('lang') || 'fi';
-const STILL_IMG = 'images/still.jpg';
-const ANIM_GIF  = 'images/working.gif';
+const STILL_IMG = 'images/background2.jpg';
+const ANIM_GIF  = 'images/background3.gif';
 
 // ── LOCALE ── 
 const i18n = {
