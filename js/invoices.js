@@ -61,15 +61,15 @@ function renderArchive(highlightId) {
       <div class="inv-row-line">
         <div class="inv-row-left">
           <div class="inv-row-title">${fmtDur(e.secs)}</div>
-          <div class="inv-row-sub">${fmtDate(e.date)}${e.customer ? ' · ' + e.customer : ''}</div>
+          <div class="inv-row-sub">${fmtDate(e.date)}${e.customer ? ' · ' + esc(e.customer) : ''}</div>
         </div>
         <div class="inv-row-val">${fmtEur((e.secs / 3600) * (e.rate ?? cfg.hourly))}</div>
       </div>`).join('');
     const recRows = inv.recurring.map(r => `
       <div class="inv-row-line">
         <div class="inv-row-left">
-          <div class="inv-row-title">${r.name}</div>
-          <div class="inv-row-sub">${t('monthlyCharge')}${r.customer ? ' · ' + r.customer : ''}</div>
+          <div class="inv-row-title">${esc(r.name)}</div>
+          <div class="inv-row-sub">${t('monthlyCharge')}${r.customer ? ' · ' + esc(r.customer) : ''}</div>
         </div>
         <div class="inv-row-val">${fmtEur(r.amount)}</div>
       </div>`).join('');
@@ -79,7 +79,7 @@ function renderArchive(highlightId) {
         <div class="inv-header" onclick="this.nextElementSibling.classList.toggle('open')">
           <div>
             <div class="inv-num">${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</div>
-            <div class="inv-sub">${fmtDate(inv.date)}${custs.length ? ' · ' + custs.join(', ') : ''}</div>
+            <div class="inv-sub">${fmtDate(inv.date)}${custs.length ? ' · ' + custs.map(esc).join(', ') : ''}</div>
           </div>
           <div class="inv-right">
             <div class="inv-total">${fmtEur(inv.total)}</div>
@@ -118,12 +118,12 @@ function printInvoice(id, asAttachment) {
       <td>${fmtDate(e.date)}</td>
       <td>${fmtEur(e.rate ?? cfg.hourly)}</td>
       <td>${fmtHours(e.secs)}</td>
-      <td>${e.notes || '—'}</td>
+      <td>${esc(e.notes || '—')}</td>
       <td style="text-align:right">${fmtEur((e.secs / 3600) * (e.rate ?? cfg.hourly))}</td>
     </tr>`).join('');
   const recRows = inv.recurring.map(r => `
     <tr>
-      <td>${r.name}</td>
+      <td>${esc(r.name)}</td>
       <td>${1}</td>
       <td></td>
       <td></td>
@@ -133,20 +133,20 @@ function printInvoice(id, asAttachment) {
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
   const primaryCustObj = custs.length === 1 ? cfg.customers.find(c => c.name === custs[0]) : null;
   const custAddrLines = primaryCustObj ? [
-    primaryCustObj.ytunnus ? 'Y-tunnus: ' + primaryCustObj.ytunnus : '',
-    primaryCustObj.katuosoite || '',
-    [primaryCustObj.postinumero, primaryCustObj.postitoimipaikka].filter(Boolean).join(' '),
-    primaryCustObj.sposti || '',
-    primaryCustObj.puhelin || '',
+    primaryCustObj.ytunnus ? 'Y-tunnus: ' + esc(primaryCustObj.ytunnus) : '',
+    esc(primaryCustObj.katuosoite || ''),
+    [primaryCustObj.postinumero, primaryCustObj.postitoimipaikka].filter(Boolean).map(esc).join(' '),
+    esc(primaryCustObj.sposti || ''),
+    esc(primaryCustObj.puhelin || ''),
   ].filter(Boolean).map(l => `<div style="font-size:13px;color:#555;line-height:1.5;">${l}</div>`).join('') : '';
 
   const companyBlock = cfg.company ? `
     <div style="text-align:right;">
-      <div style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">${cfg.company}</div>
-      ${cfg.ytunnus ? `<div style="font-size:13px;color:#666;margin-top:2px;">Y-tunnus: ${cfg.ytunnus}</div>` : ''}
-      ${cfg.address ? `<div style="font-size:13px;color:#666;">${cfg.address}</div>` : ''}
-      ${cfg.phone ? `<div style="font-size:13px;color:#666;">${cfg.phone}</div>` : ''}
-      ${cfg.email ? `<div style="font-size:13px;color:#666;">${cfg.email}</div>` : ''}
+      <div style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">${esc(cfg.company)}</div>
+      ${cfg.ytunnus ? `<div style="font-size:13px;color:#666;margin-top:2px;">Y-tunnus: ${esc(cfg.ytunnus)}</div>` : ''}
+      ${cfg.address ? `<div style="font-size:13px;color:#666;">${esc(cfg.address)}</div>` : ''}
+      ${cfg.phone ? `<div style="font-size:13px;color:#666;">${esc(cfg.phone)}</div>` : ''}
+      ${cfg.email ? `<div style="font-size:13px;color:#666;">${esc(cfg.email)}</div>` : ''}
     </div>` : '';
 
   let headerLeft, paymentBlock;
@@ -154,7 +154,7 @@ function printInvoice(id, asAttachment) {
     headerLeft = `
       <h1 style="font-size:20px;font-weight:700;margin:0 0 2px 0;line-height:1;">Tuntierittely</h1>
       <div style="margin-top:4px; font-size 16px;">${fmtDate(inv.date)}</div>
-      <div class="inv-customer">${custs.join(', ') || '—'}</div>
+      <div class="inv-customer">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     paymentBlock = '';
   } else {
@@ -166,19 +166,19 @@ function printInvoice(id, asAttachment) {
     headerLeft = `
       <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;line-height:1;">${t('invoice')} #${String(inv.id).padStart(3, '0')}</h1>
       <div class="sub">${fmtDate(inv.date)}</div>
-      <div class="inv-customer" style="margin-top:8px;">${custs.join(', ') || '—'}</div>
+      <div class="inv-customer" style="margin-top:8px;">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     const payItems = [
       cfg.showErapaiva ? `<div><div class="pay-item-label">Maksuehto</div><div class="pay-item-val">${maksuehtoText}</div></div>` : '',
       cfg.showErapaiva && maksuehto !== 'sopimus' ? `<div><div class="pay-item-label">Eräpäivä</div><div class="pay-item-val">${erapaiva}</div></div>` : '',
       cfg.showViitenumero ? `<div><div class="pay-item-label">Viitenumero</div><div class="pay-item-val">${viitenumero}</div></div>` : '',
-      cfg.showTilinumero && cfg.tilinumero ? `<div><div class="pay-item-label">Tilinumero</div><div class="pay-item-val">${cfg.tilinumero}</div></div>` : '',
+      cfg.showTilinumero && cfg.tilinumero ? `<div><div class="pay-item-label">Tilinumero</div><div class="pay-item-val">${esc(cfg.tilinumero)}</div></div>` : '',
     ].filter(Boolean).join('');
     paymentBlock = showPaymentBox && payItems ? `<div class="pay-box">${payItems}</div>` : '';
   }
 
   const title = asAttachment
-    ? `Tuntierittely - ${custs.join(', ') || fmtDate(inv.date)}`
+    ? `Tuntierittely - ${esc(custs.join(', ') || fmtDate(inv.date))}`
     : `Lasku #${String(inv.id).padStart(3, '0')}`;
 
   const win = window.open('', '_blank');
@@ -246,12 +246,12 @@ function openEditInvoice(id) {
   const el = document.getElementById('edit-inv-entries');
   el.innerHTML = inv.entries.map((e, i) => `
     <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px;margin-bottom:10px;">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">${fmtDate(e.date)} · ${e.customer || '—'}</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">${fmtDate(e.date)} · ${esc(e.customer || '—')}</div>
       <div style="display:flex;gap:8px;margin-bottom:6px;">
         <div class="fg" style="flex:1;margin:0;"><label>Tunnit</label><input type="number" id="einv-h-${i}" value="${Math.floor(e.secs / 3600)}" min="0" max="24"></div>
         <div class="fg" style="flex:1;margin:0;"><label>Minuutit</label><input type="number" id="einv-m-${i}" value="${Math.floor((e.secs % 3600) / 60)}" min="0" max="59"></div>
       </div>
-      <div class="fg" style="margin:0;"><label>Merkintöjä</label><input type="text" id="einv-notes-${i}" value="${e.notes || ''}" placeholder="Merkintä..."></div>
+      <div class="fg" style="margin:0;"><label>Merkintöjä</label><input type="text" id="einv-notes-${i}" value="${esc(e.notes || '')}" placeholder="Merkintä..."></div>
     </div>
   `).join('');
   document.getElementById('modal-edit-inv').classList.add('open');

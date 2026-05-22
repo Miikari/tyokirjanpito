@@ -102,7 +102,7 @@ function renderPills() {
   const el = document.getElementById('pills');
   if (!cfg.customers.length) { el.innerHTML = ''; return; }
   el.innerHTML = cfg.customers.map(c =>
-    `<div class="pill ${activeCustomer === c.name ? 'active' : ''}" onclick="selCust('${esc(c.name)}')">${c.name}</div>`
+    `<div class="pill ${activeCustomer === c.name ? 'active' : ''}" onclick="selCust(${esc(JSON.stringify(c.name))})">${esc(c.name)}</div>`
   ).join('');
 }
 

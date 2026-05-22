@@ -78,8 +78,8 @@ function renderRecList() {
   el.innerHTML = cfg.recurring.map(r => `
     <div class="rec-item">
       <div>
-        <div class="rec-name">${r.name}</div>
-        <div class="rec-sub">${r.customer || t('allCustomers')}</div>
+        <div class="rec-name">${esc(r.name)}</div>
+        <div class="rec-sub">${esc(r.customer || t('allCustomers'))}</div>
       </div>
       <div class="rec-right">
         <span class="rec-eur">${fmtEur(r.amount)}/kk</span>

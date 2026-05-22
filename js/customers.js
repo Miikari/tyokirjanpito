@@ -121,16 +121,16 @@ function renderCustChips() {
   el.innerHTML = cfg.customers.map(c => {
     const hasDetails = c.ytunnus || c.katuosoite || c.sposti || c.puhelin;
     return `<span class="cust-chip">
-      ${c.name}${hasDetails ? '<span class="cust-has-details">•</span>' : ''}
-      <span class="cust-edit" onclick="openEditCustomerModal('${esc(c.name)}')">✎</span>
-      <span class="cust-rm" onclick="removeCustomer('${esc(c.name)}')">×</span>
+      ${esc(c.name)}${hasDetails ? '<span class="cust-has-details">•</span>' : ''}
+      <span class="cust-edit" onclick="openEditCustomerModal(${esc(JSON.stringify(c.name))})">✎</span>
+      <span class="cust-rm" onclick="removeCustomer(${esc(JSON.stringify(c.name))})">×</span>
     </span>`;
   }).join('');
 }
 
 function renderAllSelects() {
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...cfg.customers.map(c => `<option value="${c.name}">${c.name}</option>`)].join('');
+    ...cfg.customers.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`)].join('');
   ['m-customer', 'rec-customer'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;

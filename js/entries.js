@@ -69,7 +69,7 @@ function renderFilterPills() {
   el.innerHTML = customers.map(c => `
     <div class="pill ${filterCustomer === c ? 'active' : ''}"
       style="background:${filterCustomer === c ? 'var(--blue)' : 'var(--surface)'};color:${filterCustomer === c ? '#fff' : 'var(--text2)'};border-color:${filterCustomer === c ? 'var(--blue)' : 'var(--border2)'};"
-      onclick="setFilter('${esc(c)}')">${c}</div>`
+      onclick="setFilter(${esc(JSON.stringify(c))})">${esc(c)}</div>`
   ).join('');
 }
 
@@ -84,7 +84,7 @@ function renderEntries() {
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? cfg.hourly), 0));
   renderFilterPills();
   if (!active.length) {
-    list.innerHTML = `<div class="empty">${filterCustomer ? t('noEntriesFor') + ' ' + filterCustomer : t('noEntries')}<br><br>${!filterCustomer ? t('loginFirst') : ''}</div>`;
+    list.innerHTML = `<div class="empty">${filterCustomer ? t('noEntriesFor') + ' ' + esc(filterCustomer) : t('noEntries')}<br><br>${!filterCustomer ? t('loginFirst') : ''}</div>`;
     return;
   }
   list.innerHTML = active.map(e => `
@@ -93,10 +93,10 @@ function renderEntries() {
       <div class="entry-info">
         <div class="entry-meta">${fmtDate(e.date)}</div>
         <div class="entry-dur">${fmtDur(e.secs)}</div>
-        ${e.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;">📝 ${e.notes}</div>` : ''}
+        ${e.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;">📝 ${esc(e.notes)}</div>` : ''}
       </div>
       <div class="entry-right">
-        ${e.customer ? `<span class="tag tag-cust">${e.customer}</span>` : ''}
+        ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
         <span class="entry-eur">${fmtEur((e.secs / 3600) * (e.rate ?? cfg.hourly))}</span>
         <span class="tag tag-open">${t('open') || 'Avoin'}</span>
       </div>
@@ -118,7 +118,7 @@ function openEditEntry(id) {
   document.getElementById('edit-notes').value = e.notes || '';
   document.getElementById('edit-rate').value = e.rate ?? cfg.hourly;
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...cfg.customers.map(c => `<option value="${c.name}" ${e.customer === c.name ? 'selected' : ''}>${c.name}</option>`)].join('');
+    ...cfg.customers.map(c => `<option value="${esc(c.name)}" ${e.customer === c.name ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
   document.getElementById('edit-customer').innerHTML = opts;
   document.getElementById('modal-edit').classList.add('open');
 }

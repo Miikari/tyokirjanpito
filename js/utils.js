@@ -13,7 +13,13 @@ function fmtEur(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
 
 function fmtHours(secs) { return (secs / 3600).toFixed(2).replace('.', ',') + ' h'; }
 
-function esc(s) { return s.replace(/'/g, "\\'"); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 function calcViitenumero(invoiceId) {
   const base = String(invoiceId).padStart(4, '0');
