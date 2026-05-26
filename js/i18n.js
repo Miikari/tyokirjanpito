@@ -1,3 +1,5 @@
+import { state } from './state.js';
+
 const i18n = {
   fi: {
     appName: 'Työtunnit',
@@ -112,4 +114,4 @@ const i18n = {
   }
 };
 
-function t(key) { return i18n[lang][key] || i18n['fi'][key] || key; }
+export function t(key) { return i18n[state.lang][key] || i18n['fi'][key] || key; }

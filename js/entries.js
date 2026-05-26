@@ -1,6 +1,12 @@
-function addEntry(date, secs, customer, src, notes = '', rate = null) {
-  const entryRate = (rate !== null && !isNaN(rate) && rate >= 0) ? rate : cfg.hourly;
-  entries.unshift({ id: ++eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, selected: false, invoiced: false });
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { fmtDate, fmtDur, fmtEur, fmtShort, esc } from './utils.js';
+import { toast, showConfirm } from './ui.js';
+import { save } from './storage.js';
+
+export function addEntry(date, secs, customer, src, notes = '', rate = null) {
+  const entryRate = (rate !== null && !isNaN(rate) && rate >= 0) ? rate : state.cfg.hourly;
+  state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, selected: false, invoiced: false });
 }
 
 function addManual() {
@@ -11,11 +17,11 @@ function addManual() {
   const m = parseInt(document.getElementById('m-m').value) || 0;
   const rawTotal = h * 3600 + m * 60;
   if (rawTotal < 1) { toast(t('enterTime')); return; }
-  const interval = (cfg.rounding || 15) * 60;
-  const total = cfg.rounding === 1 ? rawTotal : Math.ceil(rawTotal / interval) * interval;
+  const interval = (state.cfg.rounding || 15) * 60;
+  const total = state.cfg.rounding === 1 ? rawTotal : Math.ceil(rawTotal / interval) * interval;
   const notes = document.getElementById('m-notes').value;
   const rateVal = parseFloat(document.getElementById('m-rate').value);
-  const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : cfg.hourly;
+  const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   if (total < 1) { toast(t('enterTime')); return; }
   addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes, rate);
   document.getElementById('m-h').value = '';
@@ -25,38 +31,38 @@ function addManual() {
 }
 
 function toggleEntry(id) {
-  const e = entries.find(x => x.id === id);
+  const e = state.entries.find(x => x.id === id);
   if (e && !e.invoiced) e.selected = !e.selected;
-  const all = entries.filter(e => !e.invoiced);
+  const all = state.entries.filter(e => !e.invoiced);
   const sel = all.filter(e => e.selected);
   document.getElementById('s-sel').textContent = sel.length;
 }
 
 function selectAll() {
-  const u = entries.filter(e => !e.invoiced && (!filterCustomer || e.customer === filterCustomer));
+  const u = state.entries.filter(e => !e.invoiced && (!state.filterCustomer || e.customer === state.filterCustomer));
   const all = u.length && u.every(e => e.selected);
   u.forEach(e => e.selected = !all);
   renderEntries();
 }
 
 function setFilter(c) {
-  filterCustomer = filterCustomer === c ? null : c;
-  entries.filter(e => !e.invoiced).forEach(e => e.selected = false);
-  if (filterCustomer) {
-    entries.filter(e => !e.invoiced && e.customer === filterCustomer).forEach(e => e.selected = true);
+  state.filterCustomer = state.filterCustomer === c ? null : c;
+  state.entries.filter(e => !e.invoiced).forEach(e => e.selected = false);
+  if (state.filterCustomer) {
+    state.entries.filter(e => !e.invoiced && e.customer === state.filterCustomer).forEach(e => e.selected = true);
   }
   renderEntries();
 }
 
 function renderFilterPills() {
-  const customers = [...new Set(entries.filter(e => !e.invoiced && e.customer).map(e => e.customer))];
+  const customers = [...new Set(state.entries.filter(e => !e.invoiced && e.customer).map(e => e.customer))];
   const el = document.getElementById('filter-pills');
   if (!el) return;
 
   const existing = el.querySelectorAll('.pill');
   if (existing.length === customers.length) {
     existing.forEach(pill => {
-      const isActive = pill.textContent.trim() === filterCustomer;
+      const isActive = pill.textContent.trim() === state.filterCustomer;
       pill.classList.toggle('active', isActive);
       pill.style.background = isActive ? 'var(--blue)' : 'var(--surface)';
       pill.style.color = isActive ? '#fff' : 'var(--text2)';
@@ -67,24 +73,24 @@ function renderFilterPills() {
 
   if (!customers.length) { el.innerHTML = ''; return; }
   el.innerHTML = customers.map(c => `
-    <div class="pill ${filterCustomer === c ? 'active' : ''}"
-      style="background:${filterCustomer === c ? 'var(--blue)' : 'var(--surface)'};color:${filterCustomer === c ? '#fff' : 'var(--text2)'};border-color:${filterCustomer === c ? 'var(--blue)' : 'var(--border2)'};"
+    <div class="pill ${state.filterCustomer === c ? 'active' : ''}"
+      style="background:${state.filterCustomer === c ? 'var(--blue)' : 'var(--surface)'};color:${state.filterCustomer === c ? '#fff' : 'var(--text2)'};border-color:${state.filterCustomer === c ? 'var(--blue)' : 'var(--border2)'};"
       onclick="setFilter(${esc(JSON.stringify(c))})">${esc(c)}</div>`
   ).join('');
 }
 
-function renderEntries() {
+export function renderEntries() {
   const list = document.getElementById('entries-list');
-  const active = entries.filter(e => !e.invoiced && (!filterCustomer || e.customer === filterCustomer));
-  const all = entries.filter(e => !e.invoiced);
+  const active = state.entries.filter(e => !e.invoiced && (!state.filterCustomer || e.customer === state.filterCustomer));
+  const all = state.entries.filter(e => !e.invoiced);
   const sel = all.filter(e => e.selected);
   document.getElementById('s-count').textContent = active.length;
   document.getElementById('s-sel').textContent = sel.length;
   document.getElementById('s-total').textContent = fmtShort(all.reduce((a, e) => a + e.secs, 0));
-  document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? cfg.hourly), 0));
+  document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0));
   renderFilterPills();
   if (!active.length) {
-    list.innerHTML = `<div class="empty">${filterCustomer ? t('noEntriesFor') + ' ' + esc(filterCustomer) : t('noEntries')}<br><br>${!filterCustomer ? t('loginFirst') : ''}</div>`;
+    list.innerHTML = `<div class="empty">${state.filterCustomer ? t('noEntriesFor') + ' ' + esc(state.filterCustomer) : t('noEntries')}<br><br>${!state.filterCustomer ? t('loginFirst') : ''}</div>`;
     return;
   }
   list.innerHTML = active.map(e => `
@@ -97,7 +103,7 @@ function renderEntries() {
       </div>
       <div class="entry-right">
         ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
-        <span class="entry-eur">${fmtEur((e.secs / 3600) * (e.rate ?? cfg.hourly))}</span>
+        <span class="entry-eur">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</span>
         <span class="tag tag-open">${t('open') || 'Avoin'}</span>
       </div>
       <button onclick="openEditEntry(${e.id})" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);flex-shrink:0;">
@@ -108,23 +114,23 @@ function renderEntries() {
 
 // ── EDIT ENTRY ──
 function openEditEntry(id) {
-  const e = entries.find(x => x.id === id);
+  const e = state.entries.find(x => x.id === id);
   if (!e) return;
-  editingEntryId = id;
+  state.editingEntryId = id;
   const d = new Date(e.date);
   document.getElementById('edit-date').value = d.toISOString().slice(0, 10);
   document.getElementById('edit-h').value = Math.floor(e.secs / 3600);
   document.getElementById('edit-m').value = Math.floor((e.secs % 3600) / 60);
   document.getElementById('edit-notes').value = e.notes || '';
-  document.getElementById('edit-rate').value = e.rate ?? cfg.hourly;
+  document.getElementById('edit-rate').value = e.rate ?? state.cfg.hourly;
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...cfg.customers.map(c => `<option value="${esc(c.name)}" ${e.customer === c.name ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
+    ...state.cfg.customers.map(c => `<option value="${esc(c.name)}" ${e.customer === c.name ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
   document.getElementById('edit-customer').innerHTML = opts;
   document.getElementById('modal-edit').classList.add('open');
 }
 
 function saveEditEntry() {
-  const e = entries.find(x => x.id === editingEntryId);
+  const e = state.entries.find(x => x.id === state.editingEntryId);
   if (!e) return;
   const d = document.getElementById('edit-date').value;
   const h = parseInt(document.getElementById('edit-h').value) || 0;
@@ -138,7 +144,7 @@ function saveEditEntry() {
   e.customer = cust === '—' ? null : cust;
   e.notes = notes;
   const rateVal = parseFloat(document.getElementById('edit-rate').value);
-  e.rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : cfg.hourly;
+  e.rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   closeEditModal();
   save(); renderEntries(); toast(t('entryUpdated'));
 }
@@ -148,7 +154,7 @@ function deleteEntry() {
     t('deleteEntry'),
     t('deleteEntryConfirm'),
     () => {
-      entries = entries.filter(x => x.id !== editingEntryId);
+      state.entries = state.entries.filter(x => x.id !== state.editingEntryId);
       closeEditModal();
       save(); renderEntries(); toast(t('entryRemoved'));
     }
@@ -157,5 +163,14 @@ function deleteEntry() {
 
 function closeEditModal() {
   document.getElementById('modal-edit').classList.remove('open');
-  editingEntryId = null;
+  state.editingEntryId = null;
 }
+
+window.addManual = addManual;
+window.selectAll = selectAll;
+window.setFilter = setFilter;
+window.openEditEntry = openEditEntry;
+window.saveEditEntry = saveEditEntry;
+window.deleteEntry = deleteEntry;
+window.closeEditModal = closeEditModal;
+window.toggleEntry = toggleEntry;

@@ -1,15 +1,26 @@
+import { state, STILL_IMG, ANIM_GIF } from './state.js';
+import { t } from './i18n.js';
+import { renderMainBtns, renderPills } from './clock.js';
+import { renderEntries } from './entries.js';
+import { renderArchive } from './invoices.js';
+import { renderSettings } from './settings.js';
+
 // ── LANG ──
 function setLang(l) {
-  lang = l;
+  state.lang = l;
   localStorage.setItem('lang', l);
   applyLang();
 }
 
 function applyLang() {
   document.querySelector('.login-title').textContent = t('loginTitle');
-  document.querySelector('.login-sub').innerHTML = t('loginSub') + '<br>' + t('loginSub2');
+  const subEl = document.querySelector('.login-sub');
+  subEl.textContent = '';
+  subEl.append(t('loginSub'), document.createElement('br'), t('loginSub2'));
   document.querySelector('.btn-google').lastChild.textContent = ' ' + t('loginBtn');
-  document.querySelector('.login-footer').innerHTML = t('loginFooter') + '<br>' + t('loginFooter2');
+  const footerEl = document.querySelector('.login-footer');
+  footerEl.textContent = '';
+  footerEl.append(t('loginFooter'), document.createElement('br'), t('loginFooter2'));
 
   document.querySelector('.install-banner span').textContent = t('installBanner');
   document.querySelector('#install-banner button').textContent = t('install');
@@ -52,15 +63,15 @@ function applyLang() {
     if (t(key) !== key) el.textContent = t(key);
   });
   document.getElementById('rec-name').placeholder = t('recNamePlaceholder');
-  document.getElementById('btn-fi').style.fontWeight = lang === 'fi' ? '800' : '600';
-  document.getElementById('btn-en').style.fontWeight = lang === 'en' ? '800' : '600';
+  document.getElementById('btn-fi').style.fontWeight = state.lang === 'fi' ? '800' : '600';
+  document.getElementById('btn-en').style.fontWeight = state.lang === 'en' ? '800' : '600';
 
   renderMainBtns(); renderPills(); renderEntries(); renderArchive();
   if (document.getElementById('panel-asetukset').classList.contains('active')) renderSettings();
 }
 
 // ── TOAST ──
-function toast(msg) {
+export function toast(msg) {
   const el = document.getElementById('toast');
   clearTimeout(toast._t);
   el.textContent = msg; el.classList.add('show');
@@ -70,7 +81,7 @@ function toast(msg) {
 // ── TABS ──
 function showTab(tab, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
   if (btn) btn.classList.add('active');
   if (tab === 'kirjanpito') renderEntries();
@@ -78,24 +89,25 @@ function showTab(tab, btn) {
   if (tab === 'asetukset')  renderSettings();
 }
 
-function goTab(tab) {
+export function goTab(tab) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
-  document.querySelectorAll('.tab').forEach(t => { if (t.textContent.trim().toLowerCase() === tab) t.classList.add('active'); });
+  document.querySelectorAll('.tab').forEach(tb => { if (tb.textContent.trim().toLowerCase() === tab) tb.classList.add('active'); });
 }
 
-// ── CLOCK BG & NOTES ──
-function updateClockBg() {
+// ── CLOCK BG ──
+export function updateClockBg() {
   const bg = document.getElementById('clock-bg');
   if (!bg) return;
-  if (state === 'running' || state === 'paused') {
+  if (state.clockState === 'running' || state.clockState === 'paused') {
     bg.style.backgroundImage = `url('${ANIM_GIF}?t=${Date.now()}')`;
   } else {
     bg.style.backgroundImage = `url('${STILL_IMG}')`;
   }
 }
 
+// ── NOTES ──
 function toggleNotes() {
   const box = document.getElementById('notes-box');
   const icon = document.getElementById('notes-toggle-icon');
@@ -105,7 +117,7 @@ function toggleNotes() {
 }
 
 // ── CONFIRM MODAL ──
-function showConfirm(title, text, onOk) {
+export function showConfirm(title, text, onOk) {
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-text').textContent = text;
   document.getElementById('confirm-ok').onclick = () => { closeConfirm(); onOk(); };
@@ -115,3 +127,8 @@ function showConfirm(title, text, onOk) {
 function closeConfirm() {
   document.getElementById('modal-confirm').classList.remove('open');
 }
+
+window.showTab = showTab;
+window.setLang = setLang;
+window.toggleNotes = toggleNotes;
+window.closeConfirm = closeConfirm;

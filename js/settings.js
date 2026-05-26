@@ -1,36 +1,43 @@
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { fmtEur, esc } from './utils.js';
+import { toast } from './ui.js';
+import { save } from './storage.js';
+import { renderCustChips, renderAllSelects } from './customers.js';
+
 function saveRounding() {
-  cfg.rounding = parseInt(document.getElementById('set-rounding').value);
+  state.cfg.rounding = parseInt(document.getElementById('set-rounding').value);
   save(); toast(t('saved'));
 }
 
 function saveCompany() {
-  cfg.company = document.getElementById('set-company').value.trim();
-  cfg.address = document.getElementById('set-address').value.trim();
-  cfg.phone = document.getElementById('set-phone').value.trim();
-  cfg.email = document.getElementById('set-email').value.trim();
-  cfg.ytunnus = document.getElementById('set-ytunnus').value.trim();
-  cfg.tilinumero = document.getElementById('set-tilinumero').value.trim();
+  state.cfg.company = document.getElementById('set-company').value.trim();
+  state.cfg.address = document.getElementById('set-address').value.trim();
+  state.cfg.phone = document.getElementById('set-phone').value.trim();
+  state.cfg.email = document.getElementById('set-email').value.trim();
+  state.cfg.ytunnus = document.getElementById('set-ytunnus').value.trim();
+  state.cfg.tilinumero = document.getElementById('set-tilinumero').value.trim();
   save(); toast(t('saved'));
 }
 
 function saveVat() {
-  cfg.vat = parseFloat(document.getElementById('set-vat').value);
+  state.cfg.vat = parseFloat(document.getElementById('set-vat').value);
   save(); toast(t('saved'));
 }
 
-function renderSettings() {
-  document.getElementById('set-company').value = cfg.company || '';
-  document.getElementById('set-address').value = cfg.address || '';
-  document.getElementById('set-phone').value = cfg.phone || '';
-  document.getElementById('set-email').value = cfg.email || '';
-  document.getElementById('set-ytunnus').value = cfg.ytunnus || '';
-  document.getElementById('set-tilinumero').value = cfg.tilinumero || '';
-  document.getElementById('inv-show-tilinumero').checked = cfg.showTilinumero !== false;
-  document.getElementById('inv-show-erapaiva').checked = cfg.showErapaiva !== false;
-  document.getElementById('inv-show-viitenumero').checked = cfg.showViitenumero === true;
-  document.getElementById('set-rounding').value = cfg.rounding || 15;
-  document.getElementById('set-hourly').value = cfg.hourly;
-  document.getElementById('set-vat').value = cfg.vat || 0;
+export function renderSettings() {
+  document.getElementById('set-company').value = state.cfg.company || '';
+  document.getElementById('set-address').value = state.cfg.address || '';
+  document.getElementById('set-phone').value = state.cfg.phone || '';
+  document.getElementById('set-email').value = state.cfg.email || '';
+  document.getElementById('set-ytunnus').value = state.cfg.ytunnus || '';
+  document.getElementById('set-tilinumero').value = state.cfg.tilinumero || '';
+  document.getElementById('inv-show-tilinumero').checked = state.cfg.showTilinumero !== false;
+  document.getElementById('inv-show-erapaiva').checked = state.cfg.showErapaiva !== false;
+  document.getElementById('inv-show-viitenumero').checked = state.cfg.showViitenumero === true;
+  document.getElementById('set-rounding').value = state.cfg.rounding || 15;
+  document.getElementById('set-hourly').value = state.cfg.hourly;
+  document.getElementById('set-vat').value = state.cfg.vat || 0;
   previewHourly();
   renderRecList(); renderCustChips(); renderAllSelects();
 }
@@ -43,13 +50,13 @@ function previewHourly() {
 function saveHourly() {
   const v = parseFloat(document.getElementById('set-hourly').value);
   if (isNaN(v) || v < 0) { toast(t('invalidPrice')); return; }
-  cfg.hourly = v; save(); previewHourly(); toast(t('saved') + fmtEur(v) + '/h');
+  state.cfg.hourly = v; save(); previewHourly(); toast(t('saved') + fmtEur(v) + '/h');
 }
 
 function saveInvoiceSettings() {
-  cfg.showTilinumero = document.getElementById('inv-show-tilinumero').checked;
-  cfg.showErapaiva = document.getElementById('inv-show-erapaiva').checked;
-  cfg.showViitenumero = document.getElementById('inv-show-viitenumero').checked;
+  state.cfg.showTilinumero = document.getElementById('inv-show-tilinumero').checked;
+  state.cfg.showErapaiva = document.getElementById('inv-show-erapaiva').checked;
+  state.cfg.showViitenumero = document.getElementById('inv-show-viitenumero').checked;
   save();
 }
 
@@ -58,24 +65,24 @@ function addRecurring() {
   const a = parseFloat(document.getElementById('rec-amount').value);
   const c = document.getElementById('rec-customer').value;
   if (!n || isNaN(a) || a <= 0) { toast(t('fillDesc')); return; }
-  cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c === '—' ? null : c });
+  state.cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c === '—' ? null : c });
   document.getElementById('rec-name').value = '';
   document.getElementById('rec-amount').value = '';
   save(); renderRecList(); toast(t('added'));
 }
 
 function removeRecurring(id) {
-  cfg.recurring = cfg.recurring.filter(r => r.id !== id);
+  state.cfg.recurring = state.cfg.recurring.filter(r => r.id !== id);
   save(); renderRecList();
 }
 
 function renderRecList() {
   const el = document.getElementById('rec-list');
-  if (!cfg.recurring.length) {
+  if (!state.cfg.recurring.length) {
     el.innerHTML = `<div style="font-size:14px;color:var(--text2);padding:4px 0">${t('noRecurring')}</div>`;
     return;
   }
-  el.innerHTML = cfg.recurring.map(r => `
+  el.innerHTML = state.cfg.recurring.map(r => `
     <div class="rec-item">
       <div>
         <div class="rec-name">${esc(r.name)}</div>
@@ -89,3 +96,12 @@ function renderRecList() {
       </div>
     </div>`).join('');
 }
+
+window.saveCompany = saveCompany;
+window.saveHourly = saveHourly;
+window.saveRounding = saveRounding;
+window.saveVat = saveVat;
+window.saveInvoiceSettings = saveInvoiceSettings;
+window.addRecurring = addRecurring;
+window.removeRecurring = removeRecurring;
+window.previewHourly = previewHourly;

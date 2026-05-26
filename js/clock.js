@@ -1,14 +1,21 @@
-function tick() {
-  const total = Math.floor((elapsedMs + (Date.now() - startTime)) / 1000);
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { fmtDur, fmtDate, esc } from './utils.js';
+import { toast, updateClockBg } from './ui.js';
+import { save } from './storage.js';
+import { addEntry } from './entries.js';
+
+export function tick() {
+  const total = Math.floor((state.elapsedMs + (Date.now() - state.startTime)) / 1000);
   document.getElementById('timer').textContent = fmtDur(total);
-  timerRaf = requestAnimationFrame(tick);
+  state.timerRaf = requestAnimationFrame(tick);
 }
 
-function initClockRate() {
+export function initClockRate() {
   const input = document.getElementById('clock-rate-input');
-  if (input) input.value = cfg.hourly;
+  if (input) input.value = state.cfg.hourly;
   const val = document.getElementById('clock-rate-val');
-  if (val) val.textContent = cfg.hourly.toFixed(2).replace('.', ',') + ' €/h';
+  if (val) val.textContent = state.cfg.hourly.toFixed(2).replace('.', ',') + ' €/h';
 }
 
 function enableClockRateEdit() {
@@ -29,88 +36,95 @@ function confirmClockRateEdit() {
 }
 
 function clockIn() {
-  if (!activeCustomer) { toast(t('selectCustomer')); return; }
-  state = 'running'; clockInDate = new Date(); startTime = Date.now(); elapsedMs = 0;
-  const clockRate = parseFloat(document.getElementById('clock-rate-input').value) || cfg.hourly;
-  if (uid) {
-    db.collection('users').doc(uid).collection('data').doc('active').set({
-      startTime: startTime, clockInDate: clockInDate.toISOString(), customer: activeCustomer, rate: clockRate
+  if (!state.activeCustomer) { toast(t('selectCustomer')); return; }
+  state.clockState = 'running'; state.clockInDate = new Date(); state.startTime = Date.now(); state.elapsedMs = 0;
+  const clockRate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
+  if (state.uid) {
+    db.collection('users').doc(state.uid).collection('data').doc('active').set({
+      startTime: state.startTime, clockInDate: state.clockInDate.toISOString(), customer: state.activeCustomer, rate: clockRate
     });
   }
-  timerRaf = requestAnimationFrame(tick);
-  const th = clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('timer-sub').textContent = fmtDate(clockInDate) + ' — aloitettu ' + th;
+  state.timerRaf = requestAnimationFrame(tick);
+  const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
   setBadge('running', '● Töissä'); renderMainBtns();
-  toast(t('clockedIn') + activeCustomer);
+  toast(t('clockedIn') + state.activeCustomer);
   updateClockBg();
 }
 
 function togglePause() {
-  if (state === 'running') {
-    state = 'paused'; elapsedMs += Date.now() - startTime;
-    cancelAnimationFrame(timerRaf);
+  if (state.clockState === 'running') {
+    state.clockState = 'paused'; state.elapsedMs += Date.now() - state.startTime;
+    cancelAnimationFrame(state.timerRaf);
     setBadge('paused', t('onBreak')); renderMainBtns(); toast(t('taukoAlkaa'));
     updateClockBg();
   } else {
-    state = 'running'; startTime = Date.now();
-    timerRaf = requestAnimationFrame(tick);
+    state.clockState = 'running'; state.startTime = Date.now();
+    state.timerRaf = requestAnimationFrame(tick);
     setBadge('running', t('working')); renderMainBtns(); toast(t('jatko'));
     updateClockBg();
   }
 }
 
 function clockOut() {
-  if (state === 'running') elapsedMs += Date.now() - startTime;
-  cancelAnimationFrame(timerRaf);
-  const rawSecs = Math.floor(elapsedMs / 1000);
+  if (state.clockState === 'running') state.elapsedMs += Date.now() - state.startTime;
+  cancelAnimationFrame(state.timerRaf);
+  const rawSecs = Math.floor(state.elapsedMs / 1000);
   if (rawSecs < 1) { toast(t('noTime')); return; }
-  const interval = (cfg.rounding || 15) * 60;
-  const secs = cfg.rounding === 1 ? rawSecs : Math.ceil(rawSecs / interval) * interval;
+  const interval = (state.cfg.rounding || 15) * 60;
+  const secs = state.cfg.rounding === 1 ? rawSecs : Math.ceil(rawSecs / interval) * interval;
   const notes = document.getElementById('clock-notes').value.trim();
-  const rate = parseFloat(document.getElementById('clock-rate-input').value) || cfg.hourly;
-  addEntry(clockInDate, secs, activeCustomer, t('kello'), notes, rate);
+  const rate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
+  addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate);
   document.getElementById('clock-notes').value = '';
   document.getElementById('notes-box').style.display = 'none';
   document.getElementById('notes-toggle-icon').textContent = '+';
-  state = 'idle'; elapsedMs = 0; startTime = null;
+  state.clockState = 'idle'; state.elapsedMs = 0; state.startTime = null;
   document.getElementById('timer').textContent = '00:00:00';
   document.getElementById('timer-sub').textContent = '—';
   setBadge('idle', t('idle')); renderMainBtns();
-  if (uid) db.collection('users').doc(uid).collection('data').doc('active').delete();
+  if (state.uid) db.collection('users').doc(state.uid).collection('data').doc('active').delete();
   initClockRate();
   save(); toast(t('kirjattu') + fmtDur(secs));
   updateClockBg();
 }
 
-function setBadge(type, txt) {
+export function setBadge(type, txt) {
   const el = document.getElementById('clock-badge');
   el.className = 'clock-badge cb-' + type; el.textContent = txt;
 }
 
-function renderMainBtns() {
+export function renderMainBtns() {
   const r = document.getElementById('main-btns');
-  if (state === 'idle') {
+  if (state.clockState === 'idle') {
     r.innerHTML = `<button class="btn btn-signin" onclick="clockIn()">${t('clockIn')}</button>`;
   } else {
-    const pauseLabel = state === 'paused' ? '▶ Jatka' : '⏸ Tauko';
+    const pauseLabel = state.clockState === 'paused' ? '▶ Jatka' : '⏸ Tauko';
     r.innerHTML = `<button class="btn btn-pause" onclick="togglePause()">${pauseLabel}</button>
                    <button class="btn btn-signout" onclick="clockOut()">${t('logout')}</button>`;
   }
 }
 
-function renderPills() {
+export function renderPills() {
   const el = document.getElementById('pills');
-  if (!cfg.customers.length) { el.innerHTML = ''; return; }
-  el.innerHTML = cfg.customers.map(c =>
-    `<div class="pill ${activeCustomer === c.name ? 'active' : ''}" onclick="selCust(${esc(JSON.stringify(c.name))})">${esc(c.name)}</div>`
+  if (!state.cfg.customers.length) { el.innerHTML = ''; return; }
+  el.innerHTML = state.cfg.customers.map(c =>
+    `<div class="pill ${state.activeCustomer === c.name ? 'active' : ''}" onclick="selCust(${esc(JSON.stringify(c.name))})">${esc(c.name)}</div>`
   ).join('');
 }
 
 function selCust(n) {
-  if (state === 'running' || state === 'paused') {
-    toast(t('cannotSwtich'));
+  if (state.clockState === 'running' || state.clockState === 'paused') {
+    toast(t('cannotSwitch'));
     return;
   }
-  activeCustomer = activeCustomer === n ? null : n;
+  state.activeCustomer = state.activeCustomer === n ? null : n;
   renderPills();
 }
+
+window.clockIn = clockIn;
+window.clockOut = clockOut;
+window.togglePause = togglePause;
+window.selCust = selCust;
+window.enableClockRateEdit = enableClockRateEdit;
+window.confirmClockRateEdit = confirmClockRateEdit;

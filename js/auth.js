@@ -1,3 +1,8 @@
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { toast } from './ui.js';
+import { loadFromFirestore } from './storage.js';
+
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch(err => {
@@ -12,7 +17,7 @@ function signInWithGoogle() {
 }
 
 function signOut() {
-  auth.signOut();
+  auth.signOut().catch(() => toast('Uloskirjautuminen epäonnistui. Yritä uudelleen.'));
 }
 
 auth.getRedirectResult().then(() => {}).catch(e => {
@@ -21,7 +26,7 @@ auth.getRedirectResult().then(() => {}).catch(e => {
 
 auth.onAuthStateChanged(user => {
   if (user) {
-    uid = user.uid;
+    state.uid = user.uid;
     document.getElementById('login-screen').classList.remove('visible');
     document.getElementById('user-name').textContent = user.displayName || user.email;
     const av = document.getElementById('user-avatar');
@@ -29,9 +34,12 @@ auth.onAuthStateChanged(user => {
     else av.style.display = 'none';
     loadFromFirestore();
   } else {
-    uid = null;
-    entries = []; invoices = []; eId = 0; iId = 0;
-    cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };
+    state.uid = null;
+    state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
+    state.cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };
     document.getElementById('login-screen').classList.add('visible');
   }
 });
+
+window.signInWithGoogle = signInWithGoogle;
+window.signOut = signOut;

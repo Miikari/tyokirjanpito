@@ -1,30 +1,37 @@
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { fmtDate, fmtDur, fmtEur, fmtHours, fmtShort, esc, calcViitenumero, calcErapaiva } from './utils.js';
+import { toast, goTab } from './ui.js';
+import { save } from './storage.js';
+import { renderEntries } from './entries.js';
+
 function startInvoice() {
-  const sel = entries.filter(e => e.selected && !e.invoiced);
+  const sel = state.entries.filter(e => e.selected && !e.invoiced);
   if (!sel.length) { toast(t('selectEntries')); return; }
-  pending = sel;
-  if (!cfg.recurring.length) { finishInvoice(false); return; }
+  state.pending = sel;
+  if (!state.cfg.recurring.length) { finishInvoice(false); return; }
 
   const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
   const relevantRecurring = custs.length === 1
-    ? cfg.recurring.filter(r => !r.customer || r.customer === custs[0])
-    : cfg.recurring;
+    ? state.cfg.recurring.filter(r => !r.customer || r.customer === custs[0])
+    : state.cfg.recurring;
 
   if (!relevantRecurring.length) { finishInvoice(false); return; }
 
   document.getElementById('modal-text').textContent =
     `Valitsit ${sel.length} ${t('entries_count')} ${custs.length ? ' (' + custs.join(', ') + ')' : ''}.  ${t('doAddRecurring')}`;
 
-  pendingRecurring = relevantRecurring;
+  state.pendingRecurring = relevantRecurring;
   document.getElementById('modal').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); pending = null; }
+function closeModal() { document.getElementById('modal').classList.remove('open'); state.pending = null; }
 
 function finishInvoice(mode) {
   document.getElementById('modal').classList.remove('open');
-  const sel = pending; if (!sel) return; pending = null;
-  const recurring = pendingRecurring || cfg.recurring;
-  pendingRecurring = null;
+  const sel = state.pending; if (!sel) return; state.pending = null;
+  const recurring = state.pendingRecurring || state.cfg.recurring;
+  state.pendingRecurring = null;
   let rec = [];
   if (mode === true) rec = [...recurring];
   else if (mode === 'customer') {
@@ -32,30 +39,30 @@ function finishInvoice(mode) {
     rec = recurring.filter(r => r.customer && custs.includes(r.customer));
   }
   const totalSecs = sel.reduce((a, e) => a + e.secs, 0);
-  const hourly = sel.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? cfg.hourly), 0);
+  const hourly = sel.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
   const monthly = rec.reduce((a, r) => a + r.amount, 0);
   const subtotal = hourly + monthly;
-  const vatAmount = subtotal * (cfg.vat || 0) / 100;
+  const vatAmount = subtotal * (state.cfg.vat || 0) / 100;
   const invoiceCustomers = [...new Set(sel.map(e => e.customer).filter(Boolean))];
-  const primaryCust = invoiceCustomers.length === 1 ? cfg.customers.find(c => c.name === invoiceCustomers[0]) : null;
+  const primaryCust = invoiceCustomers.length === 1 ? state.cfg.customers.find(c => c.name === invoiceCustomers[0]) : null;
   const maksuehto = primaryCust?.maksuehto ?? 10;
-  invoices.unshift({
-    id: ++iId, date: new Date().toISOString(),
+  state.invoices.unshift({
+    id: ++state.iId, date: new Date().toISOString(),
     entries: sel.map(e => ({ ...e })), totalSecs, hourly, monthly,
-    subtotal, vatAmount, vat: cfg.vat || 0,
+    subtotal, vatAmount, vat: state.cfg.vat || 0,
     total: subtotal + vatAmount, recurring: rec, maksuehto
   });
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
-  filterCustomer = null;
+  state.filterCustomer = null;
   save(); renderEntries();
-  toast(t('invoicePrefix') + String(iId).padStart(3, '0') + ' arkistoitu');
-  goTab('arkisto'); setTimeout(() => renderArchive(iId), 80);
+  toast(t('invoicePrefix') + String(state.iId).padStart(3, '0') + ' arkistoitu');
+  goTab('arkisto'); setTimeout(() => renderArchive(state.iId), 80);
 }
 
-function renderArchive(highlightId) {
+export function renderArchive(highlightId) {
   const el = document.getElementById('archive-list');
-  if (!invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
-  el.innerHTML = invoices.map(inv => {
+  if (!state.invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
+  el.innerHTML = state.invoices.map(inv => {
     const isOpen = highlightId === inv.id;
     const rows = inv.entries.map(e => `
       <div class="inv-row-line">
@@ -63,7 +70,7 @@ function renderArchive(highlightId) {
           <div class="inv-row-title">${fmtDur(e.secs)}</div>
           <div class="inv-row-sub">${fmtDate(e.date)}${e.customer ? ' · ' + esc(e.customer) : ''}</div>
         </div>
-        <div class="inv-row-val">${fmtEur((e.secs / 3600) * (e.rate ?? cfg.hourly))}</div>
+        <div class="inv-row-val">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</div>
       </div>`).join('');
     const recRows = inv.recurring.map(r => `
       <div class="inv-row-line">
@@ -92,7 +99,7 @@ function renderArchive(highlightId) {
           <div class="inv-subtotals">
             ${inv.vat > 0 ? `
               <div class="inv-subtotal-line"><span>${t('vatExcl')}</span><span>${fmtEur(inv.subtotal)}</span></div>
-              <div class="inv-subtotal-line"><span>ALV ${inv.vat}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+              <div class="inv-subtotal-line"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
             ` : ''}
             <div class="inv-grand">
               <span class="inv-grand-label">${t('grandTotal')}</span>
@@ -110,16 +117,16 @@ function renderArchive(highlightId) {
 }
 
 function printInvoice(id, asAttachment) {
-  const inv = invoices.find(x => x.id === id);
+  const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
 
   const rows = inv.entries.map(e => `
     <tr>
       <td>${fmtDate(e.date)}</td>
-      <td>${fmtEur(e.rate ?? cfg.hourly)}</td>
+      <td>${fmtEur(e.rate ?? state.cfg.hourly)}</td>
       <td>${fmtHours(e.secs)}</td>
       <td>${esc(e.notes || '—')}</td>
-      <td style="text-align:right">${fmtEur((e.secs / 3600) * (e.rate ?? cfg.hourly))}</td>
+      <td style="text-align:right">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
     </tr>`).join('');
   const recRows = inv.recurring.map(r => `
     <tr>
@@ -131,7 +138,7 @@ function printInvoice(id, asAttachment) {
     </tr>`).join('');
 
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
-  const primaryCustObj = custs.length === 1 ? cfg.customers.find(c => c.name === custs[0]) : null;
+  const primaryCustObj = custs.length === 1 ? state.cfg.customers.find(c => c.name === custs[0]) : null;
   const custAddrLines = primaryCustObj ? [
     primaryCustObj.ytunnus ? 'Y-tunnus: ' + esc(primaryCustObj.ytunnus) : '',
     esc(primaryCustObj.katuosoite || ''),
@@ -140,13 +147,13 @@ function printInvoice(id, asAttachment) {
     esc(primaryCustObj.puhelin || ''),
   ].filter(Boolean).map(l => `<div style="font-size:13px;color:#555;line-height:1.5;">${l}</div>`).join('') : '';
 
-  const companyBlock = cfg.company ? `
+  const companyBlock = state.cfg.company ? `
     <div style="text-align:right;">
-      <div style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">${esc(cfg.company)}</div>
-      ${cfg.ytunnus ? `<div style="font-size:13px;color:#666;margin-top:2px;">Y-tunnus: ${esc(cfg.ytunnus)}</div>` : ''}
-      ${cfg.address ? `<div style="font-size:13px;color:#666;">${esc(cfg.address)}</div>` : ''}
-      ${cfg.phone ? `<div style="font-size:13px;color:#666;">${esc(cfg.phone)}</div>` : ''}
-      ${cfg.email ? `<div style="font-size:13px;color:#666;">${esc(cfg.email)}</div>` : ''}
+      <div style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">${esc(state.cfg.company)}</div>
+      ${state.cfg.ytunnus ? `<div style="font-size:13px;color:#666;margin-top:2px;">Y-tunnus: ${esc(state.cfg.ytunnus)}</div>` : ''}
+      ${state.cfg.address ? `<div style="font-size:13px;color:#666;">${esc(state.cfg.address)}</div>` : ''}
+      ${state.cfg.phone ? `<div style="font-size:13px;color:#666;">${esc(state.cfg.phone)}</div>` : ''}
+      ${state.cfg.email ? `<div style="font-size:13px;color:#666;">${esc(state.cfg.email)}</div>` : ''}
     </div>` : '';
 
   let headerLeft, paymentBlock;
@@ -162,17 +169,17 @@ function printInvoice(id, asAttachment) {
     const maksuehtoText = maksuehto === 'sopimus' ? 'Erillisen sopimuksen mukaan' : maksuehto + ' pv';
     const erapaiva = calcErapaiva(inv.date, maksuehto);
     const viitenumero = calcViitenumero(inv.id);
-    const showPaymentBox = cfg.showErapaiva || cfg.showViitenumero || cfg.showTilinumero;
+    const showPaymentBox = state.cfg.showErapaiva || state.cfg.showViitenumero || state.cfg.showTilinumero;
     headerLeft = `
       <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;line-height:1;">${t('invoice')} #${String(inv.id).padStart(3, '0')}</h1>
       <div class="sub">${fmtDate(inv.date)}</div>
       <div class="inv-customer" style="margin-top:8px;">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     const payItems = [
-      cfg.showErapaiva ? `<div><div class="pay-item-label">Maksuehto</div><div class="pay-item-val">${maksuehtoText}</div></div>` : '',
-      cfg.showErapaiva && maksuehto !== 'sopimus' ? `<div><div class="pay-item-label">Eräpäivä</div><div class="pay-item-val">${erapaiva}</div></div>` : '',
-      cfg.showViitenumero ? `<div><div class="pay-item-label">Viitenumero</div><div class="pay-item-val">${viitenumero}</div></div>` : '',
-      cfg.showTilinumero && cfg.tilinumero ? `<div><div class="pay-item-label">Tilinumero</div><div class="pay-item-val">${esc(cfg.tilinumero)}</div></div>` : '',
+      state.cfg.showErapaiva ? `<div><div class="pay-item-label">Maksuehto</div><div class="pay-item-val">${esc(maksuehtoText)}</div></div>` : '',
+      state.cfg.showErapaiva && maksuehto !== 'sopimus' ? `<div><div class="pay-item-label">Eräpäivä</div><div class="pay-item-val">${esc(erapaiva)}</div></div>` : '',
+      state.cfg.showViitenumero ? `<div><div class="pay-item-label">Viitenumero</div><div class="pay-item-val">${viitenumero}</div></div>` : '',
+      state.cfg.showTilinumero && state.cfg.tilinumero ? `<div><div class="pay-item-label">Tilinumero</div><div class="pay-item-val">${esc(state.cfg.tilinumero)}</div></div>` : '',
     ].filter(Boolean).join('');
     paymentBlock = showPaymentBox && payItems ? `<div class="pay-box">${payItems}</div>` : '';
   }
@@ -181,10 +188,14 @@ function printInvoice(id, asAttachment) {
     ? `Tuntierittely - ${esc(custs.join(', ') || fmtDate(inv.date))}`
     : `Lasku #${String(inv.id).padStart(3, '0')}`;
 
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  const nonceBytes = new Uint8Array(16);
+  crypto.getRandomValues(nonceBytes);
+  const nonce = btoa(String.fromCharCode(...nonceBytes));
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
     <title>${title}</title>
-    <style>
+    <style nonce="${nonce}">
       body { font-family: -apple-system, sans-serif; padding: 40px; color: #111; max-width: 760px; margin: 0 auto; }
       h1 { font-size: 24px; margin-bottom: 2px; }
       .inv-customer { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 2px; }
@@ -226,23 +237,29 @@ function printInvoice(id, asAttachment) {
     <div class="total-section">
       ${inv.vat > 0 ? `
         <div class="total-line"><span>${t('vatExcl')}</span><span>${fmtEur(inv.subtotal)}</span></div>
-        <div class="total-line"><span>ALV ${inv.vat}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+        <div class="total-line"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
       ` : ''}
       <div class="grand">
         <span class="grand-label">${t('grandTotal')}</span>
         <span class="grand-val">${fmtEur(inv.total)}</span>
       </div>
     </div>
-    <br><button onclick="window.print()" style="padding:12px 24px;background:#1976D2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">🖨 ${t('printPdf')}</button>
-  </body></html>`);
-  win.document.close();
+    <br><button id="print-btn" style="padding:12px 24px;background:#1976D2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">🖨 ${t('printPdf')}</button>
+    <script nonce="${nonce}">document.getElementById('print-btn').addEventListener('click',function(){window.print();})</script>
+  </body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win) win.addEventListener('load', () => URL.revokeObjectURL(url));
+  else URL.revokeObjectURL(url);
 }
 
 // ── EDIT INVOICE ──
 function openEditInvoice(id) {
-  const inv = invoices.find(x => x.id === id);
+  const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
-  editingInvId = id;
+  state.editingInvId = id;
   const el = document.getElementById('edit-inv-entries');
   el.innerHTML = inv.entries.map((e, i) => `
     <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px;margin-bottom:10px;">
@@ -258,7 +275,7 @@ function openEditInvoice(id) {
 }
 
 function saveEditInvoice() {
-  const inv = invoices.find(x => x.id === editingInvId);
+  const inv = state.invoices.find(x => x.id === state.editingInvId);
   if (!inv) return;
   inv.entries.forEach((e, i) => {
     const h = parseInt(document.getElementById(`einv-h-${i}`).value) || 0;
@@ -267,7 +284,7 @@ function saveEditInvoice() {
     e.notes = document.getElementById(`einv-notes-${i}`).value.trim();
   });
   const totalSecs = inv.entries.reduce((a, e) => a + e.secs, 0);
-  const hourly = inv.entries.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? cfg.hourly), 0);
+  const hourly = inv.entries.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
   const subtotal = hourly + inv.monthly;
   const vatAmount = subtotal * (inv.vat || 0) / 100;
   inv.totalSecs = totalSecs;
@@ -281,5 +298,13 @@ function saveEditInvoice() {
 
 function closeEditInvModal() {
   document.getElementById('modal-edit-inv').classList.remove('open');
-  editingInvId = null;
+  state.editingInvId = null;
 }
+
+window.printInvoice = printInvoice;
+window.openEditInvoice = openEditInvoice;
+window.saveEditInvoice = saveEditInvoice;
+window.closeEditInvModal = closeEditInvModal;
+window.finishInvoice = finishInvoice;
+window.closeModal = closeModal;
+window.startInvoice = startInvoice;

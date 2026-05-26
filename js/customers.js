@@ -1,3 +1,10 @@
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { esc } from './utils.js';
+import { toast, showConfirm } from './ui.js';
+import { save } from './storage.js';
+import { renderPills } from './clock.js';
+
 let editingCustomerName = null; // null = adding new, string = editing existing
 
 function openAddCustomerModal() {
@@ -17,7 +24,7 @@ function openAddCustomerModal() {
 }
 
 function openEditCustomerModal(name) {
-  const c = cfg.customers.find(x => x.name === name);
+  const c = state.cfg.customers.find(x => x.name === name);
   if (!c) return;
   editingCustomerName = name;
   document.getElementById('modal-cust-title').textContent = 'Muokkaa asiakasta';
@@ -54,20 +61,20 @@ function saveCustomerModal() {
 
   if (editingCustomerName === null) {
     // Adding new
-    if (cfg.customers.some(c => c.name === name)) { toast(t('customerExists')); return; }
-    cfg.customers.push(data);
+    if (state.cfg.customers.some(c => c.name === name)) { toast(t('customerExists')); return; }
+    state.cfg.customers.push(data);
     toast(t('customerAdded'));
   } else {
     // Editing existing
-    const idx = cfg.customers.findIndex(c => c.name === editingCustomerName);
+    const idx = state.cfg.customers.findIndex(c => c.name === editingCustomerName);
     if (idx === -1) return;
     // If name changed, update activeCustomer and entries references
     if (editingCustomerName !== name) {
-      if (cfg.customers.some((c, i) => c.name === name && i !== idx)) { toast(t('customerExists')); return; }
-      entries.forEach(e => { if (e.customer === editingCustomerName) e.customer = name; });
-      if (activeCustomer === editingCustomerName) activeCustomer = name;
+      if (state.cfg.customers.some((c, i) => c.name === name && i !== idx)) { toast(t('customerExists')); return; }
+      state.entries.forEach(e => { if (e.customer === editingCustomerName) e.customer = name; });
+      if (state.activeCustomer === editingCustomerName) state.activeCustomer = name;
     }
-    cfg.customers[idx] = data;
+    state.cfg.customers[idx] = data;
     toast('Asiakastiedot tallennettu');
   }
 
@@ -86,16 +93,16 @@ function closeCustomerModal() {
 }
 
 function removeCustomer(name) {
-  const openEntries = entries.filter(e => !e.invoiced && e.customer === name);
+  const openEntries = state.entries.filter(e => !e.invoiced && e.customer === name);
 
   if (openEntries.length > 0) {
     showConfirm(
       t('deleteCustomer'),
       `${t('customerHas')} "${name}" ${t('has')} ${openEntries.length} ${t('customerHasEntries')}`,
       () => {
-        entries = entries.filter(e => !(e.customer === name && !e.invoiced));
-        cfg.customers = cfg.customers.filter(c => c.name !== name);
-        if (activeCustomer === name) activeCustomer = null;
+        state.entries = state.entries.filter(e => !(e.customer === name && !e.invoiced));
+        state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
+        if (state.activeCustomer === name) state.activeCustomer = null;
         save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
@@ -104,21 +111,21 @@ function removeCustomer(name) {
       t('deleteCustomer'),
       `${t('deleteCustomerConfirm')} "${name}" ?`,
       () => {
-        cfg.customers = cfg.customers.filter(c => c.name !== name);
-        if (activeCustomer === name) activeCustomer = null;
+        state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
+        if (state.activeCustomer === name) state.activeCustomer = null;
         save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
   }
 }
 
-function renderCustChips() {
+export function renderCustChips() {
   const el = document.getElementById('cust-chips');
-  if (!cfg.customers.length) {
+  if (!state.cfg.customers.length) {
     el.innerHTML = '<div style="font-size:14px;color:var(--text2);padding:4px 0">Ei asiakkaita vielä.</div>';
     return;
   }
-  el.innerHTML = cfg.customers.map(c => {
+  el.innerHTML = state.cfg.customers.map(c => {
     const hasDetails = c.ytunnus || c.katuosoite || c.sposti || c.puhelin;
     return `<span class="cust-chip">
       ${esc(c.name)}${hasDetails ? '<span class="cust-has-details">•</span>' : ''}
@@ -128,11 +135,18 @@ function renderCustChips() {
   }).join('');
 }
 
-function renderAllSelects() {
+export function renderAllSelects() {
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...cfg.customers.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`)].join('');
+    ...state.cfg.customers.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`)].join('');
   ['m-customer', 'rec-customer'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
 }
+
+window.openAddCustomerModal = openAddCustomerModal;
+window.openEditCustomerModal = openEditCustomerModal;
+window.saveCustomerModal = saveCustomerModal;
+window.closeCustomerModal = closeCustomerModal;
+window.removeCustomer = removeCustomer;
+window.toggleMaksuehtoSopimus = toggleMaksuehtoSopimus;

@@ -1,12 +1,16 @@
+import { state } from './state.js';
+import { t } from './i18n.js';
+import { toast } from './ui.js';
+
 // ── PWA INSTALL ──
 window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
+  e.preventDefault(); state.deferredPrompt = e;
   document.getElementById('install-banner').classList.add('visible');
 });
 
 function installApp() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissInstall(); });
+  if (!state.deferredPrompt) return;
+  state.deferredPrompt.prompt(); state.deferredPrompt.userChoice.then(() => { state.deferredPrompt = null; dismissInstall(); });
 }
 
 function dismissInstall() { document.getElementById('install-banner').classList.remove('visible'); }
@@ -15,5 +19,8 @@ window.addEventListener('appinstalled', () => { dismissInstall(); toast(t('appIn
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
 }
+
+window.installApp = installApp;
+window.dismissInstall = dismissInstall;
