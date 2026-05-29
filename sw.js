@@ -37,10 +37,15 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith(self.location.origin)) return;
 
-  // index.html: aina verkosta, fallback cacheen vain jos offline
+  // index.html: verkosta ensin, päivitä cache, fallback cacheen jos offline
   if (HTML_URLS.some(u => e.request.url.endsWith(u))) {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('/tyokirjanpito/index.html'))
+      fetch(e.request)
+        .then(response => {
+          caches.open(CACHE).then(c => c.put(e.request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match('/tyokirjanpito/index.html'))
     );
     return;
   }
