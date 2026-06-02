@@ -126,7 +126,7 @@ function printInvoice(id, asAttachment) {
       <td>${fmtEur(e.rate ?? state.cfg.hourly)}</td>
       <td>${fmtHours(e.secs)}</td>
       <td>${esc(e.notes || '—')}</td>
-      <td style="text-align:right">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
+      <td>${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
     </tr>`).join('');
   const recRows = inv.recurring.map(r => `
     <tr>
@@ -134,7 +134,7 @@ function printInvoice(id, asAttachment) {
       <td>${1}</td>
       <td></td>
       <td></td>
-      <td style="text-align:right">${fmtEur(r.amount)}</td>
+      <td>${fmtEur(r.amount)}</td>
     </tr>`).join('');
 
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
@@ -145,22 +145,22 @@ function printInvoice(id, asAttachment) {
     [primaryCustObj.postinumero, primaryCustObj.postitoimipaikka].filter(Boolean).map(esc).join(' '),
     esc(primaryCustObj.sposti || ''),
     esc(primaryCustObj.puhelin || ''),
-  ].filter(Boolean).map(l => `<div style="font-size:13px;color:#555;line-height:1.5;">${l}</div>`).join('') : '';
+  ].filter(Boolean).map(l => `<div class="cust-addr">${l}</div>`).join('') : '';
 
   const companyBlock = state.cfg.company ? `
-    <div style="text-align:right;">
-      <div style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">${esc(state.cfg.company)}</div>
-      ${state.cfg.ytunnus ? `<div style="font-size:13px;color:#666;margin-top:2px;">Y-tunnus: ${esc(state.cfg.ytunnus)}</div>` : ''}
-      ${state.cfg.address ? `<div style="font-size:13px;color:#666;">${esc(state.cfg.address)}</div>` : ''}
-      ${state.cfg.phone ? `<div style="font-size:13px;color:#666;">${esc(state.cfg.phone)}</div>` : ''}
-      ${state.cfg.email ? `<div style="font-size:13px;color:#666;">${esc(state.cfg.email)}</div>` : ''}
+    <div class="company-block">
+      <div class="company-name">${esc(state.cfg.company)}</div>
+      ${state.cfg.ytunnus ? `<div class="company-detail">Y-tunnus: ${esc(state.cfg.ytunnus)}</div>` : ''}
+      ${state.cfg.address ? `<div class="company-detail">${esc(state.cfg.address)}</div>` : ''}
+      ${state.cfg.phone ? `<div class="company-detail">${esc(state.cfg.phone)}</div>` : ''}
+      ${state.cfg.email ? `<div class="company-detail">${esc(state.cfg.email)}</div>` : ''}
     </div>` : '';
 
   let headerLeft, paymentBlock;
   if (asAttachment) {
     headerLeft = `
-      <h1 style="font-size:20px;font-weight:700;margin:0 0 2px 0;line-height:1;">Tuntierittely</h1>
-      <div style="margin-top:4px; font-size 16px;">${fmtDate(inv.date)}</div>
+      <h1>Tuntierittely</h1>
+      <div class="sub att-date">${fmtDate(inv.date)}</div>
       <div class="inv-customer">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     paymentBlock = '';
@@ -171,9 +171,9 @@ function printInvoice(id, asAttachment) {
     const viitenumero = calcViitenumero(inv.id);
     const showPaymentBox = state.cfg.showErapaiva || state.cfg.showViitenumero || state.cfg.showTilinumero;
     headerLeft = `
-      <h1 style="font-size:20px;font-weight:700;margin:0 0 4px 0;line-height:1;">${t('invoice')} #${String(inv.id).padStart(3, '0')}</h1>
+      <h1>${t('invoice')} #${String(inv.id).padStart(3, '0')}</h1>
       <div class="sub">${fmtDate(inv.date)}</div>
-      <div class="inv-customer" style="margin-top:8px;">${custs.map(esc).join(', ') || '—'}</div>
+      <div class="inv-customer">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     const payItems = [
       state.cfg.showErapaiva ? `<div><div class="pay-item-label">Maksuehto</div><div class="pay-item-val">${esc(maksuehtoText)}</div></div>` : '',
@@ -197,9 +197,16 @@ function printInvoice(id, asAttachment) {
     <title>${title}</title>
     <style nonce="${nonce}">
       body { font-family: -apple-system, sans-serif; padding: 40px; color: #111; max-width: 760px; margin: 0 auto; }
-      h1 { font-size: 24px; margin-bottom: 2px; }
-      .inv-customer { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 2px; }
+      h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px 0; line-height: 1; }
+      .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+      .inv-customer { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 2px; margin-top: 8px; }
       .sub { color: #666; font-size: 14px; }
+      .att-date { margin-top: 4px; font-size: 16px; }
+      .company-block { text-align: right; }
+      .company-name { font-size: 18px; font-weight: 700; margin: 0; line-height: 1.2; }
+      .company-detail { font-size: 13px; color: #666; margin-top: 2px; }
+      .cust-addr { font-size: 13px; color: #555; line-height: 1.5; }
+      .print-btn { padding: 12px 24px; background: #1976D2; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
       table { width: 100%; border-collapse: collapse; margin-bottom: 24px; table-layout: fixed; }
       th { text-align: left; border-bottom: 2px solid #111; padding: 8px 4px; font-size: 13px; }
       td { padding: 10px 4px; border-bottom: 1px solid #ddd; font-size: 14px; vertical-align: top; word-wrap: break-word; }
@@ -219,8 +226,8 @@ function printInvoice(id, asAttachment) {
       @media print { button { display: none; } }
     </style>
   </head><body>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">
-      <div style="margin-top:0;padding-top:0;">${headerLeft}</div>
+    <div class="inv-header">
+      <div>${headerLeft}</div>
       ${companyBlock}
     </div>
     ${paymentBlock}
@@ -230,7 +237,7 @@ function printInvoice(id, asAttachment) {
         <th>${t('hourlyRate')}</th>
         <th>${t('total')}</th>
         <th>${t('notes')}</th>
-        <th style="text-align:right">${t('amount')}</th>
+        <th>${t('amount')}</th>
       </tr></thead>
       <tbody>${rows}${recRows}</tbody>
     </table>
@@ -244,7 +251,7 @@ function printInvoice(id, asAttachment) {
         <span class="grand-val">${fmtEur(inv.total)}</span>
       </div>
     </div>
-    <br><button id="print-btn" style="padding:12px 24px;background:#1976D2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">🖨 ${t('printPdf')}</button>
+    <br><button id="print-btn" class="print-btn">🖨 ${t('printPdf')}</button>
     <script nonce="${nonce}">document.getElementById('print-btn').addEventListener('click',function(){window.print();})</script>
   </body></html>`;
 
