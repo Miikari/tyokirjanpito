@@ -24,11 +24,55 @@
 <div class="login-screen visible" id="login-screen">
   <div class="login-logo">⏱</div>
   <div class="login-title">Työtunnit</div>
-  <div class="login-sub">Seuraa työtunteja ja kokoa laskuja.<br>Kirjaudu sisään päästäksesi alkuun.</div>
-  <button class="btn-google" onclick="signInWithGoogle()">
-    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-    Kirjaudu Google-tilillä
-  </button>
+  <div class="login-sub" id="login-sub-text">Seuraa työtunteja ja kokoa laskuja.<br>Kirjaudu sisään päästäksesi alkuun.</div>
+
+  <div id="login-view-main">
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Kirjaudu Google-tilillä
+    </button>
+    <div class="login-divider"><span>tai</span></div>
+    <button class="btn-email" onclick="showLoginView('signin')">Kirjaudu sähköpostilla</button>
+    <button class="btn-email btn-email-outline" onclick="showLoginView('signup')">Luo uusi tunnus</button>
+    <button class="btn-anon" onclick="signInAnonymously()">Kokeile ilman tunnusta</button>
+  </div>
+
+  <div id="login-view-signin" style="display:none; width:100%;">
+    <div class="login-form">
+      <input class="login-input" type="email" id="signin-email" placeholder="Sähköposti" autocomplete="off">
+      <input class="login-input" type="password" id="signin-password" placeholder="Salasana" autocomplete="off">
+      <div id="login-error" class="login-error"></div>
+      <button class="btn-email" onclick="signInWithEmail()">Kirjaudu sisään</button>
+      <button class="btn-link" onclick="showLoginView('reset')">Unohditko salasanan?</button>
+      <div class="login-divider"><span>tai</span></div>
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Kirjaudu Google-tilillä
+      </button>
+      <button class="btn-link" onclick="showLoginView('main')">Takaisin</button>
+    </div>
+  </div>
+
+  <div id="login-view-signup" style="display:none; width:100%;">
+    <div class="login-form">
+      <input class="login-input" type="email" id="signup-email" placeholder="Sähköposti" autocomplete="off">
+      <input class="login-input" type="password" id="signup-password" placeholder="Salasana (väh. 6 merkkiä)" autocomplete="off">
+      <input class="login-input" type="password" id="signup-password2" placeholder="Salasana uudelleen" autocomplete="off">
+      <div id="signup-error" class="login-error"></div>
+      <button class="btn-email" onclick="signUpWithEmail()">Luo tunnus</button>
+      <button class="btn-link" onclick="showLoginView('main')">Takaisin</button>
+    </div>
+  </div>
+
+  <div id="login-view-reset" style="display:none; width:100%;">
+    <div class="login-form">
+      <input class="login-input" type="email" id="reset-email" placeholder="Sähköposti" autocomplete="off">
+      <div id="reset-msg" class="login-error"></div>
+      <button class="btn-email" onclick="sendPasswordReset()">Lähetä palautuslinkki</button>
+      <button class="btn-link" onclick="showLoginView('signin')">Takaisin</button>
+    </div>
+  </div>
+
   <div class="login-footer">Tietosi tallennetaan turvallisesti pilveen.<br>Käytä samalla tilillä puhelimella ja tietokoneella.</div>
 </div>
 
@@ -70,7 +114,7 @@
           <span style="font-size:12px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:2px 7px;">✎</span>
         </div>
         <div id="clock-rate-edit" style="display:none;align-items:center;gap:6px;">
-          <input type="number" id="clock-rate-input" min="0" step="0.5" style="width:72px;padding:6px 8px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;" onkeydown="if(event.key==='Enter')confirmClockRateEdit()">
+          <input type="number" id="clock-rate-input" min="0" step="0.5" style="width:72px;padding:6px 8px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;" onkeydown="if(event.key==='Enter')confirmClockRateEdit()" autocomplete="off">
           <span style="color:rgba(255,255,255,0.7);font-size:13px;">€/h</span>
           <button onclick="confirmClockRateEdit()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;cursor:pointer;font-size:14px;padding:6px 10px;border-radius:8px;">✓</button>
         </div>
@@ -88,14 +132,14 @@
 
     <div class="card">
       <div class="card-label" data-i18n="manualEntry">Manuaalinen kirjaus</div>
-      <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date"></div>
+      <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off"></div>
       <div class="fg"><label data-i18n="customer">Asiakas</label><select id="m-customer"></select></div>
       <div class="row2">
-        <div class="fg"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0"></div>
-        <div class="fg"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0"></div>
+        <div class="fg"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off"></div>
+        <div class="fg"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off"></div>
       </div>
-      <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="m-notes" placeholder="Lisätietoja..."></div>
-      <div class="fg"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="m-rate" min="0" step="0.5" style="flex:1;"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+      <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></div>
+      <div class="fg"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="m-rate" min="0" step="0.5" style="flex:1;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
       <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
     </div>
   </div>
@@ -133,12 +177,12 @@
           <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;flex:1;">🇬🇧 English</button>
         </div>
       </div>
-      <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy"></div>
-      <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki"></div>
-      <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567"></div>
-      <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi"></div>
-      <div class="fg"><label>Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8"></div>
-      <div class="fg"><label>Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56"></div>
+      <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi" autocomplete="off"></div>
+      <div class="fg"><label>Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
+      <div class="fg"><label>Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" autocomplete="off"></div>
       <button class="btn-add" onclick="saveCompany()" data-i18n="save">Tallenna</button>
     </div>
 
@@ -147,7 +191,7 @@
       <div class="set-row">
         <div><div class="set-label" data-i18n="hourlyRateLabel">Tuntihinta</div><div class="set-sub" id="hourly-hint">—</div></div>
         <div class="set-input-wrap">
-          <input type="number" id="set-hourly" min="0" step="0.5" oninput="previewHourly()">
+          <input type="number" id="set-hourly" min="0" step="0.5" oninput="previewHourly()" autocomplete="off">
           <span style="font-size:15px;font-weight:600;color:var(--text2);">€/h</span>
         </div>
       </div>
@@ -182,9 +226,9 @@
       <div class="card-label" data-i18n="recurring">Kuukausiveloitukset</div>
       <div id="rec-list"></div>
       <div style="margin-top:12px;">
-        <div class="fg"><label data-i18n="description">Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu"></div>
+        <div class="fg"><label data-i18n="description">Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu" autocomplete="off"></div>
         <div style="display:flex;gap:10px;margin-bottom:10px;">
-          <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="amount">Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;"></div>
+          <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="amount">Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
           <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="rec-customer" style="width:100%;"></select></div>
         </div>
         <button class="btn-add" onclick="addRecurring()" data-i18n="addRecurring">+ Lisää kuukausiveloitus</button>
@@ -214,6 +258,26 @@
     </label>
   </div>
 
+  <div class="card" style="margin-top:14px;">
+    <div class="card-label">Organisaatio</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px;" id="org-name-display">—</div>
+    <div id="org-members-list" style="margin-bottom:14px;"></div>
+    <div class="set-label" style="margin-bottom:6px;">Kutsu­linkki</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input type="text" id="org-invite-url" readonly style="flex:1;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text2);" autocomplete="off">
+      <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="copyInviteLink()">Kopioi</button>
+    </div>
+    <button class="btn-add" style="background:transparent;color:var(--text2);border:1.5px solid var(--border2);" onclick="refreshInviteCode()">Luo uusi koodi</button>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div class="set-label" style="margin-bottom:6px;">Liity toiseen organisaatioon</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="org-join-input" placeholder="Kutsukoodi" style="flex:1;font-size:14px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);" autocomplete="off">
+        <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="joinWithCodeUI()">Liity</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">Nykyiset tietosi eivät siirry uuteen organisaatioon.</div>
+    </div>
+  </div>
+
   </div><!-- /panel-asetukset -->
 
 </div><!-- /scroll -->
@@ -236,14 +300,14 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 data-i18n="editEntry">Muokkaa kirjausta</h2>
-    <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="edit-date"></div>
+    <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="edit-date" autocomplete="off"></div>
     <div class="fg"><label data-i18n="customer">Asiakas</label><select id="edit-customer"></select></div>
     <div style="display:flex;gap:10px;margin-bottom:10px;">
-      <div class="fg" style="flex:1;margin:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="edit-h" min="0" max="24"></div>
-      <div class="fg" style="flex:1;margin:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="edit-m" min="0" max="59"></div>
+      <div class="fg" style="flex:1;margin:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="edit-h" min="0" max="24" autocomplete="off"></div>
+      <div class="fg" style="flex:1;margin:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="edit-m" min="0" max="59" autocomplete="off"></div>
     </div>
-    <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="edit-notes" placeholder="Vapaaehtoinen merkintä..."></div>
-    <div class="fg"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="edit-rate" min="0" step="0.5" style="flex:1;"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+    <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="edit-notes" placeholder="Vapaaehtoinen merkintä..." autocomplete="off"></div>
+    <div class="fg"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="edit-rate" min="0" step="0.5" style="flex:1;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
     <button class="modal-opt primary" onclick="saveEditEntry()" data-i18n="saveChanges">Tallenna muutokset</button>
     <button class="modal-opt" onclick="deleteEntry()" style="color:var(--red);border-color:var(--red-bg);" data-i18n="deleteEntry">Poista kirjaus</button>
     <button class="modal-opt modal-cancel" onclick="closeEditModal()" data-i18n="cancel">Peruuta</button>
@@ -266,20 +330,20 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modal-cust-title">Lisää asiakas</h2>
-    <div class="fg"><label>Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy"></div>
-    <div class="fg"><label>Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8"></div>
-    <div class="fg"><label>Katuosoite</label><input type="text" id="cust-katuosoite" placeholder="Esimerkkitie 1"></div>
+    <div class="fg"><label>Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy" autocomplete="off"></div>
+    <div class="fg"><label>Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
+    <div class="fg"><label>Katuosoite</label><input type="text" id="cust-katuosoite" placeholder="Esimerkkitie 1" autocomplete="off"></div>
     <div class="row2">
-      <div class="fg"><label>Postinumero</label><input type="text" id="cust-postinumero" placeholder="00100"></div>
-      <div class="fg"><label>Postitoimipaikka</label><input type="text" id="cust-postitoimipaikka" placeholder="Helsinki"></div>
+      <div class="fg"><label>Postinumero</label><input type="text" id="cust-postinumero" placeholder="00100" autocomplete="off"></div>
+      <div class="fg"><label>Postitoimipaikka</label><input type="text" id="cust-postitoimipaikka" placeholder="Helsinki" autocomplete="off"></div>
     </div>
-    <div class="fg"><label>Sähköposti</label><input type="email" id="cust-sposti" placeholder="yritys@esimerkki.fi"></div>
-    <div class="fg"><label>Puhelinnumero</label><input type="tel" id="cust-puhelin" placeholder="+358 40 123 4567"></div>
+    <div class="fg"><label>Sähköposti</label><input type="email" id="cust-sposti" placeholder="yritys@esimerkki.fi" autocomplete="off"></div>
+    <div class="fg"><label>Puhelinnumero</label><input type="tel" id="cust-puhelin" placeholder="+358 40 123 4567" autocomplete="off"></div>
     <div class="fg">
       <label>Maksuehto</label>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" id="cust-maksuehto" min="1" max="365" value="10" style="width:70px;">
+          <input type="number" id="cust-maksuehto" min="1" max="365" value="10" style="width:70px;" autocomplete="off">
           <span style="font-size:13px;color:var(--text2);">pv</span>
         </div>
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;">
@@ -304,6 +368,16 @@
   </div>
 </div>
 
+<div class="modal-wrap" id="join-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Liity organisaatioon</h2>
+    <p>Sinut on kutsuttu organisaatioon <strong id="join-org-name"></strong>. Haluatko liittyä?</p>
+    <button class="modal-opt primary" onclick="confirmJoin()">Liity</button>
+    <button class="modal-opt modal-cancel" onclick="closeJoinModal()">Peruuta</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="js/firebase.js"></script>
@@ -317,6 +391,7 @@
 <script type="module" src="js/entries.js"></script>
 <script type="module" src="js/customers.js"></script>
 <script type="module" src="js/invoices.js"></script>
+<script type="module" src="js/org.js"></script>
 <script type="module" src="js/settings.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>

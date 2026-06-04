@@ -328,10 +328,68 @@ body {
   padding: 14px 28px; border-radius: 99px;
   font-size: 16px; font-weight: 700; border: none; cursor: pointer;
   box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: all 0.15s;
+  width: 100%; justify-content: center; box-sizing: border-box;
 }
 .btn-google:active { transform: scale(0.97); opacity: 0.9; }
 .btn-google svg { flex-shrink: 0; }
-.login-footer { position: absolute; bottom: 32px; font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; }
+.btn-email {
+  display: block; width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.2); color: #fff;
+  padding: 14px 28px; border-radius: 99px;
+  font-size: 16px; font-weight: 700; border: 2px solid rgba(255,255,255,0.5);
+  cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.btn-email:active { transform: scale(0.97); opacity: 0.9; }
+.btn-email-outline { background: transparent; border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); }
+.btn-anon {
+  display: block; width: 100%; box-sizing: border-box;
+  background: transparent; color: rgba(255,255,255,0.65);
+  padding: 12px 28px; border-radius: 99px;
+  font-size: 14px; font-weight: 600; border: none;
+  cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.btn-anon:active { opacity: 0.7; }
+.btn-link {
+  display: block; width: 100%; background: none; border: none;
+  color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer;
+  padding: 8px; text-align: center; text-decoration: underline;
+}
+.login-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0; color: rgba(255,255,255,0.4); font-size: 13px;
+}
+.login-divider::before, .login-divider::after {
+  content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.2);
+}
+.login-form {
+  display: flex; flex-direction: column; gap: 10px; width: 100%;
+}
+.login-input {
+  width: 100%; box-sizing: border-box;
+  padding: 13px 18px; border-radius: 12px; border: none;
+  font-size: 16px; background: rgba(255,255,255,0.95); color: #1a1a1a;
+  outline: none;
+}
+.login-input:focus { background: #fff; }
+.login-error {
+  font-size: 13px; color: #ffd0d0; min-height: 18px; text-align: center;
+}
+.org-member-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.org-member-row:last-child { border-bottom: none; }
+.org-member-name { font-size: 14px; font-weight: 600; }
+.org-member-email { font-size: 12px; color: var(--text2); }
+.org-member-role { font-size: 12px; color: var(--text3); background: var(--bg2); padding: 2px 8px; border-radius: 99px; }
+.org-remove-btn { font-size: 12px; color: var(--red, #e53); background: none; border: 1px solid currentColor; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.login-switch-link {
+  display: block; margin-top: 20px; background: none; border: none;
+  color: rgba(255,255,255,0.8); font-size: 14px; cursor: pointer;
+  text-decoration: underline; text-align: center;
+}
+#login-view-main { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.login-footer { margin-top: 32px; font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; }
 
 /* ── USER BAR ── */
 .user-bar {

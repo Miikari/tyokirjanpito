@@ -6,9 +6,13 @@ import { initClockRate, renderMainBtns, renderPills, setBadge, tick } from './cl
 import { renderAllSelects } from './customers.js';
 import { renderEntries } from './entries.js';
 
+function mainRef() {
+  return db.collection('orgs').doc(state.orgId).collection('data').doc('main');
+}
+
 export async function loadFromFirestore() {
   try {
-    const doc = await db.collection('users').doc(state.uid).collection('data').doc('main').get();
+    const doc = await mainRef().get();
     if (doc.exists) {
       const d = doc.data();
       if (d.entries)  state.entries  = d.entries;
@@ -16,7 +20,6 @@ export async function loadFromFirestore() {
       if (d.eId)      state.eId      = d.eId;
       if (d.iId)      state.iId      = d.iId;
       if (d.cfg)      state.cfg      = Object.assign(state.cfg, d.cfg);
-      // Normalize customers: strings → objects, migrate old osoite → katuosoite
       state.cfg.customers = (state.cfg.customers || []).map(c => {
         if (typeof c === 'string') return { name: c };
         if (c.osoite && !c.katuosoite) { c = { ...c, katuosoite: c.osoite }; delete c.osoite; }
@@ -52,11 +55,11 @@ export async function loadFromFirestore() {
 }
 
 export function save() {
-  if (!state.uid) return;
+  if (!state.orgId) return;
   clearTimeout(state.saveTimer);
   state.saveTimer = setTimeout(async () => {
     try {
-      await db.collection('users').doc(state.uid).collection('data').doc('main').set(
+      await mainRef().set(
         { entries: state.entries, invoices: state.invoices, eId: state.eId, iId: state.iId, cfg: state.cfg }, { merge: true }
       );
     } catch (e) { toast(t('tallennusVirhe')); }

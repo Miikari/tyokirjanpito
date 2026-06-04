@@ -1,5 +1,5 @@
 export const state = {
-  uid: null,
+  uid: null, orgId: null,
   timerRaf: null, startTime: null, elapsedMs: 0,
   clockState: 'idle', clockInDate: null, activeCustomer: null,
   entries: [], invoices: [], eId: 0, iId: 0,

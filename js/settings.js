@@ -4,6 +4,7 @@ import { fmtEur, esc } from './utils.js';
 import { toast } from './ui.js';
 import { save } from './storage.js';
 import { renderCustChips, renderAllSelects } from './customers.js';
+import { renderOrgSettings } from './org.js';
 
 function saveRounding() {
   state.cfg.rounding = parseInt(document.getElementById('set-rounding').value);
@@ -39,7 +40,7 @@ export function renderSettings() {
   document.getElementById('set-hourly').value = state.cfg.hourly;
   document.getElementById('set-vat').value = state.cfg.vat || 0;
   previewHourly();
-  renderRecList(); renderCustChips(); renderAllSelects();
+  renderRecList(); renderCustChips(); renderAllSelects(); renderOrgSettings();
 }
 
 function previewHourly() {
