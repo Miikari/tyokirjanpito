@@ -3,8 +3,8 @@
   --surface: #ffffff;
   --surface2: #efefef;
   --text: #111111;
-  --text2: #666666;
-  --text3: #aaaaaa;
+  --text2: #4a4a4a;
+  --text3: #7a7a7a;
   --blue: #1976D2;
   --blue-dk: #1256a0;
   --blue-bg: #e3f0fc;
@@ -67,12 +67,15 @@ body {
 .clock-card {
   background: rgba(15, 60, 130, 0.45);
   border-radius: var(--r);
-  padding: 32px 20px 24px;
+  padding: clamp(32px, 5vh, 72px) 20px clamp(24px, 4vh, 60px);
   text-align: center;
   margin-bottom: 14px;
   box-shadow: 0 4px 16px rgba(25, 118, 210, 0.05);
   position: relative;
   overflow: hidden;
+  max-width: 1400;
+  margin-left: auto;
+  margin-right: auto;
 }
 .timer {
   font-size: 62px; font-weight: 200; letter-spacing: 3px;
@@ -141,6 +144,18 @@ body {
   width: 16px; height: 16px;
 }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card-form { max-width: 1020px; margin-left: auto; margin-right: auto; }
+.form-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 10px; }
+.form-col { display: flex; flex-direction: column; }
+.fg-grow { flex: 1; }
+.fg-grow textarea {
+  flex: 1; min-height: 80px; resize: none;
+  padding: 12px 13px; border: 1.5px solid var(--border2);
+  border-radius: var(--r-sm); font-size: 16px;
+  background: var(--bg); color: var(--text);
+  font-family: inherit; transition: border-color 0.15s; width: 100%;
+}
+.fg-grow textarea:focus { outline: none; border-color: var(--blue); background: #fff; }
 .btn-add {
   width: 100%; padding: 13px; border-radius: var(--r-sm);
   font-size: 15px; font-weight: 600;
@@ -266,8 +281,9 @@ body {
 .settings-grid .card { margin-bottom: 0; }
 @media (max-width: 600px) {
   .settings-grid { grid-template-columns: 1fr; }
+  .form-cols { grid-template-columns: 1fr; }
 }
-#clock-bg { z-index: 0; background-image: url('../images/background2.jpg'); background-size: cover; background-position: center; }
+#clock-bg { z-index: 0; background-image: url('../images/background2.jpg'); background-size: cover; background-position: center 70%; background-repeat: no-repeat; }
 .clock-card > *:not(#clock-bg) { position: relative; z-index: 2; }
 
 /* ── MODAL ── */

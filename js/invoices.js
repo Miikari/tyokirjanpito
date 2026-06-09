@@ -12,10 +12,10 @@ function startInvoice() {
   if (!state.cfg.recurring.length) { finishInvoice(false); return; }
 
   const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
-  const relevantRecurring = custs.length === 1
-    ? state.cfg.recurring.filter(r => !r.customer || r.customer === custs[0])
-    : state.cfg.recurring;
+  const primaryCustObj = custs.length === 1 ? state.cfg.customers.find(c => c.name === custs[0]) : null;
+  if (!primaryCustObj?.ytunnus) { finishInvoice(false); return; }
 
+  const relevantRecurring = state.cfg.recurring.filter(r => r.customer === custs[0]);
   if (!relevantRecurring.length) { finishInvoice(false); return; }
 
   document.getElementById('modal-text').textContent =

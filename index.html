@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
@@ -130,16 +130,22 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card card-form">
       <div class="card-label" data-i18n="manualEntry">Manuaalinen kirjaus</div>
-      <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off"></div>
-      <div class="fg"><label data-i18n="customer">Asiakas</label><select id="m-customer"></select></div>
-      <div class="row2">
-        <div class="fg"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off"></div>
-        <div class="fg"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off"></div>
+      <div class="form-cols">
+        <div class="form-col">
+          <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off"></div>
+          <div class="fg"><label data-i18n="customer">Asiakas</label><select id="m-customer"></select></div>
+          <div class="row2" style="margin-bottom:0;">
+            <div class="fg" style="margin-bottom:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off"></div>
+            <div class="fg" style="margin-bottom:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off"></div>
+          </div>
+        </div>
+        <div class="form-col">
+          <div class="fg fg-grow"><label data-i18n="notes">Merkintöjä</label><textarea id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></textarea></div>
+          <div class="fg" style="margin-bottom:0;"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="m-rate" min="0" step="0.5" style="width:120px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+        </div>
       </div>
-      <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></div>
-      <div class="fg"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="m-rate" min="0" step="0.5" style="flex:1;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
       <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
     </div>
   </div>
@@ -288,8 +294,7 @@
     <div class="modal-handle"></div>
     <h2 data-i18n="recurring">Kuukausiveloitukset</h2>
     <p id="modal-text"></p>
-    <button class="modal-opt primary" onclick="finishInvoice(true)" data-i18n="addAllRecurring">Lisää kaikki kuukausiveloitukset</button>
-    <button class="modal-opt" onclick="finishInvoice('customer')" data-i18n="addCustomerRecurring">Lisää vain asiakkaalle merkityt</button>
+    <button class="modal-opt primary" onclick="finishInvoice('customer')" data-i18n="addCustomerRecurring">Lisää kuukausiveloitukset</button>
     <button class="modal-opt" onclick="finishInvoice(false)" data-i18n="noRecurringInvoice">Ei kuukausiveloituksia</button>
     <button class="modal-opt modal-cancel" onclick="closeModal()" data-i18n="cancel">Peruuta</button>
   </div>
