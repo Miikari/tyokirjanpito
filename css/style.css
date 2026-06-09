@@ -65,7 +65,7 @@ body {
 
 /* ── CLOCK CARD ── */
 .clock-card {
-  background: rgba(25, 118, 210, 0.15);
+  background: rgba(15, 60, 130, 0.45);
   border-radius: var(--r);
   padding: 32px 20px 24px;
   text-align: center;
@@ -267,7 +267,7 @@ body {
 @media (max-width: 600px) {
   .settings-grid { grid-template-columns: 1fr; }
 }
-#clock-bg { z-index: 0; }
+#clock-bg { z-index: 0; background-image: url('../images/background2.jpg'); background-size: cover; background-position: center; }
 .clock-card > *:not(#clock-bg) { position: relative; z-index: 2; }
 
 /* ── MODAL ── */
