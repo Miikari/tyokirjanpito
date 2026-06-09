@@ -133,6 +133,7 @@ auth.onAuthStateChanged(async user => {
     await loadFromFirestore();
     listenActiveState();
     if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
+      const { loadDemoData } = await import('./demo.js');
       loadDemoData();
       const { renderAllSelects } = await import('./customers.js');
       const { renderEntries } = await import('./entries.js');
