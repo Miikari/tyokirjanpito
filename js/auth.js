@@ -131,6 +131,14 @@ auth.onAuthStateChanged(async user => {
 
     await initOrg(user);
     await loadFromFirestore();
+    if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
+      const { loadDemoData } = await import('./demo.js');
+      loadDemoData();
+      const { renderAllSelects } = await import('./customers.js');
+      const { renderEntries } = await import('./entries.js');
+      const { renderPills } = await import('./clock.js');
+      renderAllSelects(); renderPills(); renderEntries();
+    }
     renderOrgSettings();
   } else {
     state.uid = null; state.orgId = null;

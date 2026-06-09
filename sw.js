@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v18';
+const CACHE = 'tyotunnit-v20';
 const FILES = [
   '/tyokirjanpito/manifest.json',
   '/tyokirjanpito/icons/icon-192.png',
@@ -24,7 +24,9 @@ const HTML_URLS = ['/tyokirjanpito/', '/tyokirjanpito/index.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then(c => Promise.allSettled(FILES.map(f => c.add(f))))
+      .then(() => self.skipWaiting())
   );
 });
 

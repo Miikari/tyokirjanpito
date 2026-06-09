@@ -51,7 +51,7 @@ export async function loadFromFirestore() {
       setBadge('running', '● Töissä'); renderMainBtns(); renderPills();
       updateClockBg();
     }
-  } catch (e) { toast(t('latausVirhe')); }
+  } catch (e) { /* active clock restore failed — non-critical */ }
 }
 
 export function save() {
