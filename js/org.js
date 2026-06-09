@@ -15,10 +15,6 @@ export async function initOrg(user) {
 
   if (userDoc.exists && userDoc.data().orgId) {
     state.orgId = userDoc.data().orgId;
-    orgRef().update({
-      [`members.${user.uid}.email`]: user.email || '',
-      [`members.${user.uid}.displayName`]: user.displayName || user.email || 'Vieras',
-    }).catch(() => {});
     return;
   }
 
