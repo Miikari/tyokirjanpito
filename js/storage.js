@@ -54,6 +54,55 @@ export async function loadFromFirestore() {
   } catch (e) { /* active clock restore failed — non-critical */ }
 }
 
+let activeUnsub = null;
+
+export function listenActiveState() {
+  if (activeUnsub) { activeUnsub(); activeUnsub = null; }
+  if (!state.uid) return;
+
+  activeUnsub = db.collection('users').doc(state.uid).collection('data').doc('active')
+    .onSnapshot(async doc => {
+      if (!state.uid) return;
+      if (doc.exists) {
+        const a = doc.data();
+        // Tämä laite käynnisti kellon — ei tehdä mitään
+        if (state.clockState !== 'idle' && state.startTime === a.startTime) return;
+        // Kello käynnistyi toisella laitteella
+        state.startTime = a.startTime;
+        state.clockInDate = new Date(a.clockInDate);
+        state.activeCustomer = a.customer;
+        const savedRate = a.rate || state.cfg.hourly;
+        document.getElementById('clock-rate-input').value = savedRate;
+        document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';
+        state.elapsedMs = 0;
+        if (state.clockState !== 'running') {
+          cancelAnimationFrame(state.timerRaf);
+          state.clockState = 'running';
+          state.timerRaf = requestAnimationFrame(tick);
+        }
+        const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
+        setBadge('running', '● Töissä'); renderMainBtns(); renderPills();
+        updateClockBg();
+      } else if (state.clockState !== 'idle') {
+        // Kello pysäytetty toisella laitteella — nollaa tila ja lataa uusi kirjaus
+        cancelAnimationFrame(state.timerRaf);
+        state.clockState = 'idle'; state.elapsedMs = 0; state.startTime = null;
+        state.clockInDate = null; state.activeCustomer = null;
+        document.getElementById('timer').textContent = '00:00:00';
+        document.getElementById('timer-sub').textContent = '—';
+        setBadge('idle', ''); renderMainBtns(); renderPills();
+        updateClockBg();
+        toast('Kello pysäytetty toisella laitteella');
+        await loadFromFirestore();
+      }
+    }, () => {});
+}
+
+export function unlistenActiveState() {
+  if (activeUnsub) { activeUnsub(); activeUnsub = null; }
+}
+
 export function save() {
   if (!state.orgId) return;
   clearTimeout(state.saveTimer);
