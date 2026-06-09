@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
 import { toast } from './ui.js';
-import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
+import { loadFromFirestore } from './storage.js';
 import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
 
 const EMAIL_ERRORS = {
@@ -131,9 +131,7 @@ auth.onAuthStateChanged(async user => {
 
     await initOrg(user);
     await loadFromFirestore();
-    listenActiveState();
     if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
-      const { loadDemoData } = await import('./demo.js');
       loadDemoData();
       const { renderAllSelects } = await import('./customers.js');
       const { renderEntries } = await import('./entries.js');
@@ -142,7 +140,6 @@ auth.onAuthStateChanged(async user => {
     }
     renderOrgSettings();
   } else {
-    unlistenActiveState();
     state.uid = null; state.orgId = null;
     state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
     state.cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };

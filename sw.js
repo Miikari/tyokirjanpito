@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v24';
+const CACHE = 'tyotunnit-v25';
 const FILES = [
   '/tyokirjanpito/manifest.json',
   '/tyokirjanpito/icons/icon-192.png',
