@@ -283,6 +283,24 @@ body {
   .settings-grid { grid-template-columns: 1fr; }
   .form-cols { grid-template-columns: 1fr; }
 }
+@media (min-width: 1200px) {
+  .header h1 { font-size: 26px; }
+  .tab { font-size: 15px; }
+  .card-label { font-size: 13px; }
+  .sum-label { font-size: 13px; }
+  .sum-val { font-size: 26px; }
+  .entry-meta { font-size: 14px; }
+  .entry-dur { font-size: 20px; }
+  .entry-eur { font-size: 18px; }
+  .tag { font-size: 13px; }
+  .btn-outline, .btn-invoice { font-size: 16px; padding: 14px; }
+  .inv-num { font-size: 19px; }
+  .inv-sub { font-size: 14px; }
+  .inv-total { font-size: 23px; }
+  .inv-grand-val { font-size: 32px; }
+  .set-label { font-size: 17px; }
+  .set-sub { font-size: 14px; }
+}
 #clock-bg { z-index: 0; background-image: url('../images/background2.jpg'); background-size: cover; background-position: center 70%; background-repeat: no-repeat; }
 .clock-card > *:not(#clock-bg) { position: relative; z-index: 2; }
 
