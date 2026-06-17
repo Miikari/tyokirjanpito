@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v28';
+const CACHE = 'tyotunnit-v29';
 const FILES = [
   '/tyokirjanpito/manifest.json',
   '/tyokirjanpito/icons/icon-192.png',
@@ -45,7 +45,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(e.request)
         .then(response => {
-          caches.open(CACHE).then(c => c.put(e.request, response.clone()));
+          const clone = response.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
           return response;
         })
         .catch(() => caches.match('/tyokirjanpito/index.html'))
