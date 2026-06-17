@@ -151,7 +151,11 @@ export async function regenerateInviteCode() {
 
 export async function removeMember(uid) {
   await orgRef().update({ [`members.${uid}`]: firebase.firestore.FieldValue.delete() });
-  await db.collection('users').doc(uid).update({ orgId: firebase.firestore.FieldValue.delete() });
+  // Best-effort cleanup: rules only allow a user to write their own doc,
+  // so this may be denied. Access is already revoked via the members map.
+  try {
+    await db.collection('users').doc(uid).update({ orgId: firebase.firestore.FieldValue.delete() });
+  } catch (_) {}
 }
 
 export async function renderOrgSettings() {

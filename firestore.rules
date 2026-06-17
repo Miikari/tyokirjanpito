@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /data/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ── Organisations ────────────────────────────────────────────────────────
+    match /orgs/{orgId} {
+
+      // Members can read their own org document by ID.
+      allow get: if request.auth != null
+        && resource.data.members[request.auth.uid] != null;
+
+      // Non-anonymous users can run collection queries (required for the
+      // invite-code lookup: db.collection('orgs').where('inviteCode','==',code)).
+      // Note: this allows querying org metadata (name, members list) but NOT
+      // the data subcollection. Upgrade to Cloud Functions if org metadata
+      // must remain private.
+      allow list: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+
+      // Any authenticated user may create an org for themselves (anonymous
+      // users get their own private workspace). The creator must be set as
+      // ownerId and must be present in the members map.
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.members[request.auth.uid] != null;
+
+      // Only the current owner may update org fields. ownerId is immutable —
+      // ownership cannot be transferred by a simple client-side write.
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      // Self-join via invite code: a non-anonymous user may add only themselves
+      // to the members map when an inviteCode is present, without modifying
+      // any other field (including ownerId or inviteCode).
+      allow update: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && resource.data.inviteCode != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+        && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
+        && request.resource.data.members.diff(resource.data.members).removedKeys().size() == 0
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      // Only the owner may delete the org.
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.ownerId;
+
+      // Org data access is gated on the org-side members map — not on the
+      // user's self-declared orgId field, which the user could freely rewrite.
+      match /data/{docId} {
+        allow read, write: if request.auth != null
+          && get(/databases/$(database)/documents/orgs/$(orgId)).data.members[request.auth.uid] != null;
+      }
+    }
+  }
+}
