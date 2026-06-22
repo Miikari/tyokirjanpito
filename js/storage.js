@@ -15,11 +15,13 @@ export async function loadFromFirestore() {
     const doc = await mainRef().get();
     if (doc.exists) {
       const d = doc.data();
-      if (d.entries)  state.entries  = d.entries;
-      if (d.invoices) state.invoices = d.invoices;
-      if (d.eId)      state.eId      = d.eId;
-      if (d.iId)      state.iId      = d.iId;
-      if (d.cfg)      state.cfg      = Object.assign(state.cfg, d.cfg);
+      if (d.entries)   state.entries   = d.entries;
+      if (d.invoices)  state.invoices  = d.invoices;
+      if (d.expenses)  state.expenses  = d.expenses;
+      if (d.eId)       state.eId       = d.eId;
+      if (d.iId)       state.iId       = d.iId;
+      if (d.eExpId)    state.eExpId    = d.eExpId;
+      if (d.cfg)       state.cfg       = Object.assign(state.cfg, d.cfg);
       state.cfg.customers = (state.cfg.customers || []).map(c => {
         if (typeof c === 'string') return { name: c };
         if (c.osoite && !c.katuosoite) { c = { ...c, katuosoite: c.osoite }; delete c.osoite; }
@@ -32,6 +34,7 @@ export async function loadFromFirestore() {
   document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('m-rate').value = state.cfg.hourly;
   renderAllSelects(); renderPills(); renderEntries();
+  window.updateInvoiceBadge?.();
 
   try {
     const activeDoc = await db.collection('users').doc(state.uid).collection('data').doc('active').get();
@@ -106,7 +109,7 @@ export function save() {
   state.saveTimer = setTimeout(async () => {
     try {
       await mainRef().set(
-        { entries: state.entries, invoices: state.invoices, eId: state.eId, iId: state.iId, cfg: state.cfg }, { merge: true }
+        { entries: state.entries, invoices: state.invoices, expenses: state.expenses, eId: state.eId, iId: state.iId, eExpId: state.eExpId, cfg: state.cfg }, { merge: true }
       );
     } catch (e) { toast(t('tallennusVirhe')); }
   }, 800);

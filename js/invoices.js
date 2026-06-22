@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { fmtDate, fmtDur, fmtEur, fmtHours, fmtShort, esc, calcViitenumero, calcErapaiva } from './utils.js';
 import { toast, goTab } from './ui.js';
 import { save } from './storage.js';
-import { renderEntries } from './entries.js';
+import { renderEntries, renderExpenses } from './entries.js';
 
 function startInvoice() {
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
@@ -41,7 +41,12 @@ function finishInvoice(mode) {
   const totalSecs = sel.reduce((a, e) => a + e.secs, 0);
   const hourly = sel.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
   const monthly = rec.reduce((a, r) => a + r.amount, 0);
-  const subtotal = hourly + monthly;
+  const selExpenses = state.expenses.filter(e => e.selected && !e.invoiced);
+  const expenseTotal = selExpenses.reduce((a, e) => a + e.amount, 0);
+  const totalKm = sel.reduce((a, e) => a + (e.km || 0), 0);
+  const kmRate = state.cfg.kmRate ?? 0.57;
+  const kmAmount = totalKm * kmRate;
+  const subtotal = hourly + monthly + kmAmount + expenseTotal;
   const vatAmount = subtotal * (state.cfg.vat || 0) / 100;
   const invoiceCustomers = [...new Set(sel.map(e => e.customer).filter(Boolean))];
   const primaryCust = invoiceCustomers.length === 1 ? state.cfg.customers.find(c => c.name === invoiceCustomers[0]) : null;
@@ -49,21 +54,164 @@ function finishInvoice(mode) {
   state.invoices.unshift({
     id: ++state.iId, date: new Date().toISOString(),
     entries: sel.map(e => ({ ...e })), totalSecs, hourly, monthly,
+    km: totalKm, kmRate, kmAmount,
+    expenses: selExpenses.map(e => ({ ...e })), expenseTotal,
     subtotal, vatAmount, vat: state.cfg.vat || 0,
     total: subtotal + vatAmount, recurring: rec, maksuehto
   });
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
+  selExpenses.forEach(e => { e.invoiced = true; e.selected = false; });
   state.filterCustomer = null;
-  save(); renderEntries();
+  save(); renderEntries(); renderExpenses();
   toast(t('invoicePrefix') + String(state.iId).padStart(3, '0') + ' arkistoitu');
   goTab('arkisto'); setTimeout(() => renderArchive(state.iId), 80);
 }
 
+function isOverdue(inv) {
+  if (inv.paid) return false;
+  if (inv.maksuehto === 'sopimus') return false;
+  const d = new Date(inv.date);
+  d.setDate(d.getDate() + (parseInt(inv.maksuehto) || 10));
+  d.setHours(23, 59, 59, 999);
+  return d < new Date();
+}
+
+function updateInvoiceBadge() {
+  const badge = document.getElementById('inv-badge');
+  if (!badge) return;
+  const unpaid = state.invoices.filter(inv => !inv.paid).length;
+  if (unpaid === 0) { badge.style.display = 'none'; return; }
+  badge.style.display = 'inline-flex';
+  badge.textContent = unpaid > 5 ? '5+' : String(unpaid);
+}
+
+function markInvoicePaid(id) {
+  const inv = state.invoices.find(x => x.id === id);
+  if (!inv) return;
+  inv.paid = !inv.paid;
+  save();
+  renderArchive();
+  toast(inv.paid ? t('markedPaid') : t('paidRemoved'));
+}
+
+function isValidEmail(email) {
+  if (!email || typeof email !== 'string') return false;
+  if (email.length > 254 || email.includes(' ')) return false;
+  const parts = email.split('@');
+  if (parts.length !== 2) return false;
+  const [local, domain] = parts;
+  if (!local.length || local.length > 64) return false;
+  const domainParts = domain.split('.');
+  if (domainParts.length < 2 || domainParts.some(p => !p.length)) return false;
+  if (domainParts[domainParts.length - 1].length < 2) return false;
+  return true;
+}
+
+function resolveCustomerEmail(inv) {
+  const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+  if (!custs.length) return { error: t('noCustomerOnInvoice') };
+  if (custs.length > 1) return { error: t('multipleCustomersInvoice') };
+  const custObj = state.cfg.customers.find(c => c.name === custs[0]);
+  if (!custObj?.sposti) return { error: `${esc(custs[0])} ${t('noCustomerEmail')}` };
+  if (!isValidEmail(custObj.sposti)) return { error: `${t('invalidEmailAddr')} ${custObj.sposti}` };
+  return { email: custObj.sposti };
+}
+
+function openMailto(to, subject, body) {
+  const a = document.createElement('a');
+  a.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  a.click();
+}
+
+function sendInvoiceEmail(id) {
+  if (state.isDemo) { toast(t('notAvailableGuest')); return; }
+  const inv = state.invoices.find(x => x.id === id);
+  if (!inv) return;
+  const { email, error } = resolveCustomerEmail(inv);
+  if (error) { toast(error); return; }
+
+  const invNum = String(inv.id).padStart(3, '0');
+  const maksuehto = inv.maksuehto ?? 10;
+  const erapaiva = maksuehto !== 'sopimus' ? calcErapaiva(inv.date, maksuehto) : null;
+  const viitenumero = calcViitenumero(inv.id);
+
+  const subject = `Lasku #${invNum}${state.cfg.company ? ' – ' + state.cfg.company : ''}`;
+
+  const payLines = [
+    erapaiva ? `Eräpäivä: ${erapaiva}` : 'Maksuehto: Erillisen sopimuksen mukaan',
+    state.cfg.tilinumero ? `Tilinumero: ${state.cfg.tilinumero}` : '',
+    state.cfg.showViitenumero ? `Viitenumero: ${viitenumero}` : '',
+  ].filter(Boolean).join('\n');
+
+  const body = [
+    'Hei,',
+    '',
+    `Lähetän ohessa laskun nro #${invNum}, päivätty ${fmtDate(inv.date)}.`,
+    '',
+    `Laskun summa: ${fmtEur(inv.total)}`,
+    payLines,
+    '',
+    'Mikäli teillä on kysyttävää laskuun liittyen, ottakaa rohkeasti yhteyttä.',
+    '',
+    'Ystävällisin terveisin,',
+    state.cfg.company || '',
+  ].filter(l => l !== undefined).join('\n');
+
+  openMailto(email, subject, body);
+}
+
+function sendReminder(id) {
+  if (state.isDemo) { toast(t('notAvailableGuest')); return; }
+  const inv = state.invoices.find(x => x.id === id);
+  if (!inv) return;
+  const { email, error } = resolveCustomerEmail(inv);
+  if (error) { toast(error); return; }
+
+  const invNum = String(inv.id).padStart(3, '0');
+  const maksuehto = inv.maksuehto ?? 10;
+  const erapaiva = maksuehto !== 'sopimus' ? calcErapaiva(inv.date, maksuehto) : null;
+  const viitenumero = calcViitenumero(inv.id);
+
+  let daysOverdueText = '';
+  if (erapaiva) {
+    const dueDate = new Date(inv.date);
+    dueDate.setDate(dueDate.getDate() + (parseInt(maksuehto) || 10));
+    const days = Math.floor((new Date() - dueDate) / (1000 * 60 * 60 * 24));
+    if (days > 0) daysOverdueText = ` Eräpäivästä on kulunut ${days} päivää.`;
+  }
+
+  const subject = `Maksumuistutus – Lasku #${invNum}`;
+
+  const payLines = [
+    erapaiva ? `Eräpäivä: ${erapaiva}` : '',
+    state.cfg.tilinumero ? `Tilinumero: ${state.cfg.tilinumero}` : '',
+    state.cfg.showViitenumero ? `Viitenumero: ${viitenumero}` : '',
+  ].filter(Boolean).join('\n');
+
+  const body = [
+    'Hei,',
+    '',
+    `Huomautan ystävällisesti, että laskumme nro #${invNum}${erapaiva ? ' (eräpäivä ' + erapaiva + ')' : ''} on jäänyt maksamatta.${daysOverdueText}`,
+    '',
+    `Laskun summa: ${fmtEur(inv.total)}`,
+    payLines,
+    '',
+    'Pyydämme suorittamaan maksun mahdollisimman pian. Mikäli maksu on jo suoritettu, pyydämme jättämään tämän viestin huomiotta.',
+    '',
+    'Ystävällisin terveisin,',
+    state.cfg.company || '',
+  ].filter(l => l !== undefined).join('\n');
+
+  openMailto(email, subject, body);
+}
+
 export function renderArchive(highlightId) {
   const el = document.getElementById('archive-list');
+  updateInvoiceBadge();
   if (!state.invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
   el.innerHTML = state.invoices.map(inv => {
     const isOpen = highlightId === inv.id;
+    const overdue = isOverdue(inv);
     const rows = inv.entries.map(e => `
       <div class="inv-row-line">
         <div class="inv-row-left">
@@ -80,22 +228,51 @@ export function renderArchive(highlightId) {
         </div>
         <div class="inv-row-val">${fmtEur(r.amount)}</div>
       </div>`).join('');
+    const kmRow = inv.km > 0 ? `
+      <div class="inv-row-line">
+        <div class="inv-row-left">
+          <div class="inv-row-title">${t('kmReimbursement')}</div>
+          <div class="inv-row-sub">${inv.km} km × ${String(inv.kmRate ?? 0.57).replace('.', ',')} €/km</div>
+        </div>
+        <div class="inv-row-val">${fmtEur(inv.kmAmount || 0)}</div>
+      </div>` : '';
+    const expRows = (inv.expenses || []).map(e => `
+      <div class="inv-row-line">
+        <div class="inv-row-left">
+          <div class="inv-row-title">${esc(e.description)}</div>
+          <div class="inv-row-sub">${t('expenseReimbursement')}${e.customer ? ' · ' + esc(e.customer) : ''}</div>
+        </div>
+        <div class="inv-row-val">${fmtEur(e.amount)}</div>
+      </div>`).join('');
     const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+    const statusTag = inv.paid
+      ? `<div class="inv-tag inv-tag-paid">${t('paid')}</div>`
+      : `<div class="inv-tag inv-tag-unpaid">${t('unpaid')}</div>`;
+    const overdueText = overdue
+      ? `<div class="inv-overdue-text">${t('invoiceOverdue')}</div>`
+      : '';
+    const paidBtn = inv.paid
+      ? `<button class="btn-mark-paid is-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">✓ ${t('paid')}</button>`
+      : `<button class="btn-mark-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">${t('markPaid')}</button>`;
+    const reminderBtn = overdue
+      ? `<button class="btn-reminder" style="flex:1;" onclick="sendReminder(${inv.id})">${t('sendReminder')}</button>`
+      : '';
     return `
       <div class="inv-card">
         <div class="inv-header" onclick="this.nextElementSibling.classList.toggle('open')">
           <div>
             <div class="inv-num">${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</div>
             <div class="inv-sub">${fmtDate(inv.date)}${custs.length ? ' · ' + custs.map(esc).join(', ') : ''}</div>
+            ${overdueText}
           </div>
           <div class="inv-right">
             <div class="inv-total">${fmtEur(inv.total)}</div>
-            <div class="inv-tag">${t('archived')}</div>
+            ${statusTag}
           </div>
         </div>
         <div class="inv-body ${isOpen ? 'open' : ''}">
           <div class="inv-meta">${fmtDate(inv.date)} · ${fmtShort(inv.totalSecs)} h</div>
-          ${rows}${recRows}
+          ${rows}${recRows}${kmRow}${expRows}
           <div class="inv-subtotals">
             ${inv.vat > 0 ? `
               <div class="inv-subtotal-line"><span>${t('vatExcl')}</span><span>${fmtEur(inv.subtotal)}</span></div>
@@ -106,10 +283,17 @@ export function renderArchive(highlightId) {
               <span class="inv-grand-val">${fmtEur(inv.total)}</span>
             </div>
           </div>
-          <div style="display:flex;gap:10px;margin-top:14px;">
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id})">${t('printPdf')}</button>
-            <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id},true)">Tulosta liitteeksi</button>
+            <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id},true)">${t('printAttachment')}</button>
             <button class="btn-outline" style="flex:1;" onclick="openEditInvoice(${inv.id})">${t('edit')}</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button class="btn-email-inv" style="flex:1;" onclick="sendInvoiceEmail(${inv.id})">${t('sendInvoiceEmail')}</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+            ${paidBtn}
+            ${reminderBtn}
           </div>
         </div>
       </div>`;
@@ -131,10 +315,26 @@ function printInvoice(id, asAttachment) {
   const recRows = inv.recurring.map(r => `
     <tr>
       <td>${esc(r.name)}</td>
-      <td>${1}</td>
+      <td></td>
       <td></td>
       <td></td>
       <td>${fmtEur(r.amount)}</td>
+    </tr>`).join('');
+  const kmPrintRow = inv.km > 0 ? `
+    <tr>
+      <td>${t('kmReimbursement')}</td>
+      <td>${String(inv.kmRate ?? 0.57).replace('.', ',')} €/km</td>
+      <td>${inv.km} km</td>
+      <td></td>
+      <td>${fmtEur(inv.kmAmount || 0)}</td>
+    </tr>` : '';
+  const expPrintRows = (inv.expenses || []).map(e => `
+    <tr>
+      <td>${esc(e.description)}</td>
+      <td>${t('expenseReimbursement')}</td>
+      <td></td>
+      <td></td>
+      <td>${fmtEur(e.amount)}</td>
     </tr>`).join('');
 
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
@@ -239,7 +439,7 @@ function printInvoice(id, asAttachment) {
         <th>${t('notes')}</th>
         <th>${t('amount')}</th>
       </tr></thead>
-      <tbody>${rows}${recRows}</tbody>
+      <tbody>${rows}${recRows}${kmPrintRow}${expPrintRows}</tbody>
     </table>
     <div class="total-section">
       ${inv.vat > 0 ? `
@@ -315,3 +515,7 @@ window.closeEditInvModal = closeEditInvModal;
 window.finishInvoice = finishInvoice;
 window.closeModal = closeModal;
 window.startInvoice = startInvoice;
+window.markInvoicePaid = markInvoicePaid;
+window.sendInvoiceEmail = sendInvoiceEmail;
+window.sendReminder = sendReminder;
+window.updateInvoiceBadge = updateInvoiceBadge;

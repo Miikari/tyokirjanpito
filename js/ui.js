@@ -3,6 +3,7 @@ import { t } from './i18n.js';
 import { renderMainBtns, renderPills } from './clock.js';
 import { renderEntries } from './entries.js';
 import { renderArchive } from './invoices.js';
+import { renderReports } from './reports.js';
 import { renderSettings } from './settings.js';
 
 // ── LANG ──
@@ -28,8 +29,9 @@ function applyLang() {
   document.querySelector('.btn-logout').textContent = t('logout');
   document.querySelectorAll('.tab')[0].textContent = t('kello');
   document.querySelectorAll('.tab')[1].textContent = t('kirjanpito');
-  document.querySelectorAll('.tab')[2].textContent = t('arkisto');
-  document.querySelectorAll('.tab')[3].textContent = t('asetukset');
+  document.querySelectorAll('.tab')[2].querySelector('.tab-label').textContent = t('arkisto');
+  document.querySelectorAll('.tab')[3].textContent = t('raportointi');
+  document.querySelectorAll('.tab')[4].textContent = t('asetukset');
 
   document.querySelector('.card-label').textContent = t('manualEntry');
   document.querySelector('#notes-toggle-icon').nextSibling.textContent = ' ' + t('addNotes');
@@ -63,10 +65,17 @@ function applyLang() {
     if (t(key) !== key) el.textContent = t(key);
   });
   document.getElementById('rec-name').placeholder = t('recNamePlaceholder');
-  document.getElementById('btn-fi').style.fontWeight = state.lang === 'fi' ? '800' : '600';
-  document.getElementById('btn-en').style.fontWeight = state.lang === 'en' ? '800' : '600';
+  ['fi', 'en'].forEach(l => {
+    const btn = document.getElementById('btn-' + l);
+    const active = state.lang === l;
+    btn.style.background = active ? 'var(--blue)' : '#fff';
+    btn.style.color = active ? '#fff' : 'var(--blue-txt)';
+    btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
+    btn.style.fontWeight = active ? '700' : '600';
+  });
 
   renderMainBtns(); renderPills(); renderEntries(); renderArchive();
+  if (document.getElementById('panel-raportointi').classList.contains('active')) renderReports();
   if (document.getElementById('panel-asetukset').classList.contains('active')) renderSettings();
 }
 
@@ -84,16 +93,17 @@ function showTab(tab, btn) {
   document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (tab === 'kirjanpito') renderEntries();
-  if (tab === 'arkisto')    renderArchive();
-  if (tab === 'asetukset')  renderSettings();
+  if (tab === 'kirjanpito')  renderEntries();
+  if (tab === 'arkisto')     renderArchive();
+  if (tab === 'raportointi') renderReports();
+  if (tab === 'asetukset')   renderSettings();
 }
 
 export function goTab(tab) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
-  document.querySelectorAll('.tab').forEach(tb => { if (tb.textContent.trim().toLowerCase() === tab) tb.classList.add('active'); });
+  document.querySelectorAll('.tab').forEach(tb => { if (tb.dataset.tab === tab) tb.classList.add('active'); });
 }
 
 // ── CLOCK BG ──

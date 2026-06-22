@@ -38,8 +38,17 @@ export function renderSettings() {
   document.getElementById('inv-show-viitenumero').checked = state.cfg.showViitenumero === true;
   document.getElementById('set-rounding').value = state.cfg.rounding || 15;
   document.getElementById('set-hourly').value = state.cfg.hourly;
+  document.getElementById('set-kmrate').value = state.cfg.kmRate ?? 0.57;
   document.getElementById('set-vat').value = state.cfg.vat || 0;
   previewHourly();
+  ['fi', 'en'].forEach(l => {
+    const btn = document.getElementById('btn-' + l);
+    const active = state.lang === l;
+    btn.style.background = active ? 'var(--blue)' : '#fff';
+    btn.style.color = active ? '#fff' : 'var(--blue-txt)';
+    btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
+    btn.style.fontWeight = active ? '700' : '600';
+  });
   renderRecList(); renderCustChips(); renderAllSelects(); renderOrgSettings();
 }
 
@@ -52,6 +61,12 @@ function saveHourly() {
   const v = parseFloat(document.getElementById('set-hourly').value);
   if (isNaN(v) || v < 0) { toast(t('invalidPrice')); return; }
   state.cfg.hourly = v; save(); previewHourly(); toast(t('saved') + fmtEur(v) + '/h');
+}
+
+function saveKmRate() {
+  const v = parseFloat(document.getElementById('set-kmrate').value);
+  if (isNaN(v) || v < 0) { toast(t('invalidPrice')); return; }
+  state.cfg.kmRate = v; save(); toast(t('kmRateSaved') + ': ' + String(v).replace('.', ',') + ' €/km');
 }
 
 function saveInvoiceSettings() {
@@ -100,6 +115,7 @@ function renderRecList() {
 
 window.saveCompany = saveCompany;
 window.saveHourly = saveHourly;
+window.saveKmRate = saveKmRate;
 window.saveRounding = saveRounding;
 window.saveVat = saveVat;
 window.saveInvoiceSettings = saveInvoiceSettings;

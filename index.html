@@ -91,10 +91,11 @@
     <button class="btn-logout" onclick="signOut()">Kirjaudu ulos</button>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="showTab('kello',this)">Kello</button>
-    <button class="tab" onclick="showTab('kirjanpito',this)">Kirjanpito</button>
-    <button class="tab" onclick="showTab('arkisto',this)">Arkisto</button>
-    <button class="tab" onclick="showTab('asetukset',this)">Asetukset</button>
+    <button class="tab active" data-tab="kello" onclick="showTab('kello',this)">Kello</button>
+    <button class="tab" data-tab="kirjanpito" onclick="showTab('kirjanpito',this)">Kirjaukset</button>
+    <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskut</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
+    <button class="tab" data-tab="raportointi" onclick="showTab('raportointi',this)">Raportit</button>
+    <button class="tab" data-tab="asetukset" onclick="showTab('asetukset',this)">Asetukset</button>
   </div>
 </div>
 
@@ -125,7 +126,12 @@
       <div style="margin-top:16px;">
         <button onclick="toggleNotes()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;"><span id="notes-toggle-icon" style="font-size:18px;line-height:1;">+</span><span data-i18n="addNotes">Lisää merkintöjä</span></button>
         <div id="notes-box" style="display:none;margin-top:10px;">
-          <textarea id="clock-notes" placeholder="Merkintöjä tähän kirjaukseen..." style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:14px;resize:none;height:80px;outline:none;"></textarea>
+          <textarea id="clock-notes" placeholder="Merkintöjä tähän kirjaukseen..." style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:14px;resize:none;height:72px;outline:none;margin-bottom:8px;"></textarea>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;white-space:nowrap;">🚗 Km:</span>
+            <input type="number" id="clock-km" min="0" step="1" placeholder="0" autocomplete="off" style="width:80px;padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;">
+            <span style="color:rgba(255,255,255,0.55);font-size:12px;">ajetut kilometrit</span>
+          </div>
         </div>
       </div>
     </div>
@@ -148,7 +154,18 @@
       </div>
       <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
     </div>
-  </div>
+
+    <div class="card card-form">
+      <div class="card-label">Kulukorvaukset</div>
+      <div id="exp-list-kello"></div>
+      <div class="fg"><label>Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." autocomplete="off"></div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label>Summa (€)</label><input type="number" id="exp-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label>Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
+      </div>
+      <button class="btn-add" onclick="addExpense()">+ Lisää kulu</button>
+    </div>
+  </div><!-- /panel-kello -->
 
   <!-- ── KIRJANPITO ── -->
   <div class="panel" id="panel-kirjanpito">
@@ -164,11 +181,65 @@
       <button class="btn-invoice" onclick="startInvoice()" data-i18n="buildInvoice">Kokoa lasku ↗</button>
     </div>
     <div id="entries-list"></div>
+    <div id="kirjanpito-expenses"></div>
   </div>
 
   <!-- ── ARKISTO ── -->
   <div class="panel" id="panel-arkisto">
     <div id="archive-list"><div class="empty" data-i18n="noInvoices">Ei arkistoituja laskuja vielä.</div></div>
+  </div>
+
+  <!-- ── RAPORTOINTI ── -->
+  <div class="panel" id="panel-raportointi">
+    <div class="rep-year-bar">
+      <button class="rep-year-btn" onclick="reportPrevYear()">‹</button>
+      <span id="report-year" class="rep-year-label"></span>
+      <button class="rep-year-btn" onclick="reportNextYear()">›</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Lataa raportti</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">
+            <option value="0">Tammikuu</option>
+            <option value="1">Helmikuu</option>
+            <option value="2">Maaliskuu</option>
+            <option value="3">Huhtikuu</option>
+            <option value="4">Toukokuu</option>
+            <option value="5">Kesäkuu</option>
+            <option value="6">Heinäkuu</option>
+            <option value="7">Elokuu</option>
+            <option value="8">Syyskuu</option>
+            <option value="9">Lokakuu</option>
+            <option value="10">Marraskuu</option>
+            <option value="11">Joulukuu</option>
+          </select>
+          <button class="btn-dl-report" onclick="downloadMonthReport()">↓ Kuukausiraportti</button>
+        </div>
+        <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()" style="flex:1;">↓ Vuosiraportti</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Asiakaskohtainen yhteenveto</div>
+      <div id="report-customers"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Tuntijakauma asiakkaiden välillä</div>
+      <div id="chart-pie-wrap" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <canvas id="chart-pie"></canvas>
+        <div id="chart-pie-legend" style="width:100%;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Vertailu kuukausien välillä</div>
+      <div id="chart-bars-wrap">
+        <canvas id="chart-bars"></canvas>
+      </div>
+    </div>
   </div>
 
   <!-- ── ASETUKSET ── -->
@@ -224,6 +295,14 @@
         </div>
       </div>
       <button class="btn-add" onclick="saveHourly()" data-i18n="saveHourlyBtn">Tallenna tuntihinta</button>
+      <div class="set-row" style="margin-top:10px;">
+        <div><div class="set-label">Kilometrikorvaus</div><div class="set-sub">Kilometrihinta laskuun</div></div>
+        <div class="set-input-wrap">
+          <input type="number" id="set-kmrate" min="0" step="0.01" autocomplete="off">
+          <span style="font-size:15px;font-weight:600;color:var(--text2);">€/km</span>
+        </div>
+      </div>
+      <button class="btn-add" onclick="saveKmRate()" style="margin-top:4px;">Tallenna kilometrikorvaus</button>
     </div>
   </div>
 
@@ -264,7 +343,7 @@
     </label>
   </div>
 
-  <div class="card" style="margin-top:14px;">
+  <div class="card" style="margin-top:14px;display:none;" id="org-card">
     <div class="card-label">Organisaatio</div>
     <div style="font-size:15px;font-weight:700;margin-bottom:12px;" id="org-name-display">—</div>
     <div id="org-members-list" style="margin-bottom:14px;"></div>
@@ -373,7 +452,7 @@
   </div>
 </div>
 
-<div class="modal-wrap" id="join-modal">
+<div class="modal-wrap" id="join-modal" style="display:none !important;">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>Liity organisaatioon</h2>
@@ -396,6 +475,7 @@
 <script type="module" src="js/entries.js"></script>
 <script type="module" src="js/customers.js"></script>
 <script type="module" src="js/invoices.js"></script>
+<script type="module" src="js/reports.js"></script>
 <script type="module" src="js/org.js"></script>
 <script type="module" src="js/settings.js"></script>
 <script type="module" src="js/app.js"></script>

@@ -138,7 +138,7 @@ export function renderCustChips() {
 export function renderAllSelects() {
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
     ...state.cfg.customers.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`)].join('');
-  ['m-customer', 'rec-customer'].forEach(id => {
+  ['m-customer', 'rec-customer', 'exp-customer'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });

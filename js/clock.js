@@ -75,8 +75,10 @@ function clockOut() {
   const secs = state.cfg.rounding === 1 ? rawSecs : Math.ceil(rawSecs / interval) * interval;
   const notes = document.getElementById('clock-notes').value.trim();
   const rate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
-  addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate);
+  const km = parseFloat(document.getElementById('clock-km').value) || 0;
+  addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate, km);
   document.getElementById('clock-notes').value = '';
+  document.getElementById('clock-km').value = '';
   document.getElementById('notes-box').style.display = 'none';
   document.getElementById('notes-toggle-icon').textContent = '+';
   state.clockState = 'idle'; state.elapsedMs = 0; state.startTime = null;

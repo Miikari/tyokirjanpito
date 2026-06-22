@@ -4,9 +4,10 @@ import { fmtDate, fmtDur, fmtEur, fmtShort, esc } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { save } from './storage.js';
 
-export function addEntry(date, secs, customer, src, notes = '', rate = null) {
+
+export function addEntry(date, secs, customer, src, notes = '', rate = null, km = 0) {
   const entryRate = (rate !== null && !isNaN(rate) && rate >= 0) ? rate : state.cfg.hourly;
-  state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, selected: false, invoiced: false });
+  state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, km: km || 0, selected: false, invoiced: false });
 }
 
 function addManual() {
@@ -100,6 +101,7 @@ export function renderEntries() {
         <div class="entry-meta">${fmtDate(e.date)}</div>
         <div class="entry-dur">${fmtDur(e.secs)}</div>
         ${e.notes ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;">📝 ${esc(e.notes)}</div>` : ''}
+        ${e.km ? `<div style="font-size:12px;color:var(--text2);margin-top:2px;">🚗 ${e.km} km</div>` : ''}
       </div>
       <div class="entry-right">
         ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
@@ -110,6 +112,7 @@ export function renderEntries() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
     </div>`).join('');
+  renderExpenses();
 }
 
 // ── EDIT ENTRY ──
@@ -166,6 +169,77 @@ function closeEditModal() {
   state.editingEntryId = null;
 }
 
+// ── EXPENSES ──
+export function addExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const cust = document.getElementById('exp-customer').value;
+  if (!desc) { toast(t('expenseDescRequired')); return; }
+  if (isNaN(amount) || amount <= 0) { toast(t('enterAmount')); return; }
+  state.expenses.unshift({
+    id: ++state.eExpId,
+    date: new Date().toISOString(),
+    description: desc,
+    amount,
+    customer: cust === '—' ? null : cust,
+    selected: false,
+    invoiced: false,
+  });
+  document.getElementById('exp-desc').value = '';
+  document.getElementById('exp-amount').value = '';
+  save(); renderExpenses(); toast(t('expenseAdded'));
+}
+
+export function toggleExpense(id) {
+  const e = state.expenses.find(x => x.id === id);
+  if (e && !e.invoiced) e.selected = !e.selected;
+}
+
+function deleteExpense(id) {
+  state.expenses = state.expenses.filter(x => x.id !== id);
+  save(); renderExpenses(); toast(t('expenseRemoved'));
+}
+
+export function renderExpenses() {
+  // kello-panel list
+  const kelloEl = document.getElementById('exp-list-kello');
+  if (kelloEl) {
+    const uninv = state.expenses.filter(e => !e.invoiced);
+    kelloEl.innerHTML = uninv.length ? uninv.map(e => `
+      <div class="exp-row">
+        <div class="exp-info">
+          <div class="exp-desc">${esc(e.description)}</div>
+          <div class="exp-sub">${e.customer ? esc(e.customer) + ' · ' : ''}${fmtEur(e.amount)}</div>
+        </div>
+        <button onclick="deleteExpense(${e.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>`).join('') : '';
+  }
+  // kirjanpito-panel list
+  const kirjEl = document.getElementById('kirjanpito-expenses');
+  if (!kirjEl) return;
+  const uninv = state.expenses.filter(e => !e.invoiced);
+  if (!uninv.length) { kirjEl.innerHTML = ''; return; }
+  kirjEl.innerHTML = `<div class="card-label" style="margin-top:6px;margin-bottom:10px;">${t('expenses')}</div>` +
+    uninv.map(e => `
+      <div class="entry">
+        <input type="checkbox" class="ecb" ${e.selected ? 'checked' : ''} onchange="toggleExpense(${e.id})">
+        <div class="entry-info">
+          <div class="entry-meta">${fmtDate(e.date)}</div>
+          <div class="entry-dur" style="font-size:15px;">${esc(e.description)}</div>
+        </div>
+        <div class="entry-right">
+          ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
+          <span class="entry-eur">${fmtEur(e.amount)}</span>
+          <span class="tag tag-open">${t('open')}</span>
+        </div>
+        <button onclick="deleteExpense(${e.id})" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>`).join('');
+}
+
 window.addManual = addManual;
 window.selectAll = selectAll;
 window.setFilter = setFilter;
@@ -174,3 +248,6 @@ window.saveEditEntry = saveEditEntry;
 window.deleteEntry = deleteEntry;
 window.closeEditModal = closeEditModal;
 window.toggleEntry = toggleEntry;
+window.addExpense = addExpense;
+window.toggleExpense = toggleExpense;
+window.deleteExpense = deleteExpense;
