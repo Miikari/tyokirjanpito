@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v33';
+const CACHE = 'tyotunnit-v34';
 const FILES = [
   '/tyokirjanpito/manifest.json',
   '/tyokirjanpito/icons/icon-192.png',
@@ -14,8 +14,10 @@ const FILES = [
   '/tyokirjanpito/js/clock.js',
   '/tyokirjanpito/js/entries.js',
   '/tyokirjanpito/js/customers.js',
+  '/tyokirjanpito/js/demo.js',
   '/tyokirjanpito/js/invoices.js',
   '/tyokirjanpito/js/org.js',
+  '/tyokirjanpito/js/reports.js',
   '/tyokirjanpito/js/settings.js',
   '/tyokirjanpito/js/app.js',
 ];
