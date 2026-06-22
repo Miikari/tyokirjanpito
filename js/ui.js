@@ -153,5 +153,3 @@ window.showTab = showTab;
 window.setLang = setLang;
 window.toggleNotes = toggleNotes;
 window.closeConfirm = closeConfirm;
-
-applyLang();

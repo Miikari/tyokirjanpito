@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { toast } from './ui.js';
+import { toast, applyLang } from './ui.js';
 
 // ── PWA INSTALL ──
 window.addEventListener('beforeinstallprompt', e => {
@@ -24,3 +24,5 @@ if ('serviceWorker' in navigator) {
 
 window.installApp = installApp;
 window.dismissInstall = dismissInstall;
+
+applyLang();
