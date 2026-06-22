@@ -10,6 +10,14 @@ import { renderSettings } from './settings.js';
 function setLang(l) {
   state.lang = l;
   localStorage.setItem('lang', l);
+  ['fi', 'en'].forEach(code => {
+    const btn = document.getElementById('btn-' + code);
+    const active = code === l;
+    btn.style.background = active ? 'var(--blue)' : '#fff';
+    btn.style.color = active ? '#fff' : 'var(--blue-txt)';
+    btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
+    btn.style.fontWeight = active ? '700' : '600';
+  });
   applyLang();
 }
 

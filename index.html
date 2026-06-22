@@ -126,11 +126,11 @@
       <div style="margin-top:16px;">
         <button onclick="toggleNotes()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;"><span id="notes-toggle-icon" style="font-size:18px;line-height:1;">+</span><span data-i18n="addNotes">Lisää merkintöjä</span></button>
         <div id="notes-box" style="display:none;margin-top:10px;">
-          <textarea id="clock-notes" placeholder="Merkintöjä tähän kirjaukseen..." style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:14px;resize:none;height:72px;outline:none;margin-bottom:8px;"></textarea>
+          <textarea id="clock-notes" placeholder="Merkintöjä tähän kirjaukseen..." style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(136, 136, 136, 0.713);color:#fff;font-size:14px;resize:none;height:72px;outline:none;margin-bottom:8px;"></textarea>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;white-space:nowrap;">🚗 Km:</span>
-            <input type="number" id="clock-km" min="0" step="1" placeholder="0" autocomplete="off" style="width:80px;padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;">
-            <span style="color:rgba(255,255,255,0.55);font-size:12px;">ajetut kilometrit</span>
+            <span style="color:rgba(255, 255, 255, 0.9);font-size:14px;font-weight:600;white-space:nowrap;">🚗 Km:</span>
+            <input type="number" id="clock-km" min="0" step="1" placeholder="0" autocomplete="off" style="width:80px;padding:8px 10px;border-radius:8px;border:none;background:rgba(255, 255, 255, 0.327);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;">
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">ajetut kilometrit</span>
           </div>
         </div>
       </div>
@@ -198,36 +198,23 @@
     </div>
 
     <div class="card">
-      <div class="card-label">Lataa raportti</div>
+      <div class="card-label" data-i18n="downloadReport">Lataa raportti</div>
       <div style="display:flex;gap:10px;align-items:flex-end;">
         <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-          <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">
-            <option value="0">Tammikuu</option>
-            <option value="1">Helmikuu</option>
-            <option value="2">Maaliskuu</option>
-            <option value="3">Huhtikuu</option>
-            <option value="4">Toukokuu</option>
-            <option value="5">Kesäkuu</option>
-            <option value="6">Heinäkuu</option>
-            <option value="7">Elokuu</option>
-            <option value="8">Syyskuu</option>
-            <option value="9">Lokakuu</option>
-            <option value="10">Marraskuu</option>
-            <option value="11">Joulukuu</option>
-          </select>
-          <button class="btn-dl-report" onclick="downloadMonthReport()">↓ Kuukausiraportti</button>
+          <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></select>
+          <button id="btn-dl-month" class="btn-dl-report" onclick="downloadMonthReport()">↓ Kuukausiraportti</button>
         </div>
         <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()" style="flex:1;">↓ Vuosiraportti</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-label">Asiakaskohtainen yhteenveto</div>
+      <div class="card-label" data-i18n="customerSummary">Asiakaskohtainen yhteenveto</div>
       <div id="report-customers"></div>
     </div>
 
     <div class="card">
-      <div class="card-label">Tuntijakauma asiakkaiden välillä</div>
+      <div class="card-label" data-i18n="hourDistribution">Tuntijakauma asiakkaiden välillä</div>
       <div id="chart-pie-wrap" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
         <canvas id="chart-pie"></canvas>
         <div id="chart-pie-legend" style="width:100%;"></div>
@@ -235,7 +222,7 @@
     </div>
 
     <div class="card">
-      <div class="card-label">Vertailu kuukausien välillä</div>
+      <div class="card-label" data-i18n="monthlyComparison">Vertailu kuukausien välillä</div>
       <div id="chart-bars-wrap">
         <canvas id="chart-bars"></canvas>
       </div>

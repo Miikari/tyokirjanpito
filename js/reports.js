@@ -8,11 +8,8 @@ const PALETTE = [
   '#5E35B1', '#00897B',
 ];
 
-const MONTHS = ['Tam', 'Hel', 'Maa', 'Huh', 'Tou', 'Kes', 'Hei', 'Elo', 'Syy', 'Lok', 'Mar', 'Jou'];
-const MONTH_NAMES = [
-  'Tammikuu', 'Helmikuu', 'Maaliskuu', 'Huhtikuu', 'Toukokuu', 'Kesäkuu',
-  'Heinäkuu', 'Elokuu', 'Syyskuu', 'Lokakuu', 'Marraskuu', 'Joulukuu',
-];
+const months = () => t('monthNamesShort');
+const monthNames = () => t('monthNames');
 
 let reportYear = new Date().getFullYear();
 
@@ -39,11 +36,13 @@ function sizeCanvas(id, w, h) {
 
 export function renderReports() {
   document.getElementById('report-year').textContent = reportYear;
-  document.getElementById('btn-dl-year').textContent = `↓ Vuosiraportti ${reportYear}`;
+  document.getElementById('btn-dl-year').textContent = `↓ ${t('yearReport')} ${reportYear}`;
+  document.getElementById('btn-dl-month').textContent = `↓ ${t('monthReport')}`;
   const sel = document.getElementById('rep-month-sel');
-  if (sel && !sel.dataset.userChanged) {
-    const curM = reportYear === new Date().getFullYear() ? new Date().getMonth() : 0;
-    sel.value = curM;
+  if (sel) {
+    const prev = sel.dataset.userChanged ? parseInt(sel.value) : (reportYear === new Date().getFullYear() ? new Date().getMonth() : 0);
+    sel.innerHTML = monthNames().map((n, i) => `<option value="${i}"${i === prev ? ' selected' : ''}>${n}</option>`).join('');
+    if (sel.dataset.userChanged) sel.value = prev;
   }
   const invs = yearInvoices();
   renderCustomerSummary(invs);
@@ -73,13 +72,13 @@ function renderCustomerSummary(invs) {
       <span class="rep-dot" style="background:${PALETTE[i % PALETTE.length]}"></span>
       <div class="rep-info">
         <div class="rep-name">${name}</div>
-        <div class="rep-sub">${v.count} lasku${v.count !== 1 ? 'a' : ''} · ${fmtShort(v.secs)} h</div>
+        <div class="rep-sub">${v.count} ${v.count !== 1 ? t('invoiceSuffix') : t('invoiceSuffix1')} · ${fmtShort(v.secs)} h</div>
       </div>
       <div class="rep-val">${fmtEur(v.total)}</div>
     </div>
   `).join('') + `
     <div class="rep-grand">
-      <span>Yhteensä ${reportYear}</span>
+      <span>${t('totalRow')} ${reportYear}</span>
       <span>${fmtEur(grandTotal)}</span>
     </div>
   `;
@@ -194,7 +193,7 @@ function drawBars(invs) {
     ctx.font = isCurrent ? 'bold 9px -apple-system, sans-serif' : '9px -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(MONTHS[i], x + bW / 2, H - pb + 4);
+    ctx.fillText(months()[i], x + bW / 2, H - pb + 4);
   });
 }
 
@@ -288,7 +287,7 @@ function downloadYearReport() {
 
   const monthRows = monthlyData.map((d, i) => (d.invoiced > 0 || d.secs > 0) ? `
     <tr>
-      <td>${MONTH_NAMES[i]}</td>
+      <td>${monthNames()[i]}</td>
       <td class="num">${d.count || '—'}</td>
       <td class="num">${d.secs > 0 ? fmtShort(d.secs) + ' h' : '—'}</td>
       <td class="num">${d.invoiced > 0 ? fmtEur(d.invoiced) : '—'}</td>
@@ -305,12 +304,12 @@ function downloadYearReport() {
   const invRows = invs.map(inv => {
     const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
     return `<tr>
-      <td>Lasku #${String(inv.id).padStart(3, '0')}</td>
+      <td>${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</td>
       <td>${fmtDate(inv.date)}</td>
       <td>${custs.map(esc).join(', ') || '—'}</td>
       <td class="num">${fmtShort(inv.totalSecs)} h</td>
       <td class="num">${fmtEur(inv.total)}</td>
-      <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? 'Maksettu' : 'Maksamatta'}</span></td>
+      <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? t('paid') : t('unpaid')}</span></td>
     </tr>`;
   }).join('');
 
@@ -330,94 +329,94 @@ function downloadYearReport() {
       <td>${esc(e.description)}</td>
       <td>${esc(e.customer || '—')}</td>
       <td class="num">${fmtEur(e.amount)}</td>
-      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? 'Laskutettu' : 'Avoin'}</span></td>
+      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
     </tr>`).join('');
 
-  const html = `<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8">
+  const html = `<!DOCTYPE html><html lang="${state.lang}"><head><meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nc}'; script-src 'nonce-${nc}';">
-    <title>Vuosiraportti ${year}</title>
+    <title>${t('yearReport')} ${year}</title>
     ${reportStyles(nc)}
   </head><body>
     <div class="rep-header">
       <div>
-        <h1>Vuosiraportti ${year}</h1>
-        <div class="meta">Luotu ${fmtDate(new Date())}</div>
+        <h1>${t('yearReport')} ${year}</h1>
+        <div class="meta">${t('createdOn')} ${fmtDate(new Date())}</div>
       </div>
       ${companyHeader()}
     </div>
 
     <div class="summary">
       <div class="sum-item">
-        <div class="sum-label">Laskutettu</div>
+        <div class="sum-label">${t('invoicedLabel')}</div>
         <div class="sum-val">${fmtEur(totalInvoiced)}</div>
-        <div class="sum-sub">${invs.length} laskua · maksettu ${fmtEur(paidTotal)}</div>
+        <div class="sum-sub">${invs.length} ${t('invoiceSuffix')} · ${t('paid').toLowerCase()} ${fmtEur(paidTotal)}</div>
       </div>
       <div class="sum-item">
-        <div class="sum-label">Tunnit</div>
+        <div class="sum-label">${t('hours')}</div>
         <div class="sum-val">${fmtShort(totalSecs)} h</div>
-        ${openSecs > 0 ? `<div class="sum-sub">Laskuttamatta: ${fmtShort(openSecs)} h</div>` : '<div class="sum-sub">Kaikki laskutettu</div>'}
+        ${openSecs > 0 ? `<div class="sum-sub">${t('uninvoiced')}: ${fmtShort(openSecs)} h</div>` : `<div class="sum-sub">${t('allInvoiced')}</div>`}
       </div>
       ${unpaidTotal > 0 ? `<div class="sum-item">
-        <div class="sum-label">Maksamatta</div>
+        <div class="sum-label">${t('unpaid')}</div>
         <div class="sum-val" style="color:#c62828;">${fmtEur(unpaidTotal)}</div>
-        <div class="sum-sub">${invs.filter(i => !i.paid).length} laskua</div>
+        <div class="sum-sub">${invs.filter(i => !i.paid).length} ${t('invoiceSuffix')}</div>
       </div>` : ''}
       ${totalExpenses > 0 ? `<div class="sum-item">
-        <div class="sum-label">Kulut</div>
+        <div class="sum-label">${t('expenses')}</div>
         <div class="sum-val">${fmtEur(totalExpenses)}</div>
-        <div class="sum-sub">${allExpenses.length} kuittiä</div>
+        <div class="sum-sub">${allExpenses.length} ${t('receipts')}</div>
       </div>` : ''}
     </div>
 
-    <h2>Kuukausittainen erittely</h2>
+    <h2>${t('monthlyBreakdown')}</h2>
     <table>
-      <thead><tr><th>Kuukausi</th><th class="num">Laskuja</th><th class="num">Tunnit</th><th class="num">Laskutettu</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th class="num">${t('invoiceSuffix')}</th><th class="num">${t('hours')}</th><th class="num">${t('invoicedLabel')}</th></tr></thead>
       <tbody>
-        ${monthRows || '<tr><td colspan="4" style="color:#aaa;padding:10px 8px;">Ei toimintaa</td></tr>'}
-        <tr class="total-row"><td>Yhteensä ${year}</td><td class="num">${invs.length}</td><td class="num">${fmtShort(totalSecs)} h</td><td class="num">${fmtEur(totalInvoiced)}</td></tr>
+        ${monthRows || `<tr><td colspan="4" style="color:#aaa;padding:10px 8px;">${t('noActivity')}</td></tr>`}
+        <tr class="total-row"><td>${t('totalRow')} ${year}</td><td class="num">${invs.length}</td><td class="num">${fmtShort(totalSecs)} h</td><td class="num">${fmtEur(totalInvoiced)}</td></tr>
       </tbody>
     </table>
 
     ${Object.keys(custMap).length > 0 ? `
-    <h2>Asiakaskohtainen yhteenveto</h2>
+    <h2>${t('customerSummary')}</h2>
     <table>
-      <thead><tr><th>Asiakas</th><th class="num">Laskuja</th><th class="num">Tunnit</th><th class="num">Laskutettu</th></tr></thead>
+      <thead><tr><th>${t('customer')}</th><th class="num">${t('invoiceSuffix')}</th><th class="num">${t('hours')}</th><th class="num">${t('invoicedLabel')}</th></tr></thead>
       <tbody>${custRows}</tbody>
     </table>` : ''}
 
     ${invs.length > 0 ? `
-    <h2>Laskut</h2>
+    <h2>${t('invoice')}</h2>
     <table>
-      <thead><tr><th>Numero</th><th>Päivämäärä</th><th>Asiakas</th><th class="num">Tunnit</th><th class="num">Summa</th><th>Tila</th></tr></thead>
+      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${invRows}</tbody>
     </table>` : ''}
 
     ${openEntries.length > 0 ? `
-    <h2>Laskuttamattomat kirjaukset</h2>
+    <h2>${t('uninvoicedEntries')}</h2>
     <table>
-      <thead><tr><th>Päivämäärä</th><th>Asiakas</th><th class="num">Tunnit</th><th class="num">Arvo</th><th>Merkintöjä</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('valueLabel')}</th><th>${t('notes')}</th></tr></thead>
       <tbody>${openRows}</tbody>
     </table>` : ''}
 
     ${allExpenses.length > 0 ? `
-    <h2>Kulukorvaukset</h2>
+    <h2>${t('expenses')}</h2>
     <table>
-      <thead><tr><th>Päivämäärä</th><th>Kuvaus</th><th>Asiakas</th><th class="num">Summa</th><th>Tila</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${expRows}</tbody>
     </table>` : ''}
 
-    <button class="print-btn" id="pbtn">🖨 Tulosta / Tallenna PDF</button>
+    <button class="print-btn" id="pbtn">${t('printSavePdf')}</button>
     <script nonce="${nc}">document.getElementById('pbtn').addEventListener('click',()=>window.print())</script>
   </body></html>`;
 
-  openReport(html, `Vuosiraportti ${year}`);
+  openReport(html, `${t('yearReport')} ${year}`);
 }
 
 function downloadMonthReport() {
   const sel = document.getElementById('rep-month-sel');
   const month = parseInt(sel.value);
   const year = reportYear;
-  const monthName = MONTH_NAMES[month];
+  const monthName = monthNames()[month];
 
   const invs = state.invoices.filter(inv => {
     const d = new Date(inv.date);
@@ -447,18 +446,18 @@ function downloadMonthReport() {
       <td class="num">${fmtHours(e.secs)}</td>
       <td class="num">${fmtEur(e.rate ?? state.cfg.hourly)}/h</td>
       <td class="num">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
-      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? 'Laskutettu' : 'Avoin'}</span></td>
+      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
       <td style="font-size:12px;color:#666;">${esc(e.notes || '')}</td>
     </tr>`).join('');
 
   const invRows = invs.map(inv => {
     const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
     return `<tr>
-      <td>Lasku #${String(inv.id).padStart(3, '0')}</td>
+      <td>${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</td>
       <td>${fmtDate(inv.date)}</td>
       <td>${custs.map(esc).join(', ') || '—'}</td>
       <td class="num">${fmtEur(inv.total)}</td>
-      <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? 'Maksettu' : 'Maksamatta'}</span></td>
+      <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? t('paid') : t('unpaid')}</span></td>
     </tr>`;
   }).join('');
 
@@ -468,10 +467,10 @@ function downloadMonthReport() {
       <td>${esc(e.description)}</td>
       <td>${esc(e.customer || '—')}</td>
       <td class="num">${fmtEur(e.amount)}</td>
-      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? 'Laskutettu' : 'Avoin'}</span></td>
+      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
     </tr>`).join('');
 
-  const html = `<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8">
+  const html = `<!DOCTYPE html><html lang="${state.lang}"><head><meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nc}'; script-src 'nonce-${nc}';">
     <title>${monthName} ${year}</title>
     ${reportStyles(nc)}
@@ -479,59 +478,59 @@ function downloadMonthReport() {
     <div class="rep-header">
       <div>
         <h1>${monthName} ${year}</h1>
-        <div class="meta">Luotu ${fmtDate(new Date())}</div>
+        <div class="meta">${t('createdOn')} ${fmtDate(new Date())}</div>
       </div>
       ${companyHeader()}
     </div>
 
     <div class="summary">
       <div class="sum-item">
-        <div class="sum-label">Tunnit</div>
+        <div class="sum-label">${t('hours')}</div>
         <div class="sum-val">${fmtShort(totalSecs)} h</div>
-        <div class="sum-sub">${openSecs > 0 ? 'Laskuttamatta: ' + fmtShort(openSecs) + ' h' : 'Arvo: ' + fmtEur(totalVal)}</div>
+        <div class="sum-sub">${openSecs > 0 ? t('uninvoiced') + ': ' + fmtShort(openSecs) + ' h' : t('valueLabel') + ': ' + fmtEur(totalVal)}</div>
       </div>
       <div class="sum-item">
-        <div class="sum-label">Laskutettu</div>
+        <div class="sum-label">${t('invoicedLabel')}</div>
         <div class="sum-val">${fmtEur(totalInvoiced)}</div>
-        <div class="sum-sub">${invs.length} laskua</div>
+        <div class="sum-sub">${invs.length} ${t('invoiceSuffix')}</div>
       </div>
       ${totalExpenses > 0 ? `<div class="sum-item">
-        <div class="sum-label">Kulut</div>
+        <div class="sum-label">${t('expenses')}</div>
         <div class="sum-val">${fmtEur(totalExpenses)}</div>
       </div>` : ''}
     </div>
 
     ${allEntries.length > 0 ? `
-    <h2>Kirjaukset</h2>
+    <h2>${t('kirjanpito')}</h2>
     <table>
-      <thead><tr><th>Päivämäärä</th><th>Asiakas</th><th class="num">Tunnit</th><th class="num">Hinta</th><th class="num">Summa</th><th>Tila</th><th>Merkintöjä</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('rateLabel')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th><th>${t('notes')}</th></tr></thead>
       <tbody>
         ${entryRows}
         <tr class="total-row">
-          <td colspan="2">Yhteensä</td>
+          <td colspan="2">${t('totalRow')}</td>
           <td class="num">${fmtShort(totalSecs)} h</td>
           <td></td>
           <td class="num">${fmtEur(totalVal)}</td>
           <td colspan="2"></td>
         </tr>
       </tbody>
-    </table>` : `<p style="color:#999;margin:16px 0;">Ei kirjauksia ${monthName.toLowerCase()}ssa ${year}.</p>`}
+    </table>` : `<p style="color:#999;margin:16px 0;">${t('noEntriesMonth')} ${monthName} ${year}.</p>`}
 
     ${invs.length > 0 ? `
-    <h2>Laskut</h2>
+    <h2>${t('invoice')}</h2>
     <table>
-      <thead><tr><th>Numero</th><th>Päivämäärä</th><th>Asiakas</th><th class="num">Summa</th><th>Tila</th></tr></thead>
+      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${invRows}</tbody>
     </table>` : ''}
 
     ${allExpenses.length > 0 ? `
-    <h2>Kulukorvaukset</h2>
+    <h2>${t('expenses')}</h2>
     <table>
-      <thead><tr><th>Päivämäärä</th><th>Kuvaus</th><th>Asiakas</th><th class="num">Summa</th><th>Tila</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${expRows}</tbody>
     </table>` : ''}
 
-    <button class="print-btn" id="pbtn">🖨 Tulosta / Tallenna PDF</button>
+    <button class="print-btn" id="pbtn">${t('printSavePdf')}</button>
     <script nonce="${nc}">document.getElementById('pbtn').addEventListener('click',()=>window.print())</script>
   </body></html>`;
 

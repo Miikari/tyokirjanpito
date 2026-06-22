@@ -454,6 +454,7 @@ body {
 .install-banner span { flex: 1; font-size: 14px; font-weight: 500; }
 .install-banner button { padding: 8px 16px; border-radius: 8px; border: none; background: #fff; color: var(--blue); font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 .install-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 20px; padding: 4px 8px; }
+#clock-notes::placeholder { color: rgba(255,255,255,0.45); }
 
 /* ── TAB BADGE ── */
 .tab-badge {
