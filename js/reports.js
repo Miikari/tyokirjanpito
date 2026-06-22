@@ -152,15 +152,15 @@ function drawBars(invs) {
   const H = 180;
   const { ctx } = sizeCanvas('chart-bars', W, H);
 
-  const months = Array(12).fill(0);
+  const monthlyTotals = Array(12).fill(0);
   for (const inv of invs) {
-    months[new Date(inv.date).getMonth()] += inv.total;
+    monthlyTotals[new Date(inv.date).getMonth()] += inv.total;
   }
 
   const pt = 14, pb = 30, pl = 48, pr = 8;
   const cW = W - pl - pr;
   const cH = H - pt - pb;
-  const maxVal = Math.max(...months, 100);
+  const maxVal = Math.max(...monthlyTotals, 100);
   const slot = cW / 12;
   const bW = Math.max(slot * 0.6, 4);
 
@@ -180,7 +180,7 @@ function drawBars(invs) {
   }
 
   const now = new Date();
-  months.forEach((val, i) => {
+  monthlyTotals.forEach((val, i) => {
     const x = pl + i * slot + (slot - bW) / 2;
     const bH = val > 0 ? Math.max((val / maxVal) * cH, 3) : 3;
     const y = pt + cH - bH;

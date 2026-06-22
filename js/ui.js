@@ -53,21 +53,6 @@ export function applyLang() {
   document.querySelector('.btn-outline').textContent = t('selectAll');
   document.querySelector('.btn-invoice').textContent = t('buildInvoice');
 
-  document.querySelector('#modal h2').textContent = t('recurring');
-  document.querySelectorAll('#modal .modal-opt')[0].textContent = t('addAllRecurring');
-  document.querySelectorAll('#modal .modal-opt')[1].textContent = t('addCustomerRecurring');
-  document.querySelectorAll('#modal .modal-opt')[2].textContent = t('noRecurringInvoice');
-  document.querySelectorAll('#modal .modal-opt')[3].textContent = t('cancel');
-  document.querySelector('#modal-edit h2').textContent = t('editEntry');
-  document.querySelector('#modal-edit .modal-opt.primary').textContent = t('saveChanges');
-  document.querySelector('#modal-edit .modal-cancel').textContent = t('cancel');
-  document.querySelector('#modal-edit-inv h2').textContent = t('editInvoice');
-  document.querySelector('#modal-edit-inv .modal-opt.primary').textContent = t('saveChanges');
-  document.querySelector('#modal-edit-inv .modal-cancel').textContent = t('cancel');
-  document.getElementById('confirm-ok').textContent = t('yes');
-  document.querySelector('#modal-confirm .modal-cancel').textContent = t('cancel');
-
-  document.getElementById('label-language').textContent = t('language');
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (t(key) !== key) el.textContent = t(key);
