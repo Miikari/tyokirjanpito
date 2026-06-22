@@ -149,21 +149,21 @@
         </div>
         <div class="form-col">
           <div class="fg fg-grow"><label data-i18n="notes">Merkintöjä</label><textarea id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></textarea></div>
-          <div class="fg" style="margin-bottom:0;"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="m-rate" min="0" step="0.5" style="width:120px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+          <div class="fg" style="margin-bottom:0;"><label data-i18n="hourlyRateLabel">Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="m-rate" min="0" step="0.5" style="width:120px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
         </div>
       </div>
       <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
     </div>
 
     <div class="card card-form">
-      <div class="card-label">Kulukorvaukset</div>
+      <div class="card-label" data-i18n="expenses">Kulukorvaukset</div>
       <div id="exp-list-kello"></div>
-      <div class="fg"><label>Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." autocomplete="off"></div>
+      <div class="fg"><label data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." autocomplete="off"></div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label>Summa (€)</label><input type="number" id="exp-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label>Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
       </div>
-      <button class="btn-add" onclick="addExpense()">+ Lisää kulu</button>
+      <button class="btn-add" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
     </div>
   </div><!-- /panel-kello -->
 
@@ -245,8 +245,8 @@
       <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki" autocomplete="off"></div>
       <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567" autocomplete="off"></div>
       <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi" autocomplete="off"></div>
-      <div class="fg"><label>Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
-      <div class="fg"><label>Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="bankAccount">Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" autocomplete="off"></div>
       <button class="btn-add" onclick="saveCompany()" data-i18n="save">Tallenna</button>
     </div>
 
@@ -283,13 +283,13 @@
       </div>
       <button class="btn-add" onclick="saveHourly()" data-i18n="saveHourlyBtn">Tallenna tuntihinta</button>
       <div class="set-row" style="margin-top:10px;">
-        <div><div class="set-label">Kilometrikorvaus</div><div class="set-sub">Kilometrihinta laskuun</div></div>
+        <div><div class="set-label" data-i18n="kmReimbursement">Kilometrikorvaus</div><div class="set-sub" data-i18n="kmRateHint">Kilometrihinta laskuun</div></div>
         <div class="set-input-wrap">
           <input type="number" id="set-kmrate" min="0" step="0.01" autocomplete="off">
           <span style="font-size:15px;font-weight:600;color:var(--text2);">€/km</span>
         </div>
       </div>
-      <button class="btn-add" onclick="saveKmRate()" style="margin-top:4px;">Tallenna kilometrikorvaus</button>
+      <button class="btn-add" onclick="saveKmRate()" style="margin-top:4px;" data-i18n="saveKmRate">Tallenna kilometrikorvaus</button>
     </div>
   </div>
 
@@ -310,43 +310,43 @@
     <div class="card">
       <div class="card-label" data-i18n="customersLabel">Asiakkaat</div>
       <div id="cust-chips" style="margin-bottom:12px;"></div>
-      <button class="btn-add" onclick="openAddCustomerModal()">+ Lisää asiakas</button>
+      <button class="btn-add" onclick="openAddCustomerModal()" data-i18n="addCustomer">+ Lisää asiakas</button>
     </div>
   </div>
 
   <div class="card" style="margin-top:14px;">
-    <div class="card-label">Laskuasetukset</div>
+    <div class="card-label" data-i18n="invoiceSettings">Laskuasetukset</div>
     <label class="toggle-row">
       <input type="checkbox" id="inv-show-erapaiva" onchange="saveInvoiceSettings()">
-      <div><div class="set-label">Eräpäivä ja maksuehto</div><div class="set-sub">Lasketaan asiakkaan maksuehdosta</div></div>
+      <div><div class="set-label" data-i18n="dueDate">Eräpäivä ja maksuehto</div><div class="set-sub" data-i18n="dueDateHint">Lasketaan asiakkaan maksuehdosta</div></div>
     </label>
     <label class="toggle-row">
       <input type="checkbox" id="inv-show-viitenumero" onchange="saveInvoiceSettings()">
-      <div><div class="set-label">Viitenumero</div><div class="set-sub">Automaattisesti generoitu</div></div>
+      <div><div class="set-label" data-i18n="referenceNumber">Viitenumero</div><div class="set-sub" data-i18n="referenceNumberHint">Automaattisesti generoitu</div></div>
     </label>
     <label class="toggle-row">
       <input type="checkbox" id="inv-show-tilinumero" onchange="saveInvoiceSettings()">
-      <div><div class="set-label">Tilinumero</div><div class="set-sub">Asetuksissa määritetty tilinumero</div></div>
+      <div><div class="set-label" data-i18n="bankAccount">Tilinumero</div><div class="set-sub" data-i18n="bankAccountHint">Asetuksissa määritetty tilinumero</div></div>
     </label>
   </div>
 
   <div class="card" style="margin-top:14px;display:none;" id="org-card">
-    <div class="card-label">Organisaatio</div>
+    <div class="card-label" data-i18n="orgSection">Organisaatio</div>
     <div style="font-size:15px;font-weight:700;margin-bottom:12px;" id="org-name-display">—</div>
     <div id="org-members-list" style="margin-bottom:14px;"></div>
-    <div class="set-label" style="margin-bottom:6px;">Kutsu­linkki</div>
+    <div class="set-label" style="margin-bottom:6px;" data-i18n="orgInviteLink">Kutsu­linkki</div>
     <div style="display:flex;gap:8px;margin-bottom:8px;">
       <input type="text" id="org-invite-url" readonly style="flex:1;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text2);" autocomplete="off">
-      <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="copyInviteLink()">Kopioi</button>
+      <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="copyInviteLink()" data-i18n="orgCopy">Kopioi</button>
     </div>
-    <button class="btn-add" style="background:transparent;color:var(--text2);border:1.5px solid var(--border2);" onclick="refreshInviteCode()">Luo uusi koodi</button>
+    <button class="btn-add" style="background:transparent;color:var(--text2);border:1.5px solid var(--border2);" onclick="refreshInviteCode()" data-i18n="orgNewCode">Luo uusi koodi</button>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
-      <div class="set-label" style="margin-bottom:6px;">Liity toiseen organisaatioon</div>
+      <div class="set-label" style="margin-bottom:6px;" data-i18n="orgJoinTitle">Liity toiseen organisaatioon</div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="org-join-input" placeholder="Kutsukoodi" style="flex:1;font-size:14px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);" autocomplete="off">
-        <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="joinWithCodeUI()">Liity</button>
+        <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="joinWithCodeUI()" data-i18n="orgJoinBtn">Liity</button>
       </div>
-      <div style="font-size:12px;color:var(--text3);margin-top:4px;">Nykyiset tietosi eivät siirry uuteen organisaatioon.</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;" data-i18n="orgJoinNote">Nykyiset tietosi eivät siirry uuteen organisaatioon.</div>
     </div>
   </div>
 
@@ -378,7 +378,7 @@
       <div class="fg" style="flex:1;margin:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="edit-m" min="0" max="59" autocomplete="off"></div>
     </div>
     <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="edit-notes" placeholder="Vapaaehtoinen merkintä..." autocomplete="off"></div>
-    <div class="fg"><label>Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="edit-rate" min="0" step="0.5" style="flex:1;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+    <div class="fg"><label data-i18n="hourlyRateLabel">Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="edit-rate" min="0" step="0.5" style="flex:1;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
     <button class="modal-opt primary" onclick="saveEditEntry()" data-i18n="saveChanges">Tallenna muutokset</button>
     <button class="modal-opt" onclick="deleteEntry()" style="color:var(--red);border-color:var(--red-bg);" data-i18n="deleteEntry">Poista kirjaus</button>
     <button class="modal-opt modal-cancel" onclick="closeEditModal()" data-i18n="cancel">Peruuta</button>
@@ -401,30 +401,30 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modal-cust-title">Lisää asiakas</h2>
-    <div class="fg"><label>Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy" autocomplete="off"></div>
-    <div class="fg"><label>Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
-    <div class="fg"><label>Katuosoite</label><input type="text" id="cust-katuosoite" placeholder="Esimerkkitie 1" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custName">Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custAddress">Katuosoite</label><input type="text" id="cust-katuosoite" placeholder="Esimerkkitie 1" autocomplete="off"></div>
     <div class="row2">
-      <div class="fg"><label>Postinumero</label><input type="text" id="cust-postinumero" placeholder="00100" autocomplete="off"></div>
-      <div class="fg"><label>Postitoimipaikka</label><input type="text" id="cust-postitoimipaikka" placeholder="Helsinki" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="custPostalCode">Postinumero</label><input type="text" id="cust-postinumero" placeholder="00100" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="custCity">Postitoimipaikka</label><input type="text" id="cust-postitoimipaikka" placeholder="Helsinki" autocomplete="off"></div>
     </div>
-    <div class="fg"><label>Sähköposti</label><input type="email" id="cust-sposti" placeholder="yritys@esimerkki.fi" autocomplete="off"></div>
-    <div class="fg"><label>Puhelinnumero</label><input type="tel" id="cust-puhelin" placeholder="+358 40 123 4567" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custEmail">Sähköposti</label><input type="email" id="cust-sposti" placeholder="yritys@esimerkki.fi" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custPhone">Puhelinnumero</label><input type="tel" id="cust-puhelin" placeholder="+358 40 123 4567" autocomplete="off"></div>
     <div class="fg">
-      <label>Maksuehto</label>
+      <label data-i18n="paymentTerms">Maksuehto</label>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:6px;">
           <input type="number" id="cust-maksuehto" min="1" max="365" value="10" style="width:70px;" autocomplete="off">
-          <span style="font-size:13px;color:var(--text2);">pv</span>
+          <span style="font-size:13px;color:var(--text2);" data-i18n="paymentTermsDays">pv</span>
         </div>
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;">
           <input type="checkbox" id="cust-maksuehto-sopimus" onchange="toggleMaksuehtoSopimus()">
-          Erillisen sopimuksen mukaan
+          <span data-i18n="paymentTermsContract">Erillisen sopimuksen mukaan</span>
         </label>
       </div>
     </div>
-    <button class="modal-opt primary" onclick="saveCustomerModal()">Tallenna</button>
-    <button class="modal-opt modal-cancel" onclick="closeCustomerModal()">Peruuta</button>
+    <button class="modal-opt primary" onclick="saveCustomerModal()" data-i18n="save">Tallenna</button>
+    <button class="modal-opt modal-cancel" onclick="closeCustomerModal()" data-i18n="cancel">Peruuta</button>
   </div>
 </div>
 
@@ -442,10 +442,10 @@
 <div class="modal-wrap" id="join-modal" style="display:none !important;">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>Liity organisaatioon</h2>
-    <p>Sinut on kutsuttu organisaatioon <strong id="join-org-name"></strong>. Haluatko liittyä?</p>
-    <button class="modal-opt primary" onclick="confirmJoin()">Liity</button>
-    <button class="modal-opt modal-cancel" onclick="closeJoinModal()">Peruuta</button>
+    <h2 data-i18n="orgJoinModal">Liity organisaatioon</h2>
+    <p><span data-i18n="orgJoinText">Sinut on kutsuttu organisaatioon</span> <strong id="join-org-name"></strong>. <span data-i18n="orgJoinConfirm">Haluatko liittyä?</span></p>
+    <button class="modal-opt primary" onclick="confirmJoin()" data-i18n="orgJoinBtn">Liity</button>
+    <button class="modal-opt modal-cancel" onclick="closeJoinModal()" data-i18n="cancel">Peruuta</button>
   </div>
 </div>
 

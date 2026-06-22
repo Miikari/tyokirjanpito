@@ -9,7 +9,7 @@ let editingCustomerName = null; // null = adding new, string = editing existing
 
 function openAddCustomerModal() {
   editingCustomerName = null;
-  document.getElementById('modal-cust-title').textContent = 'Lisää asiakas';
+  document.getElementById('modal-cust-title').textContent = t('addCustomerTitle');
   document.getElementById('cust-name').value = '';
   document.getElementById('cust-ytunnus').value = '';
   document.getElementById('cust-katuosoite').value = '';
@@ -27,7 +27,7 @@ function openEditCustomerModal(name) {
   const c = state.cfg.customers.find(x => x.name === name);
   if (!c) return;
   editingCustomerName = name;
-  document.getElementById('modal-cust-title').textContent = 'Muokkaa asiakasta';
+  document.getElementById('modal-cust-title').textContent = t('editCustomerTitle');
   document.getElementById('cust-name').value = c.name || '';
   document.getElementById('cust-ytunnus').value = c.ytunnus || '';
   document.getElementById('cust-katuosoite').value = c.katuosoite || '';
@@ -44,7 +44,7 @@ function openEditCustomerModal(name) {
 
 function saveCustomerModal() {
   const name = document.getElementById('cust-name').value.trim();
-  if (!name) { toast('Syötä yrityksen nimi'); return; }
+  if (!name) { toast(t('companyNameRequired')); return; }
 
   const isSopimus = document.getElementById('cust-maksuehto-sopimus').checked;
   const maksuehto = isSopimus ? 'sopimus' : (parseInt(document.getElementById('cust-maksuehto').value) || 10);
@@ -75,7 +75,7 @@ function saveCustomerModal() {
       if (state.activeCustomer === editingCustomerName) state.activeCustomer = name;
     }
     state.cfg.customers[idx] = data;
-    toast('Asiakastiedot tallennettu');
+    toast(t('customerUpdated'));
   }
 
   closeCustomerModal();

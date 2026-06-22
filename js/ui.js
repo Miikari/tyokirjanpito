@@ -21,7 +21,7 @@ function setLang(l) {
   applyLang();
 }
 
-function applyLang() {
+export function applyLang() {
   document.querySelector('.login-title').textContent = t('loginTitle');
   const subEl = document.querySelector('.login-sub');
   subEl.textContent = '';
@@ -73,6 +73,9 @@ function applyLang() {
     if (t(key) !== key) el.textContent = t(key);
   });
   document.getElementById('rec-name').placeholder = t('recNamePlaceholder');
+  document.getElementById('exp-desc').placeholder = t('expenseDescPlaceholder');
+  const orgJoinInput = document.getElementById('org-join-input');
+  if (orgJoinInput) orgJoinInput.placeholder = t('orgJoinPlaceholder');
   ['fi', 'en'].forEach(l => {
     const btn = document.getElementById('btn-' + l);
     const active = state.lang === l;
@@ -150,3 +153,5 @@ window.showTab = showTab;
 window.setLang = setLang;
 window.toggleNotes = toggleNotes;
 window.closeConfirm = closeConfirm;
+
+applyLang();

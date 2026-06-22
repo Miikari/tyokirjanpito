@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { toast } from './ui.js';
+import { toast, applyLang } from './ui.js';
 import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
 import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
 
@@ -131,6 +131,7 @@ auth.onAuthStateChanged(async user => {
 
     await initOrg(user);
     await loadFromFirestore();
+    applyLang();
     listenActiveState();
     if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
       const { loadDemoData } = await import('./demo.js');

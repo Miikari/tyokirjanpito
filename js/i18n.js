@@ -101,6 +101,25 @@ const i18n = {
     description: 'Kuvaus', amount: 'Summa (€)', added: 'Lisätty', enterName: 'Syötä nimi',
     fillDesc: 'Täytä kuvaus ja summa', invoiceArchived: 'arkistoitu',
     perHour: '€/h', perMonth: '/kk',
+    expenseDescPlaceholder: 'esim. Matkakulut, materiaali...',
+    // Lisää asiakas
+    addCustomer: '+ Lisää asiakas', addCustomerTitle: 'Lisää asiakas', editCustomerTitle: 'Muokkaa asiakasta',
+    companyNameRequired: 'Syötä yrityksen nimi', customerUpdated: 'Asiakastiedot tallennettu',
+    custName: 'Yrityksen nimi *', ytunnus: 'Y-tunnus', custAddress: 'Katuosoite',
+    custPostalCode: 'Postinumero', custCity: 'Postitoimipaikka',
+    custEmail: 'Sähköposti', custPhone: 'Puhelinnumero',
+    paymentTerms: 'Maksuehto', paymentTermsDays: 'pv', paymentTermsContract: 'Erillisen sopimuksen mukaan',
+    // Asetukset – lisäkentät
+    bankAccount: 'Tilinumero', bankAccountHint: 'Asetuksissa määritetty tilinumero',
+    invoiceSettings: 'Laskuasetukset',
+    dueDate: 'Eräpäivä ja maksuehto', dueDateHint: 'Lasketaan asiakkaan maksuehdosta',
+    referenceNumber: 'Viitenumero', referenceNumberHint: 'Automaattisesti generoitu',
+    // Organisaatio
+    orgSection: 'Organisaatio', orgInviteLink: 'Kutsu­linkki', orgCopy: 'Kopioi',
+    orgNewCode: 'Luo uusi koodi', orgJoinTitle: 'Liity toiseen organisaatioon',
+    orgJoinBtn: 'Liity', orgJoinNote: 'Nykyiset tietosi eivät siirry uuteen organisaatioon.',
+    orgJoinPlaceholder: 'Kutsukoodi', orgJoinModal: 'Liity organisaatioon',
+    orgJoinText: 'Sinut on kutsuttu organisaatioon', orgJoinConfirm: 'Haluatko liittyä?',
   },
   en: {
     // App
@@ -202,6 +221,25 @@ const i18n = {
     description: 'Description', amount: 'Amount (€)', added: 'Added', enterName: 'Enter name',
     fillDesc: 'Fill in description and amount', invoiceArchived: 'archived',
     perHour: '€/h', perMonth: '/mo',
+    expenseDescPlaceholder: 'e.g. Travel expenses, materials...',
+    // Customer modal
+    addCustomer: '+ Add customer', addCustomerTitle: 'Add customer', editCustomerTitle: 'Edit customer',
+    companyNameRequired: 'Enter company name', customerUpdated: 'Customer saved',
+    custName: 'Company name *', ytunnus: 'Business ID', custAddress: 'Street address',
+    custPostalCode: 'Postal code', custCity: 'City',
+    custEmail: 'Email', custPhone: 'Phone number',
+    paymentTerms: 'Payment terms', paymentTermsDays: 'days', paymentTermsContract: 'Per separate agreement',
+    // Settings – extra fields
+    bankAccount: 'Bank account', bankAccountHint: 'Bank account from settings',
+    invoiceSettings: 'Invoice settings',
+    dueDate: 'Due date & payment terms', dueDateHint: 'Based on customer payment terms',
+    referenceNumber: 'Reference number', referenceNumberHint: 'Automatically generated',
+    // Organization
+    orgSection: 'Organization', orgInviteLink: 'Invite link', orgCopy: 'Copy',
+    orgNewCode: 'Generate new code', orgJoinTitle: 'Join another organization',
+    orgJoinBtn: 'Join', orgJoinNote: 'Your current data will not be transferred to the new organization.',
+    orgJoinPlaceholder: 'Invite code', orgJoinModal: 'Join organization',
+    orgJoinText: 'You have been invited to join', orgJoinConfirm: 'Do you want to join?',
   }
 };
 
