@@ -5,19 +5,10 @@ import { toast } from './ui.js';
 import { save } from './storage.js';
 import { renderCustChips, renderAllSelects } from './customers.js';
 import { renderOrgSettings } from './org.js';
+import { updateUserNameDisplay } from './auth.js';
 
 function saveRounding() {
   state.cfg.rounding = parseInt(document.getElementById('set-rounding').value);
-  save(); toast(t('saved'));
-}
-
-function saveCompany() {
-  state.cfg.company = document.getElementById('set-company').value.trim();
-  state.cfg.address = document.getElementById('set-address').value.trim();
-  state.cfg.phone = document.getElementById('set-phone').value.trim();
-  state.cfg.email = document.getElementById('set-email').value.trim();
-  state.cfg.ytunnus = document.getElementById('set-ytunnus').value.trim();
-  state.cfg.tilinumero = document.getElementById('set-tilinumero').value.trim();
   save(); toast(t('saved'));
 }
 
@@ -57,16 +48,19 @@ function previewHourly() {
   document.getElementById('hourly-hint').textContent = '8h = ' + fmtEur(8 * v) + ' · 160h = ' + fmtEur(160 * v);
 }
 
-function saveHourly() {
-  const v = parseFloat(document.getElementById('set-hourly').value);
-  if (isNaN(v) || v < 0) { toast(t('invalidPrice')); return; }
-  state.cfg.hourly = v; save(); previewHourly(); toast(t('saved') + fmtEur(v) + '/h');
-}
-
-function saveKmRate() {
-  const v = parseFloat(document.getElementById('set-kmrate').value);
-  if (isNaN(v) || v < 0) { toast(t('invalidPrice')); return; }
-  state.cfg.kmRate = v; save(); toast(t('kmRateSaved') + ': ' + String(v).replace('.', ',') + ' €/km');
+function saveAllSettings() {
+  const hourly = parseFloat(document.getElementById('set-hourly').value);
+  const kmRate = parseFloat(document.getElementById('set-kmrate').value);
+  if (isNaN(hourly) || hourly < 0 || isNaN(kmRate) || kmRate < 0) { toast(t('invalidPrice')); return; }
+  state.cfg.company = document.getElementById('set-company').value.trim();
+  state.cfg.address = document.getElementById('set-address').value.trim();
+  state.cfg.phone = document.getElementById('set-phone').value.trim();
+  state.cfg.email = document.getElementById('set-email').value.trim();
+  state.cfg.ytunnus = document.getElementById('set-ytunnus').value.trim();
+  state.cfg.tilinumero = document.getElementById('set-tilinumero').value.trim();
+  state.cfg.hourly = hourly;
+  state.cfg.kmRate = kmRate;
+  save(); previewHourly(); updateUserNameDisplay(); toast(t('saved'));
 }
 
 function saveInvoiceSettings() {
@@ -113,9 +107,7 @@ function renderRecList() {
     </div>`).join('');
 }
 
-window.saveCompany = saveCompany;
-window.saveHourly = saveHourly;
-window.saveKmRate = saveKmRate;
+window.saveAllSettings = saveAllSettings;
 window.saveRounding = saveRounding;
 window.saveVat = saveVat;
 window.saveInvoiceSettings = saveInvoiceSettings;

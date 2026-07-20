@@ -108,19 +108,22 @@ export function renderMainBtns() {
 }
 
 export function renderPills() {
-  const el = document.getElementById('pills');
-  if (!state.cfg.customers.length) { el.innerHTML = ''; return; }
-  el.innerHTML = state.cfg.customers.map(c =>
-    `<div class="pill ${state.activeCustomer === c.name ? 'active' : ''}" onclick="selCust(${esc(JSON.stringify(c.name))})">${esc(c.name)}</div>`
-  ).join('');
+  const el = document.getElementById('cust-select');
+  const isLocked = state.clockState !== 'idle';
+  if (!state.cfg.customers.length) {
+    el.innerHTML = `<option value="">${t('noCustomer')}</option>`;
+    el.disabled = true;
+    return;
+  }
+  const sorted = [...state.cfg.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
+  el.innerHTML = [`<option value=""${state.activeCustomer ? '' : ' selected'}>— ${t('noCustomer')} —</option>`,
+    ...sorted.map(c => `<option value="${esc(c.name)}"${state.activeCustomer === c.name ? ' selected' : ''}>${esc(c.name)}</option>`)
+  ].join('');
+  el.disabled = isLocked;
 }
 
 function selCust(n) {
-  if (state.clockState === 'running' || state.clockState === 'paused') {
-    toast(t('cannotSwitch'));
-    return;
-  }
-  state.activeCustomer = state.activeCustomer === n ? null : n;
+  state.activeCustomer = n || null;
   renderPills();
 }
 

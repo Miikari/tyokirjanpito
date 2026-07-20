@@ -3,6 +3,9 @@ import { t } from './i18n.js';
 import { toast, applyLang } from './ui.js';
 import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
 import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
+import { renderPills } from './clock.js';
+import { renderEntries } from './entries.js';
+import { renderAllSelects } from './customers.js';
 
 const EMAIL_ERRORS = {
   'auth/invalid-email': 'Sähköpostiosoite ei ole kelvollinen.',
@@ -13,6 +16,25 @@ const EMAIL_ERRORS = {
   'auth/invalid-credential': 'Väärä sähköposti tai salasana.',
   'auth/too-many-requests': 'Liian monta yritystä. Odota hetki.',
 };
+
+export function updateUserNameDisplay() {
+  const company = (state.cfg.company || '').trim();
+  document.getElementById('user-name').textContent = company || state.accountName;
+  const av = document.getElementById('user-avatar');
+  const avLetter = document.getElementById('user-avatar-letter');
+  if (company) {
+    avLetter.textContent = company.charAt(0);
+    avLetter.style.display = 'flex';
+    av.style.display = 'none';
+  } else if (state.accountPhotoURL) {
+    av.src = state.accountPhotoURL;
+    av.style.display = 'block';
+    avLetter.style.display = 'none';
+  } else {
+    av.style.display = 'none';
+    avLetter.style.display = 'none';
+  }
+}
 
 function showLoginView(view) {
   ['main', 'signin', 'signup', 'reset'].forEach(v => {
@@ -104,52 +126,61 @@ auth.getRedirectResult().then(() => {}).catch(e => {
 auth.onAuthStateChanged(async user => {
   if (user) {
     state.uid = user.uid;
-    document.getElementById('login-screen').classList.remove('visible');
-    const name = user.isAnonymous ? 'Vieras' : (user.displayName || user.email);
-    document.getElementById('user-name').textContent = name;
-    const av = document.getElementById('user-avatar');
-    if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
-    else av.style.display = 'none';
+    state.accountName = user.isAnonymous ? 'Vieras' : (user.displayName || user.email);
+    state.accountPhotoURL = user.photoURL || '';
+    updateUserNameDisplay();
 
-    // Check for invite link in URL before initOrg
-    const joinCode = new URLSearchParams(location.search).get('join');
-    if (joinCode && state.uid) {
-      const userDoc = await db.collection('users').doc(user.uid).get();
-      if (userDoc.exists && userDoc.data().orgId) {
-        // Already in an org — show join prompt
-        await initOrg(user);
-        await loadFromFirestore();
-        renderOrgSettings();
-        handleJoinLink(user, joinCode);
-        return;
-      } else {
-        // New user — store code and let initOrg handle it
-        localStorage.setItem('pendingJoinCode', joinCode);
-        history.replaceState({}, '', location.pathname);
+    try {
+      // Check for invite link in URL before initOrg
+      const joinCode = new URLSearchParams(location.search).get('join');
+      if (joinCode && state.uid) {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists && userDoc.data().orgId) {
+          // Already in an org — show join prompt
+          await initOrg(user);
+          await loadFromFirestore();
+          updateUserNameDisplay();
+          renderOrgSettings();
+          document.getElementById('login-screen').classList.remove('visible');
+          handleJoinLink(user, joinCode);
+          return;
+        } else {
+          // New user — store code and let initOrg handle it
+          localStorage.setItem('pendingJoinCode', joinCode);
+          history.replaceState({}, '', location.pathname);
+        }
       }
-    }
 
-    await initOrg(user);
-    await loadFromFirestore();
-    applyLang();
-    listenActiveState();
-    if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
-      const { loadDemoData } = await import('./demo.js');
-      loadDemoData();
-      const { renderAllSelects } = await import('./customers.js');
-      const { renderEntries } = await import('./entries.js');
-      const { renderPills } = await import('./clock.js');
-      renderAllSelects(); renderPills(); renderEntries();
-      window.updateInvoiceBadge?.();
+      await initOrg(user);
+      await loadFromFirestore();
+      updateUserNameDisplay();
+      applyLang();
+      listenActiveState();
+      if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
+        const { loadDemoData } = await import('./demo.js');
+        loadDemoData();
+        const { renderAllSelects } = await import('./customers.js');
+        const { renderEntries } = await import('./entries.js');
+        const { renderPills } = await import('./clock.js');
+        renderAllSelects(); renderPills(); renderEntries();
+        window.updateInvoiceBadge?.();
+      }
+      renderOrgSettings();
+    } finally {
+      document.getElementById('login-screen').classList.remove('visible');
     }
-    renderOrgSettings();
   } else {
     unlistenActiveState();
-    state.uid = null; state.orgId = null;
-    state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
-    state.cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };
     document.getElementById('login-screen').classList.add('visible');
     showLoginView('main');
+    state.uid = null; state.orgId = null; state.accountName = ''; state.accountPhotoURL = '';
+    state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
+    state.cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };
+    document.getElementById('user-name').textContent = '';
+    document.getElementById('user-avatar').style.display = 'none';
+    document.getElementById('user-avatar-letter').style.display = 'none';
+    renderAllSelects(); renderPills(); renderEntries();
+    window.updateInvoiceBadge?.();
   }
 });
 

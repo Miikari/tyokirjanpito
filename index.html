@@ -22,6 +22,7 @@
 
 <!-- ── LOGIN SCREEN ── -->
 <div class="login-screen visible" id="login-screen">
+ <div class="login-inner">
   <div class="login-logo">⏱</div>
   <div class="login-title">Työtunnit</div>
   <div class="login-sub" id="login-sub-text">Seuraa työtunteja ja kokoa laskuja.<br>Kirjaudu sisään päästäksesi alkuun.</div>
@@ -74,6 +75,7 @@
   </div>
 
   <div class="login-footer">Tietosi tallennetaan turvallisesti pilveen.<br>Käytä samalla tilillä puhelimella ja tietokoneella.</div>
+ </div>
 </div>
 
 <div class="install-banner" id="install-banner">
@@ -83,20 +85,31 @@
 </div>
 
 <div class="header">
+ <div class="header-inner">
   <div class="user-bar">
     <div class="user-info">
-      <img class="user-avatar" id="user-avatar" src="" alt="">
-      <span class="user-name" id="user-name"></span>
+      <div class="user-info-top">
+        <img class="user-avatar" id="user-avatar" src="" alt="">
+        <div class="user-avatar user-avatar-letter" id="user-avatar-letter"></div>
+        <span class="user-name" id="user-name"></span>
+      </div>
+      <div class="header-icons">
+        <button class="icon-btn" onclick="showTab('asetukset')" title="Asetukset">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button class="icon-btn" onclick="signOut()" title="Kirjaudu ulos" >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+      </div>
     </div>
-    <button class="btn-logout" onclick="signOut()">Kirjaudu ulos</button>
   </div>
   <div class="tabs">
-    <button class="tab active" data-tab="kello" onclick="showTab('kello',this)">Kello</button>
+    <button class="tab active" data-tab="kello" onclick="showTab('kello',this)">Työnäkymä</button>
     <button class="tab" data-tab="kirjanpito" onclick="showTab('kirjanpito',this)">Kirjaukset</button>
-    <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskut</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
+    <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskutus</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
     <button class="tab" data-tab="raportointi" onclick="showTab('raportointi',this)">Raportit</button>
-    <button class="tab" data-tab="asetukset" onclick="showTab('asetukset',this)">Asetukset</button>
   </div>
+ </div>
 </div>
 
 <div class="scroll">
@@ -108,7 +121,7 @@
       <div class="timer" id="timer">00:00:00</div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge" data-i18n="idle">Ei käynnissä</span>
-      <div class="pills" id="pills"></div>
+      <select class="clock-cust-select" id="cust-select" onchange="selCust(this.value)"></select>
       <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
         <div id="clock-rate-display" style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="enableClockRateEdit()">
           <span id="clock-rate-val" style="color:rgba(255,255,255,0.85);font-size:14px;font-weight:600;"></span>
@@ -247,7 +260,6 @@
       <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi" autocomplete="off"></div>
       <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
       <div class="fg"><label data-i18n="bankAccount">Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" autocomplete="off"></div>
-      <button class="btn-add" onclick="saveCompany()" data-i18n="save">Tallenna</button>
     </div>
 
     <div class="card">
@@ -281,7 +293,6 @@
           </select>
         </div>
       </div>
-      <button class="btn-add" onclick="saveHourly()" data-i18n="saveHourlyBtn">Tallenna tuntihinta</button>
       <div class="set-row" style="margin-top:10px;">
         <div><div class="set-label" data-i18n="kmReimbursement">Kilometrikorvaus</div><div class="set-sub" data-i18n="kmRateHint">Kilometrihinta laskuun</div></div>
         <div class="set-input-wrap">
@@ -289,9 +300,10 @@
           <span style="font-size:15px;font-weight:600;color:var(--text2);">€/km</span>
         </div>
       </div>
-      <button class="btn-add" onclick="saveKmRate()" style="margin-top:4px;" data-i18n="saveKmRate">Tallenna kilometrikorvaus</button>
     </div>
   </div>
+
+  <button class="btn-add" onclick="saveAllSettings()" style="margin-bottom:14px;" data-i18n="saveChanges">Tallenna muutokset</button>
 
   <div class="settings-grid">
     <div class="card">

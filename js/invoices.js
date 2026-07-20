@@ -252,8 +252,9 @@ export function renderArchive(highlightId) {
       ? `<div class="inv-overdue-text">${t('invoiceOverdue')}</div>`
       : '';
     const paidBtn = inv.paid
-      ? `<button class="btn-mark-paid is-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">✓ ${t('paid')}</button>`
+      ? `<button class="btn-mark-paid is-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">${t('markUnpaid')}</button>`
       : `<button class="btn-mark-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">${t('markPaid')}</button>`;
+    const editBtn = inv.paid ? '' : `<button class="btn-outline" style="flex:1;" onclick="openEditInvoice(${inv.id})">${t('edit')}</button>`;
     const reminderBtn = overdue
       ? `<button class="btn-reminder" style="flex:1;" onclick="sendReminder(${inv.id})">${t('sendReminder')}</button>`
       : '';
@@ -286,7 +287,7 @@ export function renderArchive(highlightId) {
           <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id})">${t('printPdf')}</button>
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id},true)">${t('printAttachment')}</button>
-            <button class="btn-outline" style="flex:1;" onclick="openEditInvoice(${inv.id})">${t('edit')}</button>
+            ${editBtn}
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;">
             <button class="btn-email-inv" style="flex:1;" onclick="sendInvoiceEmail(${inv.id})">${t('sendInvoiceEmail')}</button>
@@ -466,6 +467,7 @@ function printInvoice(id, asAttachment) {
 function openEditInvoice(id) {
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
+  if (inv.paid) { toast(t('invoicePaidNoEdit')); return; }
   state.editingInvId = id;
   const el = document.getElementById('edit-inv-entries');
   el.innerHTML = inv.entries.map((e, i) => `

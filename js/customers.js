@@ -6,6 +6,7 @@ import { save } from './storage.js';
 import { renderPills } from './clock.js';
 
 let editingCustomerName = null; // null = adding new, string = editing existing
+let activeCustRow = null; // name of the customer row currently expanded (showing edit/delete) in settings
 
 function openAddCustomerModal() {
   editingCustomerName = null;
@@ -79,6 +80,7 @@ function saveCustomerModal() {
   }
 
   closeCustomerModal();
+  activeCustRow = null;
   save(); renderCustChips(); renderAllSelects(); renderPills();
 }
 
@@ -92,6 +94,11 @@ function closeCustomerModal() {
   editingCustomerName = null;
 }
 
+function toggleCustRow(name) {
+  activeCustRow = activeCustRow === name ? null : name;
+  renderCustChips();
+}
+
 function removeCustomer(name) {
   const openEntries = state.entries.filter(e => !e.invoiced && e.customer === name);
 
@@ -103,6 +110,7 @@ function removeCustomer(name) {
         state.entries = state.entries.filter(e => !(e.customer === name && !e.invoiced));
         state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
         if (state.activeCustomer === name) state.activeCustomer = null;
+        activeCustRow = null;
         save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
@@ -113,6 +121,7 @@ function removeCustomer(name) {
       () => {
         state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
         if (state.activeCustomer === name) state.activeCustomer = null;
+        activeCustRow = null;
         save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
@@ -122,17 +131,22 @@ function removeCustomer(name) {
 export function renderCustChips() {
   const el = document.getElementById('cust-chips');
   if (!state.cfg.customers.length) {
-    el.innerHTML = '<div style="font-size:14px;color:var(--text2);padding:4px 0">Ei asiakkaita vielä.</div>';
+    el.innerHTML = `<div style="font-size:14px;color:var(--text2);padding:4px 0">${t('noCustomersYet')}</div>`;
     return;
   }
-  el.innerHTML = state.cfg.customers.map(c => {
+  const sorted = [...state.cfg.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
+  el.innerHTML = `<div class="cust-list">${sorted.map(c => {
     const hasDetails = c.ytunnus || c.katuosoite || c.sposti || c.puhelin;
-    return `<span class="cust-chip">
-      ${esc(c.name)}${hasDetails ? '<span class="cust-has-details">•</span>' : ''}
-      <span class="cust-edit" onclick="openEditCustomerModal(${esc(JSON.stringify(c.name))})">✎</span>
-      <span class="cust-rm" onclick="removeCustomer(${esc(JSON.stringify(c.name))})">×</span>
-    </span>`;
-  }).join('');
+    const isActive = activeCustRow === c.name;
+    const jsonName = esc(JSON.stringify(c.name));
+    return `<div class="cust-row${isActive ? ' active' : ''}" onclick="toggleCustRow(${jsonName})">
+      <div class="cust-row-name">${esc(c.name)}${hasDetails ? '<span class="cust-has-details">•</span>' : ''}</div>
+      <div class="cust-row-actions">
+        <button type="button" class="cust-action-btn" onclick="event.stopPropagation(); openEditCustomerModal(${jsonName})">${t('edit')}</button>
+        <button type="button" class="cust-action-btn cust-action-danger" onclick="event.stopPropagation(); removeCustomer(${jsonName})">${t('delete')}</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 export function renderAllSelects() {
@@ -150,3 +164,4 @@ window.saveCustomerModal = saveCustomerModal;
 window.closeCustomerModal = closeCustomerModal;
 window.removeCustomer = removeCustomer;
 window.toggleMaksuehtoSopimus = toggleMaksuehtoSopimus;
+window.toggleCustRow = toggleCustRow;

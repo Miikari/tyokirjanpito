@@ -34,12 +34,12 @@ export function applyLang() {
   document.querySelector('.install-banner span').textContent = t('installBanner');
   document.querySelector('#install-banner button').textContent = t('install');
 
-  document.querySelector('.btn-logout').textContent = t('logout');
   document.querySelectorAll('.tab')[0].textContent = t('kello');
   document.querySelectorAll('.tab')[1].textContent = t('kirjanpito');
   document.querySelectorAll('.tab')[2].querySelector('.tab-label').textContent = t('arkisto');
   document.querySelectorAll('.tab')[3].textContent = t('raportointi');
-  document.querySelectorAll('.tab')[4].textContent = t('asetukset');
+  document.querySelectorAll('.header-icons button[onclick^="showTab(\'asetukset\'"]').forEach(el => el.title = t('asetukset'));
+  document.querySelectorAll('.header-icons button[onclick="signOut()"]').forEach(el => el.title = t('logout'));
 
   document.querySelector('.card-label').textContent = t('manualEntry');
   document.querySelector('#notes-toggle-icon').nextSibling.textContent = ' ' + t('addNotes');

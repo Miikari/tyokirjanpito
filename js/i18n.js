@@ -5,7 +5,7 @@ const i18n = {
     // App
     appName: 'Työtunnit', latausVirhe: 'Latausvirhe', tallennusVirhe: 'Tallennusvirhe',
     // Navigaatio
-    kello: 'Kello', kirjanpito: 'Kirjaukset', arkisto: 'Laskut', raportointi: 'Raportit', asetukset: 'Asetukset',
+    kello: 'Työnäkymä', kirjanpito: 'Kirjaukset', arkisto: 'Laskutus', raportointi: 'Raportit', asetukset: 'Asetukset',
     // Kello
     clockIn: 'Kirjaudu sisään', clockOut: 'Kirjaudu ulos', pause: '⏸ Tauko', resume: '▶ Jatka',
     idle: 'Ei käynnissä', working: '● Töissä', onBreak: '⏸ Tauolla', taukoAlkaa: 'Tauko käynnistetty',
@@ -39,8 +39,8 @@ const i18n = {
     invoiceUpdated: 'Lasku päivitetty', editInvoice: 'Muokkaa laskua',
     // Maksustatukset
     paid: 'Maksettu', unpaid: 'Maksamatta', invoiceOverdue: 'Lasku maksamatta',
-    markPaid: 'Merkitse maksetuksi', markedPaid: 'Lasku merkitty maksetuksi',
-    paidRemoved: 'Maksettu-merkintä poistettu',
+    markPaid: 'Merkitse maksetuksi', markUnpaid: 'Merkitse maksamatta', markedPaid: 'Lasku merkitty maksetuksi',
+    paidRemoved: 'Maksettu-merkintä poistettu', invoicePaidNoEdit: 'Maksettua laskua ei voi muokata.',
     sendReminder: 'Lähetä maksumuistutus', sendInvoiceEmail: '✉ Lähetä lasku',
     notAvailableGuest: 'Ei käytössä testikäyttäjällä',
     noCustomerOnInvoice: 'Laskulle ei ole merkitty asiakasta.',
@@ -49,7 +49,6 @@ const i18n = {
     invalidEmailAddr: 'Sähköpostiosoite näyttää virheelliseltä:',
     // Kilometrikorvaus
     kmReimbursement: 'Kilometrikorvaus', kmRate: 'Kilometrikorvaus', kmRateHint: 'Kilometrihinta laskuun',
-    saveKmRate: 'Tallenna kilometrikorvaus', kmRateSaved: 'Kilometrikorvaus tallennettu',
     // Kuukausiveloitukset
     recurring: 'Kuukausiveloitukset', noRecurring: 'Ei kuukausiveloituksia.',
     doAddRecurring: 'Lisätäänkö kuukausiveloitukset?',
@@ -77,11 +76,11 @@ const i18n = {
     pricing: 'Hinnoittelu', hourlyRateLabel: 'Tuntihinta', hourlyRate: 'Tuntihinta',
     rounding: 'Pyöristys', roundingHint: 'Pyöristää tunnit ylöspäin', roundingNone: 'Ei pyöristystä',
     vatLabel: 'ALV', vatHint: 'Lisätään laskun loppusummaan',
-    saveHourlyBtn: 'Tallenna tuntihinta', saved: 'Tallennettu: ', invalidPrice: 'Virheellinen hinta',
+    saved: 'Tallennettu: ', invalidPrice: 'Virheellinen hinta',
     // Asiakkaat
-    customersLabel: 'Asiakkaat', noCustomer: 'Ei asiakasta',
+    customersLabel: 'Asiakkaat', noCustomer: 'Valitse asiakas', noCustomersYet: 'Ei asiakkaita vielä.',
     customerAdded: 'Asiakas lisätty', customerExists: 'Asiakas on jo olemassa',
-    customerRemoved: 'Asiakas poistettu',
+    customerRemoved: 'Asiakas poistettu', delete: 'Poista',
     deleteCustomer: 'Poista asiakas', deleteCustomerConfirm: 'Haluatko varmasti poistaa asiakkaan',
     customerHasEntries: 'koostamaton kirjaus. Poistetaan asiakas ja kaikki sen kirjaukset pysyvästi?',
     customerHas: 'Asiakkaalla', has: 'on',
@@ -125,7 +124,7 @@ const i18n = {
     // App
     appName: 'Work Hours', latausVirhe: 'Loading error', tallennusVirhe: 'Save error',
     // Navigation
-    kello: 'Clock', kirjanpito: 'Entries', arkisto: 'Invoices', raportointi: 'Reports', asetukset: 'Settings',
+    kello: 'Work', kirjanpito: 'Entries', arkisto: 'Invoices', raportointi: 'Reports', asetukset: 'Settings',
     // Clock
     clockIn: 'Clock in', clockOut: 'Clock out', pause: '⏸ Pause', resume: '▶ Resume',
     idle: 'Not running', working: '● Working', onBreak: '⏸ On break', taukoAlkaa: 'Break started',
@@ -159,8 +158,8 @@ const i18n = {
     invoiceUpdated: 'Invoice updated', editInvoice: 'Edit invoice',
     // Payment status
     paid: 'Paid', unpaid: 'Unpaid', invoiceOverdue: 'Invoice unpaid',
-    markPaid: 'Mark as paid', markedPaid: 'Invoice marked as paid',
-    paidRemoved: 'Payment status removed',
+    markPaid: 'Mark as paid', markUnpaid: 'Mark as unpaid', markedPaid: 'Invoice marked as paid',
+    paidRemoved: 'Payment status removed', invoicePaidNoEdit: 'A paid invoice cannot be edited.',
     sendReminder: 'Send payment reminder', sendInvoiceEmail: '✉ Send invoice',
     notAvailableGuest: 'Not available in demo mode',
     noCustomerOnInvoice: 'No customer on invoice.',
@@ -169,7 +168,6 @@ const i18n = {
     invalidEmailAddr: 'Email address appears invalid:',
     // Mileage
     kmReimbursement: 'Mileage reimbursement', kmRate: 'Mileage rate', kmRateHint: 'Rate per kilometer on invoice',
-    saveKmRate: 'Save mileage rate', kmRateSaved: 'Mileage rate saved',
     // Recurring
     recurring: 'Monthly charges', noRecurring: 'No monthly charges.',
     doAddRecurring: 'Do you want to add recurring costs?',
@@ -197,11 +195,11 @@ const i18n = {
     pricing: 'Pricing', hourlyRateLabel: 'Hourly rate', hourlyRate: 'Hourly rate',
     rounding: 'Rounding', roundingHint: 'Rounds hours up', roundingNone: 'No rounding',
     vatLabel: 'VAT', vatHint: 'Added to invoice total',
-    saveHourlyBtn: 'Save hourly rate', saved: 'Saved: ', invalidPrice: 'Invalid price',
+    saved: 'Saved: ', invalidPrice: 'Invalid price',
     // Customers
-    customersLabel: 'Customers', noCustomer: 'No customer',
+    customersLabel: 'Customers', noCustomer: 'Choose customer', noCustomersYet: 'No customers yet.',
     customerAdded: 'Customer added', customerExists: 'Customer already exists',
-    customerRemoved: 'Customer removed',
+    customerRemoved: 'Customer removed', delete: 'Delete',
     deleteCustomer: 'Delete customer', deleteCustomerConfirm: 'Are you sure you want to delete customer',
     customerHasEntries: 'unbuilt entries. Delete customer and all entries permanently?',
     customerHas: 'Customer', has: 'has',
