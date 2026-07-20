@@ -11,11 +11,55 @@ export function tick() {
   state.timerRaf = requestAnimationFrame(tick);
 }
 
+function getActiveService() {
+  const services = state.cfg.services || [];
+  const found = services.find(s => s.id === state.activeServiceId);
+  return found || services[0] || { id: null, name: '', rate: state.cfg.hourly };
+}
+
+export function renderServiceOptions() {
+  const el = document.getElementById('service-select');
+  if (!el) return;
+  const services = state.cfg.services || [];
+  if (!services.some(s => s.id === state.activeServiceId)) {
+    state.activeServiceId = services[0]?.id ?? null;
+  }
+  el.innerHTML = services.map(s => `<option value="${s.id}"${s.id === state.activeServiceId ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+}
+
+const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+const EYE_OFF_ICON = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+
+export function applyHideRate() {
+  const wrap = document.getElementById('clock-rate-value-wrap');
+  if (wrap) wrap.style.display = state.cfg.hideRate ? 'none' : 'flex';
+  const icon = document.getElementById('hide-rate-icon');
+  if (icon) icon.innerHTML = state.cfg.hideRate ? EYE_OFF_ICON : EYE_ICON;
+  const btn = document.getElementById('hide-rate-btn');
+  if (btn) btn.title = state.cfg.hideRate ? t('showRate') : t('hideRate');
+}
+
 export function initClockRate() {
+  renderServiceOptions();
+  const svc = getActiveService();
   const input = document.getElementById('clock-rate-input');
-  if (input) input.value = state.cfg.hourly;
+  if (input) input.value = svc.rate;
   const val = document.getElementById('clock-rate-val');
-  if (val) val.textContent = state.cfg.hourly.toFixed(2).replace('.', ',') + ' €/h';
+  if (val) val.textContent = svc.rate.toFixed(2).replace('.', ',') + ' €/h';
+  applyHideRate();
+}
+
+function selService(id) {
+  state.activeServiceId = parseInt(id, 10);
+  const svc = getActiveService();
+  document.getElementById('clock-rate-input').value = svc.rate;
+  document.getElementById('clock-rate-val').textContent = svc.rate.toFixed(2).replace('.', ',') + ' €/h';
+}
+
+function toggleHideRate() {
+  state.cfg.hideRate = !state.cfg.hideRate;
+  save();
+  applyHideRate();
 }
 
 function enableClockRateEdit() {
@@ -39,9 +83,10 @@ function clockIn() {
   if (!state.activeCustomer) { toast(t('selectCustomer')); return; }
   state.clockState = 'running'; state.clockInDate = new Date(); state.startTime = Date.now(); state.elapsedMs = 0;
   const clockRate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
+  const clockService = getActiveService().name;
   if (state.uid) {
     db.collection('users').doc(state.uid).collection('data').doc('active').set({
-      startTime: state.startTime, clockInDate: state.clockInDate.toISOString(), customer: state.activeCustomer, rate: clockRate
+      startTime: state.startTime, clockInDate: state.clockInDate.toISOString(), customer: state.activeCustomer, rate: clockRate, service: clockService
     });
   }
   state.timerRaf = requestAnimationFrame(tick);
@@ -76,7 +121,7 @@ function clockOut() {
   const notes = document.getElementById('clock-notes').value.trim();
   const rate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
   const km = parseFloat(document.getElementById('clock-km').value) || 0;
-  addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate, km);
+  addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate, km, getActiveService().name);
   document.getElementById('clock-notes').value = '';
   document.getElementById('clock-km').value = '';
   document.getElementById('notes-box').style.display = 'none';
@@ -110,6 +155,8 @@ export function renderMainBtns() {
 export function renderPills() {
   const el = document.getElementById('cust-select');
   const isLocked = state.clockState !== 'idle';
+  const svcEl = document.getElementById('service-select');
+  if (svcEl) svcEl.disabled = isLocked;
   if (!state.cfg.customers.length) {
     el.innerHTML = `<option value="">${t('noCustomer')}</option>`;
     el.disabled = true;
@@ -131,5 +178,7 @@ window.clockIn = clockIn;
 window.clockOut = clockOut;
 window.togglePause = togglePause;
 window.selCust = selCust;
+window.selService = selService;
+window.toggleHideRate = toggleHideRate;
 window.enableClockRateEdit = enableClockRateEdit;
 window.confirmClockRateEdit = confirmClockRateEdit;

@@ -5,9 +5,14 @@ import { toast, showConfirm } from './ui.js';
 import { save } from './storage.js';
 
 
-export function addEntry(date, secs, customer, src, notes = '', rate = null, km = 0) {
+export function addEntry(date, secs, customer, src, notes = '', rate = null, km = 0, service = null) {
   const entryRate = (rate !== null && !isNaN(rate) && rate >= 0) ? rate : state.cfg.hourly;
-  state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, km: km || 0, selected: false, invoiced: false });
+  state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, service: service || null, km: km || 0, selected: false, invoiced: false });
+}
+
+function selManualService(id) {
+  const svc = state.cfg.services.find(s => s.id === parseInt(id, 10));
+  if (svc) document.getElementById('m-rate').value = svc.rate;
 }
 
 function addManual() {
@@ -23,8 +28,9 @@ function addManual() {
   const notes = document.getElementById('m-notes').value;
   const rateVal = parseFloat(document.getElementById('m-rate').value);
   const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
+  const svc = state.cfg.services.find(s => s.id === parseInt(document.getElementById('m-service').value, 10));
   if (total < 1) { toast(t('enterTime')); return; }
-  addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes, rate);
+  addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
   document.getElementById('m-h').value = '';
   document.getElementById('m-m').value = '';
   document.getElementById('m-notes').value = '';
@@ -39,18 +45,24 @@ function toggleEntry(id) {
   document.getElementById('s-sel').textContent = sel.length;
 }
 
+function matchesFilter(e) {
+  return !state.filterCustomers.size || (e.customer && state.filterCustomers.has(e.customer));
+}
+
 function selectAll() {
-  const u = state.entries.filter(e => !e.invoiced && (!state.filterCustomer || e.customer === state.filterCustomer));
+  const u = state.entries.filter(e => !e.invoiced && matchesFilter(e));
   const all = u.length && u.every(e => e.selected);
   u.forEach(e => e.selected = !all);
   renderEntries();
 }
 
 function setFilter(c) {
-  state.filterCustomer = state.filterCustomer === c ? null : c;
-  state.entries.filter(e => !e.invoiced).forEach(e => e.selected = false);
-  if (state.filterCustomer) {
-    state.entries.filter(e => !e.invoiced && e.customer === state.filterCustomer).forEach(e => e.selected = true);
+  if (state.filterCustomers.has(c)) {
+    state.filterCustomers.delete(c);
+    state.entries.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = false);
+  } else {
+    state.filterCustomers.add(c);
+    state.entries.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = true);
   }
   renderEntries();
 }
@@ -59,11 +71,13 @@ function renderFilterPills() {
   const customers = [...new Set(state.entries.filter(e => !e.invoiced && e.customer).map(e => e.customer))];
   const el = document.getElementById('filter-pills');
   if (!el) return;
+  const wrap = document.getElementById('filter-pills-wrap');
+  if (wrap) wrap.style.display = customers.length ? 'block' : 'none';
 
   const existing = el.querySelectorAll('.pill');
   if (existing.length === customers.length) {
     existing.forEach(pill => {
-      const isActive = pill.textContent.trim() === state.filterCustomer;
+      const isActive = state.filterCustomers.has(pill.textContent.trim());
       pill.classList.toggle('active', isActive);
       pill.style.background = isActive ? 'var(--blue)' : 'var(--surface)';
       pill.style.color = isActive ? '#fff' : 'var(--text2)';
@@ -73,16 +87,17 @@ function renderFilterPills() {
   }
 
   if (!customers.length) { el.innerHTML = ''; return; }
-  el.innerHTML = customers.map(c => `
-    <div class="pill ${state.filterCustomer === c ? 'active' : ''}"
-      style="background:${state.filterCustomer === c ? 'var(--blue)' : 'var(--surface)'};color:${state.filterCustomer === c ? '#fff' : 'var(--text2)'};border-color:${state.filterCustomer === c ? 'var(--blue)' : 'var(--border2)'};"
-      onclick="setFilter(${esc(JSON.stringify(c))})">${esc(c)}</div>`
-  ).join('');
+  el.innerHTML = customers.map(c => {
+    const isActive = state.filterCustomers.has(c);
+    return `<div class="pill ${isActive ? 'active' : ''}"
+      style="background:${isActive ? 'var(--blue)' : 'var(--surface)'};color:${isActive ? '#fff' : 'var(--text2)'};border-color:${isActive ? 'var(--blue)' : 'var(--border2)'};"
+      onclick="setFilter(${esc(JSON.stringify(c))})">${esc(c)}</div>`;
+  }).join('');
 }
 
 export function renderEntries() {
   const list = document.getElementById('entries-list');
-  const active = state.entries.filter(e => !e.invoiced && (!state.filterCustomer || e.customer === state.filterCustomer));
+  const active = state.entries.filter(e => !e.invoiced && matchesFilter(e));
   const all = state.entries.filter(e => !e.invoiced);
   const sel = all.filter(e => e.selected);
   document.getElementById('s-count').textContent = active.length;
@@ -91,7 +106,8 @@ export function renderEntries() {
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0));
   renderFilterPills();
   if (!active.length) {
-    list.innerHTML = `<div class="empty">${state.filterCustomer ? t('noEntriesFor') + ' ' + esc(state.filterCustomer) : t('noEntries')}<br><br>${!state.filterCustomer ? t('loginFirst') : ''}</div>`;
+    const filterLabel = [...state.filterCustomers].join(', ');
+    list.innerHTML = `<div class="empty">${state.filterCustomers.size ? t('noEntriesFor') + ' ' + esc(filterLabel) : t('noEntries')}<br><br>${!state.filterCustomers.size ? t('loginFirst') : ''}</div>`;
     return;
   }
   list.innerHTML = active.map(e => `
@@ -105,6 +121,7 @@ export function renderEntries() {
       </div>
       <div class="entry-right">
         ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
+        ${e.service ? `<span class="tag tag-svc">${esc(e.service)}</span>` : ''}
         <span class="entry-eur">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</span>
         <span class="tag tag-open">${t('open') || 'Avoin'}</span>
       </div>
@@ -129,7 +146,15 @@ function openEditEntry(id) {
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
     ...state.cfg.customers.map(c => `<option value="${esc(c.name)}" ${e.customer === c.name ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
   document.getElementById('edit-customer').innerHTML = opts;
+  const svcOpts = [`<option value="—">— ${t('noService')} —</option>`,
+    ...state.cfg.services.map(s => `<option value="${s.id}" ${e.service === s.name ? 'selected' : ''}>${esc(s.name)}</option>`)].join('');
+  document.getElementById('edit-service').innerHTML = svcOpts;
   document.getElementById('modal-edit').classList.add('open');
+}
+
+function selEditService(id) {
+  const svc = state.cfg.services.find(s => s.id === parseInt(id, 10));
+  if (svc) document.getElementById('edit-rate').value = svc.rate;
 }
 
 function saveEditEntry() {
@@ -146,6 +171,9 @@ function saveEditEntry() {
   e.secs = total;
   e.customer = cust === '—' ? null : cust;
   e.notes = notes;
+  const svcId = document.getElementById('edit-service').value;
+  const svc = state.cfg.services.find(s => s.id === parseInt(svcId, 10));
+  e.service = svc ? svc.name : null;
   const rateVal = parseFloat(document.getElementById('edit-rate').value);
   e.rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   closeEditModal();
@@ -241,10 +269,12 @@ export function renderExpenses() {
 }
 
 window.addManual = addManual;
+window.selManualService = selManualService;
 window.selectAll = selectAll;
 window.setFilter = setFilter;
 window.openEditEntry = openEditEntry;
 window.saveEditEntry = saveEditEntry;
+window.selEditService = selEditService;
 window.deleteEntry = deleteEntry;
 window.closeEditModal = closeEditModal;
 window.toggleEntry = toggleEntry;

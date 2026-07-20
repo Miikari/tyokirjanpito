@@ -8,11 +8,12 @@ import { renderEntries, renderExpenses } from './entries.js';
 function startInvoice() {
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
   if (!sel.length) { toast(t('selectEntries')); return; }
+  const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
+  if (custs.length !== 1) { toast(t('selectOneCustomer')); return; }
   state.pending = sel;
   if (!state.cfg.recurring.length) { finishInvoice(false); return; }
 
-  const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
-  const primaryCustObj = custs.length === 1 ? state.cfg.customers.find(c => c.name === custs[0]) : null;
+  const primaryCustObj = state.cfg.customers.find(c => c.name === custs[0]);
   if (!primaryCustObj?.ytunnus) { finishInvoice(false); return; }
 
   const relevantRecurring = state.cfg.recurring.filter(r => r.customer === custs[0]);
@@ -61,7 +62,7 @@ function finishInvoice(mode) {
   });
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
   selExpenses.forEach(e => { e.invoiced = true; e.selected = false; });
-  state.filterCustomer = null;
+  state.filterCustomers.clear();
   save(); renderEntries(); renderExpenses();
   toast(t('invoicePrefix') + String(state.iId).padStart(3, '0') + ' arkistoitu');
   goTab('arkisto'); setTimeout(() => renderArchive(state.iId), 80);
@@ -205,11 +206,49 @@ function sendReminder(id) {
   openMailto(email, subject, body);
 }
 
+function filterInvoices() {
+  const search = (document.getElementById('arch-search')?.value || '').trim().toLowerCase();
+  const from = document.getElementById('arch-date-from')?.value || '';
+  const to = document.getElementById('arch-date-to')?.value || '';
+  const min = parseFloat(document.getElementById('arch-amount-min')?.value);
+  const max = parseFloat(document.getElementById('arch-amount-max')?.value);
+
+  return state.invoices.filter(inv => {
+    if (search) {
+      const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+      const invNum = String(inv.id).padStart(3, '0');
+      const haystack = (custs.join(' ') + ' ' + invNum).toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    const invDate = inv.date.slice(0, 10);
+    if (from && invDate < from) return false;
+    if (to && invDate > to) return false;
+    if (!isNaN(min) && inv.total < min) return false;
+    if (!isNaN(max) && inv.total > max) return false;
+    return true;
+  });
+}
+
+function clearArchiveFilters() {
+  document.getElementById('arch-search').value = '';
+  document.getElementById('arch-date-from').value = '';
+  document.getElementById('arch-date-to').value = '';
+  document.getElementById('arch-amount-min').value = '';
+  document.getElementById('arch-amount-max').value = '';
+  renderArchive();
+}
+
+function searchArchive() {
+  renderArchive();
+}
+
 export function renderArchive(highlightId) {
   const el = document.getElementById('archive-list');
   updateInvoiceBadge();
   if (!state.invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
-  el.innerHTML = state.invoices.map(inv => {
+  const filtered = filterInvoices();
+  if (!filtered.length) { el.innerHTML = `<div class="empty">${t('noSearchResults')}</div>`; return; }
+  el.innerHTML = filtered.map(inv => {
     const isOpen = highlightId === inv.id;
     const overdue = isOverdue(inv);
     const rows = inv.entries.map(e => `
@@ -521,3 +560,6 @@ window.markInvoicePaid = markInvoicePaid;
 window.sendInvoiceEmail = sendInvoiceEmail;
 window.sendReminder = sendReminder;
 window.updateInvoiceBadge = updateInvoiceBadge;
+window.clearArchiveFilters = clearArchiveFilters;
+window.searchArchive = searchArchive;
+window.renderArchive = renderArchive;

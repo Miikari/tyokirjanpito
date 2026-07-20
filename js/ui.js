@@ -59,6 +59,8 @@ export function applyLang() {
   });
   document.getElementById('rec-name').placeholder = t('recNamePlaceholder');
   document.getElementById('exp-desc').placeholder = t('expenseDescPlaceholder');
+  document.getElementById('svc-name').placeholder = t('serviceNamePlaceholder');
+  document.getElementById('arch-search').placeholder = t('archSearchPlaceholder');
   const orgJoinInput = document.getElementById('org-join-input');
   if (orgJoinInput) orgJoinInput.placeholder = t('orgJoinPlaceholder');
   ['fi', 'en'].forEach(l => {

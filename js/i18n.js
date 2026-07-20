@@ -32,14 +32,20 @@ const i18n = {
     noEntries: 'Ei kirjauksia vielä.', loginFirst: 'Kirjaudu sisään tai lisää manuaalisesti.',
     noEntriesFor: 'Ei kirjauksia asiakkaalle', entries_count: 'kirjausta',
     selectEntries: 'Valitse kirjauksia ensin',
+    selectOneCustomer: 'Valitse kirjauksia vain yhdeltä asiakkaalta kerrallaan',
+    filterByCustomer: 'Suodata asiakkaan mukaan',
     // Laskut (arkisto)
     invoice: 'Lasku', invoicePrefix: 'Lasku #', noInvoices: 'Ei laskuja vielä.',
+    noSearchResults: 'Ei hakuehtoja vastaavia laskuja.',
+    archSearchPlaceholder: 'Hae asiakkaan tai laskun numeron mukaan...',
+    dateFrom: 'Alkaen', dateTo: 'Päättyen', amountMin: 'Summa väh. (€)', amountMax: 'Summa enint. (€)',
+    clearFilters: 'Tyhjennä haku', searchBtn: 'Hae',
     grandTotal: 'Loppusumma', vatExcl: 'Veroton summa', monthlyCharge: 'Kuukausiveloitus',
-    printPdf: 'Tulosta / PDF', printAttachment: 'Tulosta liitteeksi', edit: 'Muokkaa',
+    printPdf: 'Tulosta / PDF', printAttachment: 'Tulosta ilman maksutietoja', edit: 'Muokkaa',
     invoiceUpdated: 'Lasku päivitetty', editInvoice: 'Muokkaa laskua',
     // Maksustatukset
     paid: 'Maksettu', unpaid: 'Maksamatta', invoiceOverdue: 'Lasku maksamatta',
-    markPaid: 'Merkitse maksetuksi', markUnpaid: 'Merkitse maksamatta', markedPaid: 'Lasku merkitty maksetuksi',
+    markPaid: 'Merkitse maksetuksi', markUnpaid: 'Merkitse maksamattomaksi', markedPaid: 'Lasku merkitty maksetuksi',
     paidRemoved: 'Maksettu-merkintä poistettu', invoicePaidNoEdit: 'Maksettua laskua ei voi muokata.',
     sendReminder: 'Lähetä maksumuistutus', sendInvoiceEmail: '✉ Lähetä lasku',
     notAvailableGuest: 'Ei käytössä testikäyttäjällä',
@@ -77,6 +83,12 @@ const i18n = {
     rounding: 'Pyöristys', roundingHint: 'Pyöristää tunnit ylöspäin', roundingNone: 'Ei pyöristystä',
     vatLabel: 'ALV', vatHint: 'Lisätään laskun loppusummaan',
     saved: 'Tallennettu: ', invalidPrice: 'Virheellinen hinta',
+    // Palvelut
+    services: 'Palvelut', service: 'Palvelu', addService: '+ Lisää palvelu',
+    serviceNamePlaceholder: 'esim. Editointi', noServices: 'Ei palveluita.',
+    serviceAdded: 'Palvelu lisätty', serviceRemoved: 'Palvelu poistettu',
+    fillServiceName: 'Anna palvelulle nimi ja hinta', minOneService: 'Vähintään yksi palvelu vaaditaan',
+    hideRate: 'Piilota tuntihinta', showRate: 'Näytä tuntihinta', noService: 'Ei palvelua',
     // Asiakkaat
     customersLabel: 'Asiakkaat', noCustomer: 'Valitse asiakas', noCustomersYet: 'Ei asiakkaita vielä.',
     customerAdded: 'Asiakas lisätty', customerExists: 'Asiakas on jo olemassa',
@@ -113,6 +125,10 @@ const i18n = {
     invoiceSettings: 'Laskuasetukset',
     dueDate: 'Eräpäivä ja maksuehto', dueDateHint: 'Lasketaan asiakkaan maksuehdosta',
     referenceNumber: 'Viitenumero', referenceNumberHint: 'Automaattisesti generoitu',
+    // Varmuuskopiointi
+    backupSection: 'Varmuuskopiointi',
+    backupHint: 'Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.',
+    downloadBackup: '↓ Lataa varmuuskopio', backupDownloaded: 'Varmuuskopio ladattu',
     // Organisaatio
     orgSection: 'Organisaatio', orgInviteLink: 'Kutsu­linkki', orgCopy: 'Kopioi',
     orgNewCode: 'Luo uusi koodi', orgJoinTitle: 'Liity toiseen organisaatioon',
@@ -151,10 +167,16 @@ const i18n = {
     noEntries: 'No entries yet.', loginFirst: 'Clock in or add manually.',
     noEntriesFor: 'No entries for', entries_count: 'entries',
     selectEntries: 'Select entries first',
+    selectOneCustomer: 'Select entries from only one customer at a time',
+    filterByCustomer: 'Filter by customer',
     // Invoices (archive)
     invoice: 'Invoice', invoicePrefix: 'Invoice #', noInvoices: 'No invoices yet.',
+    noSearchResults: 'No invoices match your search.',
+    archSearchPlaceholder: 'Search by customer or invoice number...',
+    dateFrom: 'From', dateTo: 'To', amountMin: 'Min amount (€)', amountMax: 'Max amount (€)',
+    clearFilters: 'Clear search', searchBtn: 'Search',
     grandTotal: 'Total', vatExcl: 'Excl. VAT', monthlyCharge: 'Monthly charge',
-    printPdf: 'Print / PDF', printAttachment: 'Print as attachment', edit: 'Edit',
+    printPdf: 'Print / PDF', printAttachment: 'Print without details', edit: 'Edit',
     invoiceUpdated: 'Invoice updated', editInvoice: 'Edit invoice',
     // Payment status
     paid: 'Paid', unpaid: 'Unpaid', invoiceOverdue: 'Invoice unpaid',
@@ -196,6 +218,12 @@ const i18n = {
     rounding: 'Rounding', roundingHint: 'Rounds hours up', roundingNone: 'No rounding',
     vatLabel: 'VAT', vatHint: 'Added to invoice total',
     saved: 'Saved: ', invalidPrice: 'Invalid price',
+    // Services
+    services: 'Services', service: 'Service', addService: '+ Add service',
+    serviceNamePlaceholder: 'e.g. Editing', noServices: 'No services.',
+    serviceAdded: 'Service added', serviceRemoved: 'Service removed',
+    fillServiceName: 'Enter a name and rate for the service', minOneService: 'At least one service is required',
+    hideRate: 'Hide hourly rate', showRate: 'Show hourly rate', noService: 'No service',
     // Customers
     customersLabel: 'Customers', noCustomer: 'Choose customer', noCustomersYet: 'No customers yet.',
     customerAdded: 'Customer added', customerExists: 'Customer already exists',
@@ -232,6 +260,10 @@ const i18n = {
     invoiceSettings: 'Invoice settings',
     dueDate: 'Due date & payment terms', dueDateHint: 'Based on customer payment terms',
     referenceNumber: 'Reference number', referenceNumberHint: 'Automatically generated',
+    // Backup
+    backupSection: 'Backup',
+    backupHint: 'Download all your data (entries, invoices, customers, settings) as a single file to keep on your own device.',
+    downloadBackup: '↓ Download backup', backupDownloaded: 'Backup downloaded',
     // Organization
     orgSection: 'Organization', orgInviteLink: 'Invite link', orgCopy: 'Copy',
     orgNewCode: 'Generate new code', orgJoinTitle: 'Join another organization',

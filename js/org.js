@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { state, defaultCfg } from './state.js';
 import { toast } from './ui.js';
 
 function genCode() {
@@ -115,7 +115,7 @@ async function reloadOrgData() {
   // Reset state data before reload
   const { state } = await import('./state.js');
   state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
-  state.cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };
+  state.cfg = defaultCfg();
   await loadFromFirestore();
   await renderOrgSettings();
 }

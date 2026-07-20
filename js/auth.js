@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { state, defaultCfg } from './state.js';
 import { t } from './i18n.js';
 import { toast, applyLang } from './ui.js';
 import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
@@ -6,6 +6,7 @@ import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
 import { renderPills } from './clock.js';
 import { renderEntries } from './entries.js';
 import { renderAllSelects } from './customers.js';
+import { renderServiceSelects } from './settings.js';
 
 const EMAIL_ERRORS = {
   'auth/invalid-email': 'Sähköpostiosoite ei ole kelvollinen.',
@@ -162,7 +163,7 @@ auth.onAuthStateChanged(async user => {
         const { renderAllSelects } = await import('./customers.js');
         const { renderEntries } = await import('./entries.js');
         const { renderPills } = await import('./clock.js');
-        renderAllSelects(); renderPills(); renderEntries();
+        renderAllSelects(); renderServiceSelects(); renderPills(); renderEntries();
         window.updateInvoiceBadge?.();
       }
       renderOrgSettings();
@@ -175,11 +176,11 @@ auth.onAuthStateChanged(async user => {
     showLoginView('main');
     state.uid = null; state.orgId = null; state.accountName = ''; state.accountPhotoURL = '';
     state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
-    state.cfg = { hourly: 50, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false };
+    state.cfg = defaultCfg();
     document.getElementById('user-name').textContent = '';
     document.getElementById('user-avatar').style.display = 'none';
     document.getElementById('user-avatar-letter').style.display = 'none';
-    renderAllSelects(); renderPills(); renderEntries();
+    renderAllSelects(); renderServiceSelects(); renderPills(); renderEntries();
     window.updateInvoiceBadge?.();
   }
 });

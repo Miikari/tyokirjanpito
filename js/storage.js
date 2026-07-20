@@ -5,6 +5,7 @@ import { toast, updateClockBg } from './ui.js';
 import { initClockRate, renderMainBtns, renderPills, setBadge, tick } from './clock.js';
 import { renderAllSelects } from './customers.js';
 import { renderEntries } from './entries.js';
+import { renderServiceSelects } from './settings.js';
 
 function mainRef() {
   return db.collection('orgs').doc(state.orgId).collection('data').doc('main');
@@ -27,12 +28,14 @@ export async function loadFromFirestore() {
         if (c.osoite && !c.katuosoite) { c = { ...c, katuosoite: c.osoite }; delete c.osoite; }
         return c;
       });
+      if (!state.cfg.services || !state.cfg.services.length) {
+        state.cfg.services = [{ id: 1, name: state.lang === 'en' ? 'Hourly work' : 'Tuntityö', rate: state.cfg.hourly ?? 50 }];
+      }
     }
   } catch (e) { toast(t('latausVirhe') + e.message); }
 
-  initClockRate();
+  renderServiceSelects();
   document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('m-rate').value = state.cfg.hourly;
   renderAllSelects(); renderPills(); renderEntries();
   window.updateInvoiceBadge?.();
 
@@ -43,6 +46,10 @@ export async function loadFromFirestore() {
       state.startTime = a.startTime;
       state.clockInDate = new Date(a.clockInDate);
       state.activeCustomer = a.customer;
+      const matchedService = state.cfg.services.find(s => s.name === a.service);
+      state.activeServiceId = matchedService ? matchedService.id : state.cfg.services[0]?.id ?? null;
+      const svcSel = document.getElementById('service-select');
+      if (svcSel) svcSel.value = state.activeServiceId;
       const savedRate = a.rate || state.cfg.hourly;
       document.getElementById('clock-rate-input').value = savedRate;
       document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';
@@ -72,6 +79,10 @@ export function listenActiveState() {
         state.startTime = a.startTime;
         state.clockInDate = new Date(a.clockInDate);
         state.activeCustomer = a.customer;
+        const matchedService = state.cfg.services.find(s => s.name === a.service);
+        state.activeServiceId = matchedService ? matchedService.id : state.cfg.services[0]?.id ?? null;
+        const svcSel = document.getElementById('service-select');
+        if (svcSel) svcSel.value = state.activeServiceId;
         const savedRate = a.rate || state.cfg.hourly;
         document.getElementById('clock-rate-input').value = savedRate;
         document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';

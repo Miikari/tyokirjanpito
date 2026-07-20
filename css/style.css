@@ -239,6 +239,7 @@ body {
 .tag-cust  { background: var(--blue-bg); color: var(--blue-txt); }
 .tag-open  { background: var(--surface2); color: var(--text2); }
 .tag-inv   { background: var(--green-bg); color: var(--green); }
+.tag-svc   { background: var(--amber-bg); color: var(--amber); }
 .entry-eur { font-size: 15px; font-weight: 700; color: var(--text); }
 .empty { text-align: center; padding: 48px 20px; color: var(--text2); font-size: 15px; line-height: 1.6; }
 
@@ -313,9 +314,18 @@ body {
   gap: 14px;
 }
 .settings-grid .card { margin-bottom: 0; }
+.settings-save-mobile { display: none; margin-top: 12px; }
 @media (max-width: 600px) {
   .settings-grid { grid-template-columns: 1fr; }
   .form-cols { grid-template-columns: 1fr; }
+  .settings-save-mobile { display: block; }
+  .settings-save-desktop { display: none; }
+  .header-icons {
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    gap: 18px;
+  }
+  .icon-btn { width: 38px; height: 38px; }
+  .icon-btn svg { width: 24px; height: 24px; }
 }
 @media (min-width: 1200px) {
   .header h1 { font-size: 26px; }
@@ -466,6 +476,7 @@ body {
 /* ── USER BAR ── */
 .user-bar {
   display: flex; padding: 8px 0 12px;
+  position: relative;
 }
 .user-info { display: flex; flex-direction: column; gap: 6px; }
 .user-info-top { display: flex; align-items: center; gap: 8px; }
@@ -523,7 +534,7 @@ body {
   background: var(--blue-bg); color: var(--blue-txt); border: none; cursor: pointer;
 }
 .btn-mark-paid.is-paid {
-  background: var(--green-bg); color: var(--green);
+  background: var(--surface2-bg); color: var(--red);
 }
 .btn-reminder {
   flex: 1; padding: 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 600;

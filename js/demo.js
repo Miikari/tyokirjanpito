@@ -31,6 +31,8 @@ export function loadDemoData() {
     showErapaiva: true,
     showViitenumero: false,
     recurring: [],
+    services: [{ id: 1, name: 'Tuntityö', rate: 50 }],
+    hideRate: false,
     customers: [
       {
         name: 'Esimerkki Oy',
