@@ -168,7 +168,7 @@
         </div>
         <div class="form-col">
           <div class="fg fg-grow"><label data-i18n="notes">Merkintöjä</label><textarea id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></textarea></div>
-          <div class="fg" style="margin-bottom:0;"><label data-i18n="service">Palvelu</label><div style="display:flex;align-items:center;gap:8px;"><select id="m-service" onchange="selManualService(this.value)" style="flex:1;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;font-weight:600;"></select><input type="number" id="m-rate" min="0" step="0.5" style="width:80px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+          <div class="fg" style="margin-bottom:0;"><label data-i18n="service">Palvelu</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><select id="m-service" onchange="selManualService(this.value)" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;font-weight:600;"></select><input type="number" id="m-rate" min="0" step="0.5" style="width:80px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
         </div>
       </div>
       <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
@@ -211,10 +211,10 @@
     <div class="card" style="margin-bottom:14px;">
       <input type="text" id="arch-search" onkeydown="if(event.key==='Enter')searchArchive()" placeholder="Hae asiakkaan tai laskun numeron mukaan..." style="width:100%;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;margin-bottom:10px;" autocomplete="off">
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <div class="fg" style="flex:1;min-width:120px;margin:0;"><label data-i18n="dateFrom">Alkaen</label><input type="date" id="arch-date-from"></div>
-        <div class="fg" style="flex:1;min-width:120px;margin:0;"><label data-i18n="dateTo">Päättyen</label><input type="date" id="arch-date-to"></div>
-        <div class="fg" style="flex:1;min-width:100px;margin:0;"><label data-i18n="amountMin">Summa väh. (€)</label><input type="number" id="arch-amount-min" min="0" step="0.01"></div>
-        <div class="fg" style="flex:1;min-width:100px;margin:0;"><label data-i18n="amountMax">Summa enint. (€)</label><input type="number" id="arch-amount-max" min="0" step="0.01"></div>
+        <div class="fg" style="flex:1;min-width:90px;margin:0;"><label data-i18n="dateFrom">Alkaen</label><input type="date" id="arch-date-from"></div>
+        <div class="fg" style="flex:1;min-width:90px;margin:0;"><label data-i18n="dateTo">Päättyen</label><input type="date" id="arch-date-to"></div>
+        <div class="fg" style="flex:1;min-width:90px;margin:0;"><label data-i18n="amountMin">Summa väh. (€)</label><input type="number" id="arch-amount-min" min="0" step="0.01"></div>
+        <div class="fg" style="flex:1;min-width:90px;margin:0;"><label data-i18n="amountMax">Summa enint. (€)</label><input type="number" id="arch-amount-max" min="0" step="0.01"></div>
       </div>
       <div style="display:flex;gap:10px;margin-top:10px;">
         <button class="btn-add" style="flex:1;margin:0;background:transparent;color:var(--text2);border:1.5px solid var(--border2);" onclick="clearArchiveFilters()" data-i18n="clearFilters">Tyhjennä haku</button>
@@ -290,8 +290,8 @@
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="services">Palvelut</div>
         <div id="services-list"></div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-          <input type="text" id="svc-name" placeholder="esim. Editointi" style="flex:1;min-width:180px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <input type="text" id="svc-name" placeholder="esim. Editointi" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
           <input type="number" id="svc-rate" min="0" step="0.5" placeholder="€/h" style="width:60px;padding:9px 8px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
           <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="addService()" data-i18n="addService">+ Lisää palvelu</button>
         </div>
