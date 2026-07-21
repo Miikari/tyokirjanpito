@@ -211,11 +211,11 @@
   <div class="panel" id="panel-arkisto">
     <div class="card" style="margin-bottom:14px;">
       <input type="text" id="arch-search" onkeydown="if(event.key==='Enter')searchArchive()" placeholder="Hae asiakkaan tai laskun numeron mukaan..." style="width:100%;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;margin-bottom:10px;" autocomplete="off">
-      <div class="row2" style="margin-bottom:10px;">
+      <div class="row-search" style="margin-bottom:10px;">
         <div class="fg" style="margin:0;"><label data-i18n="dateFrom">Alkaen</label><input type="date" id="arch-date-from" autocomplete="off"></div>
         <div class="fg" style="margin:0;"><label data-i18n="dateTo">Päättyen</label><input type="date" id="arch-date-to" autocomplete="off"></div>
       </div>
-      <div class="row2">
+      <div class="row-search">
         <div class="fg" style="margin:0;"><label data-i18n="amountMin">Summa väh. (€)</label><input type="number" autocomplete="off" id="arch-amount-min" min="0" step="0.01"></div>
         <div class="fg" style="margin:0;"><label data-i18n="amountMax">Summa enint. (€)</label><input type="number" autocomplete="off" id="arch-amount-max" min="0" step="0.01"></div>
       </div>
