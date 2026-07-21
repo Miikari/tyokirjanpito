@@ -53,6 +53,7 @@ function selectAll() {
   const u = state.entries.filter(e => !e.invoiced && matchesFilter(e));
   const all = u.length && u.every(e => e.selected);
   u.forEach(e => e.selected = !all);
+  state.expenses.filter(e => !e.invoiced && matchesFilter(e)).forEach(e => e.selected = !all);
   renderEntries();
 }
 
@@ -60,9 +61,11 @@ function setFilter(c) {
   if (state.filterCustomers.has(c)) {
     state.filterCustomers.delete(c);
     state.entries.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = false);
+    state.expenses.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = false);
   } else {
     state.filterCustomers.add(c);
     state.entries.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = true);
+    state.expenses.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = true);
   }
   renderEntries();
 }
@@ -203,7 +206,7 @@ export function addExpense() {
   const amount = parseFloat(document.getElementById('exp-amount').value);
   const cust = document.getElementById('exp-customer').value;
   if (!desc) { toast(t('expenseDescRequired')); return; }
-  if (isNaN(amount) || amount <= 0) { toast(t('enterAmount')); return; }
+  if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
   state.expenses.unshift({
     id: ++state.eExpId,
     date: new Date().toISOString(),
@@ -229,22 +232,6 @@ function deleteExpense(id) {
 }
 
 export function renderExpenses() {
-  // kello-panel list
-  const kelloEl = document.getElementById('exp-list-kello');
-  if (kelloEl) {
-    const uninv = state.expenses.filter(e => !e.invoiced);
-    kelloEl.innerHTML = uninv.length ? uninv.map(e => `
-      <div class="exp-row">
-        <div class="exp-info">
-          <div class="exp-desc">${esc(e.description)}</div>
-          <div class="exp-sub">${e.customer ? esc(e.customer) + ' · ' : ''}${fmtEur(e.amount)}</div>
-        </div>
-        <button onclick="deleteExpense(${e.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;flex-shrink:0;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4h6v2"/></svg>
-        </button>
-      </div>`).join('') : '';
-  }
-  // kirjanpito-panel list
   const kirjEl = document.getElementById('kirjanpito-expenses');
   if (!kirjEl) return;
   const uninv = state.expenses.filter(e => !e.invoiced);

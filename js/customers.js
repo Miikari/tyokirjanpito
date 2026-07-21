@@ -38,7 +38,7 @@ function openEditCustomerModal(name) {
   document.getElementById('cust-puhelin').value = c.puhelin || '';
   const isSopimus = c.maksuehto === 'sopimus';
   document.getElementById('cust-maksuehto-sopimus').checked = isSopimus;
-  document.getElementById('cust-maksuehto').value = isSopimus ? 10 : (c.maksuehto ?? 10);
+  document.getElementById('cust-maksuehto').value = isSopimus ? '' : (c.maksuehto ?? 10);
   document.getElementById('cust-maksuehto').disabled = isSopimus;
   document.getElementById('modal-customer').classList.add('open');
 }
@@ -86,7 +86,10 @@ function saveCustomerModal() {
 
 function toggleMaksuehtoSopimus() {
   const isSopimus = document.getElementById('cust-maksuehto-sopimus').checked;
-  document.getElementById('cust-maksuehto').disabled = isSopimus;
+  const field = document.getElementById('cust-maksuehto');
+  field.disabled = isSopimus;
+  if (isSopimus) field.value = '';
+  else if (!field.value) field.value = 10;
 }
 
 function closeCustomerModal() {

@@ -38,8 +38,6 @@ export function applyLang() {
   document.querySelectorAll('.tab')[1].textContent = t('kirjanpito');
   document.querySelectorAll('.tab')[2].querySelector('.tab-label').textContent = t('arkisto');
   document.querySelectorAll('.tab')[3].textContent = t('raportointi');
-  document.querySelectorAll('.header-icons button[onclick^="showTab(\'asetukset\'"]').forEach(el => el.title = t('asetukset'));
-  document.querySelectorAll('.header-icons button[onclick="signOut()"]').forEach(el => el.title = t('logout'));
 
   document.querySelector('.card-label').textContent = t('manualEntry');
   document.querySelector('#notes-toggle-icon').nextSibling.textContent = ' ' + t('addNotes');
@@ -115,6 +113,21 @@ export function updateClockBg() {
   }
 }
 
+// ── USER MENU ──
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  document.getElementById('user-menu').classList.toggle('open');
+}
+
+function closeUserMenu() {
+  document.getElementById('user-menu').classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('user-menu');
+  if (menu && menu.classList.contains('open') && !menu.contains(e.target)) closeUserMenu();
+});
+
 // ── NOTES ──
 function toggleNotes() {
   const box = document.getElementById('notes-box');
@@ -140,3 +153,5 @@ window.showTab = showTab;
 window.setLang = setLang;
 window.toggleNotes = toggleNotes;
 window.closeConfirm = closeConfirm;
+window.toggleUserMenu = toggleUserMenu;
+window.closeUserMenu = closeUserMenu;

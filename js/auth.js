@@ -23,17 +23,21 @@ export function updateUserNameDisplay() {
   document.getElementById('user-name').textContent = company || state.accountName;
   const av = document.getElementById('user-avatar');
   const avLetter = document.getElementById('user-avatar-letter');
+  const avIcon = document.getElementById('user-avatar-icon');
   if (company) {
     avLetter.textContent = company.charAt(0);
     avLetter.style.display = 'flex';
     av.style.display = 'none';
+    avIcon.style.display = 'none';
   } else if (state.accountPhotoURL) {
     av.src = state.accountPhotoURL;
     av.style.display = 'block';
     avLetter.style.display = 'none';
+    avIcon.style.display = 'none';
   } else {
     av.style.display = 'none';
     avLetter.style.display = 'none';
+    avIcon.style.display = 'flex';
   }
 }
 
@@ -180,6 +184,7 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('user-name').textContent = '';
     document.getElementById('user-avatar').style.display = 'none';
     document.getElementById('user-avatar-letter').style.display = 'none';
+    document.getElementById('user-avatar-icon').style.display = 'none';
     renderAllSelects(); renderServiceSelects(); renderPills(); renderEntries();
     window.updateInvoiceBadge?.();
   }
