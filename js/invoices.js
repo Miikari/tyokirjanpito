@@ -80,10 +80,10 @@ function isOverdue(inv) {
 function updateInvoiceBadge() {
   const badge = document.getElementById('inv-badge');
   if (!badge) return;
-  const unpaid = state.invoices.filter(inv => !inv.paid).length;
-  if (unpaid === 0) { badge.style.display = 'none'; return; }
+  const overdue = state.invoices.filter(inv => isOverdue(inv)).length;
+  if (overdue === 0) { badge.style.display = 'none'; return; }
   badge.style.display = 'inline-flex';
-  badge.textContent = unpaid > 5 ? '5+' : String(unpaid);
+  badge.textContent = overdue > 5 ? '5+' : String(overdue);
 }
 
 function markInvoicePaid(id) {
