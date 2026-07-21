@@ -343,6 +343,11 @@ body {
   .user-menu-trigger { padding: 6px; }
   .user-menu-dropdown { min-width: 160px; }
   .row-search input { padding: 9px 8px; font-size: 13px; }
+  .tab-badge {
+    margin-left: 0; vertical-align: initial;
+    position: absolute; top: 0px; right: 0px;
+    padding: 0 0px;
+  }
 }
 @media (min-width: 1200px) {
   .header h1 { font-size: 26px; }
@@ -554,8 +559,8 @@ body {
   background: var(--red); color: #fff;
   font-size: 10px; font-weight: 700; line-height: 1;
   min-width: 17px; height: 17px; border-radius: 99px;
-  padding: 0 4px;
-  position: absolute; top: 2px; right: 2px;
+  padding: 0 4px; margin-left: 4px;
+  vertical-align: middle; position: relative; top: -1px;
 }
 
 /* ── INVOICE PAYMENT STATUS ── */
