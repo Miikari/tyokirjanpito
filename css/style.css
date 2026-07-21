@@ -36,7 +36,7 @@ body {
 .header {
   background: var(--surface);
   padding: 10px 16px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--blue-dk);
   flex-shrink: 0;
   position: relative;
   z-index: 10;
@@ -54,7 +54,7 @@ body {
   border-bottom: 2.5px solid transparent; cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); font-size: 16px;}
 
 /* ── SCROLL AREA ── */
 .scroll {
@@ -102,20 +102,27 @@ body {
 .cb-paused  { background: rgba(255,200,0,0.25); color: #ffe082; }
 
 /* Customer picker on clock card */
+.clock-cust-wrap { position: relative; max-width: 260px; margin: 0 auto 20px; }
 .clock-cust-select {
-  display: block; width: 100%; max-width: 260px; margin: 0 auto 20px;
+  display: block; width: 100%; margin: 0;
   padding: 10px 34px 10px 18px; border-radius: 99px; font-size: 14px; font-weight: 600;
-  border: 1.5px solid rgba(255,255,255,0.4); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4); color: transparent;
   background-color: rgba(255,255,255,0.12);
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
   background-repeat: no-repeat; background-position: right 14px center;
   cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  text-align: center; text-align-last: center; transition: border-color 0.15s, background-color 0.15s;
+  transition: border-color 0.15s, background-color 0.15s;
 }
 .clock-cust-select:hover { border-color: rgba(255,255,255,0.7); }
 .clock-cust-select:focus { outline: none; border-color: #fff; }
 .clock-cust-select:disabled { opacity: 0.55; cursor: not-allowed; }
+.clock-cust-select:disabled + .clock-cust-label { opacity: 0.55; }
 .clock-cust-select option { color: var(--text); background: #fff; }
+.clock-cust-label {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 0 34px 0 18px; font-size: 14px; font-weight: 600; color: #fff;
+  pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* Filter pills (Kirjanpito customer filter) */
 .pill {

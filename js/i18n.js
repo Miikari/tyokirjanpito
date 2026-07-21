@@ -5,7 +5,7 @@ const i18n = {
     // App
     appName: 'Työtunnit', latausVirhe: 'Latausvirhe', tallennusVirhe: 'Tallennusvirhe',
     // Navigaatio
-    kello: 'Työnäkymä', kirjanpito: 'Kirjaukset', arkisto: 'Laskutus', raportointi: 'Raportit', asetukset: 'Asetukset',
+    kello: 'Työnäkymä', kirjanpito: 'Kirjaukset', arkisto: 'Laskut', raportointi: 'Raportit', asetukset: 'Asetukset',
     // Kello
     clockIn: 'Kirjaudu sisään', clockOut: 'Kirjaudu ulos', pause: '⏸ Tauko', resume: '▶ Jatka',
     idle: 'Ei käynnissä', working: '● Töissä', onBreak: '⏸ Tauolla', taukoAlkaa: 'Tauko käynnistetty',

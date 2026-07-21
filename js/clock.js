@@ -17,6 +17,13 @@ function getActiveService() {
   return found || services[0] || { id: null, name: '', rate: state.cfg.hourly };
 }
 
+export function syncSelectLabel(selectId, labelId) {
+  const el = document.getElementById(selectId);
+  const label = document.getElementById(labelId);
+  if (!el || !label) return;
+  label.textContent = el.options[el.selectedIndex]?.textContent || '';
+}
+
 export function renderServiceOptions() {
   const el = document.getElementById('service-select');
   if (!el) return;
@@ -25,6 +32,7 @@ export function renderServiceOptions() {
     state.activeServiceId = services[0]?.id ?? null;
   }
   el.innerHTML = services.map(s => `<option value="${s.id}"${s.id === state.activeServiceId ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  syncSelectLabel('service-select', 'service-select-label');
 }
 
 const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
@@ -54,6 +62,7 @@ function selService(id) {
   const svc = getActiveService();
   document.getElementById('clock-rate-input').value = svc.rate;
   document.getElementById('clock-rate-val').textContent = svc.rate.toFixed(2).replace('.', ',') + ' €/h';
+  syncSelectLabel('service-select', 'service-select-label');
 }
 
 function toggleHideRate() {
@@ -160,6 +169,7 @@ export function renderPills() {
   if (!state.cfg.customers.length) {
     el.innerHTML = `<option value="">${t('noCustomer')}</option>`;
     el.disabled = true;
+    syncSelectLabel('cust-select', 'cust-select-label');
     return;
   }
   const sorted = [...state.cfg.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
@@ -167,6 +177,7 @@ export function renderPills() {
     ...sorted.map(c => `<option value="${esc(c.name)}"${state.activeCustomer === c.name ? ' selected' : ''}>${esc(c.name)}</option>`)
   ].join('');
   el.disabled = isLocked;
+  syncSelectLabel('cust-select', 'cust-select-label');
 }
 
 function selCust(n) {

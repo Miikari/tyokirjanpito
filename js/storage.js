@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
-import { initClockRate, renderMainBtns, renderPills, setBadge, tick } from './clock.js';
+import { initClockRate, renderMainBtns, renderPills, setBadge, syncSelectLabel, tick } from './clock.js';
 import { renderAllSelects } from './customers.js';
 import { renderEntries } from './entries.js';
 import { renderServiceSelects } from './settings.js';
@@ -50,6 +50,7 @@ export async function loadFromFirestore() {
       state.activeServiceId = matchedService ? matchedService.id : state.cfg.services[0]?.id ?? null;
       const svcSel = document.getElementById('service-select');
       if (svcSel) svcSel.value = state.activeServiceId;
+      syncSelectLabel('service-select', 'service-select-label');
       const savedRate = a.rate || state.cfg.hourly;
       document.getElementById('clock-rate-input').value = savedRate;
       document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';
@@ -83,6 +84,7 @@ export function listenActiveState() {
         state.activeServiceId = matchedService ? matchedService.id : state.cfg.services[0]?.id ?? null;
         const svcSel = document.getElementById('service-select');
         if (svcSel) svcSel.value = state.activeServiceId;
+        syncSelectLabel('service-select', 'service-select-label');
         const savedRate = a.rate || state.cfg.hourly;
         document.getElementById('clock-rate-input').value = savedRate;
         document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';

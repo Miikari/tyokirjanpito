@@ -89,7 +89,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="kello" onclick="showTab('kello',this)">Työnäkymä</button>
     <button class="tab" data-tab="kirjanpito" onclick="showTab('kirjanpito',this)">Kirjaukset</button>
-    <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskutus</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
+    <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskut</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
     <button class="tab" data-tab="raportointi" onclick="showTab('raportointi',this)">Raportit</button>
     <div class="user-menu" id="user-menu">
       <button class="user-menu-trigger" onclick="toggleUserMenu(event)">
@@ -123,8 +123,14 @@
       <div class="timer" id="timer">00:00:00</div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge" data-i18n="idle">Ei käynnissä</span>
-      <select class="clock-cust-select" id="cust-select" onchange="selCust(this.value)"></select>
-      <select class="clock-cust-select" id="service-select" onchange="selService(this.value)" style="margin-top:8px;"></select>
+      <div class="clock-cust-wrap">
+        <select class="clock-cust-select" id="cust-select" onchange="selCust(this.value)"></select>
+        <span class="clock-cust-label" id="cust-select-label"></span>
+      </div>
+      <div class="clock-cust-wrap" style="margin-top:8px;">
+        <select class="clock-cust-select" id="service-select" onchange="selService(this.value)"></select>
+        <span class="clock-cust-label" id="service-select-label"></span>
+      </div>
       <div id="clock-rate-row" style="margin:2px 0 6px;display:flex;align-items:center;justify-content:center;gap:10px;">
         <div id="clock-rate-value-wrap" style="display:flex;align-items:center;gap:8px;">
           <div id="clock-rate-display" style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="enableClockRateEdit()">
