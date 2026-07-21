@@ -560,8 +560,8 @@ body {
 @media (max-width: 400px) {
   .tab-badge {
     margin-left: 0; vertical-align: initial; font-size: 12px;
-    position: absolute; top: 0px; right: 0px;
-    padding: 0 0px; background: transparent; color: var(--red);
+    position: absolute; top: -2px; right: -2px;
+    padding: 0 0px; background: var(--red); color: #fff; z-index: -1;
   }
 }
 
