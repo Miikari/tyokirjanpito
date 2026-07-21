@@ -346,7 +346,7 @@ body {
   .tab-badge {
     margin-left: 0; vertical-align: initial;
     position: absolute; top: 0px; right: 0px;
-    padding: 0 0px;
+    padding: 0 0px; background: transparent; color: var(--red);
   }
 }
 @media (min-width: 1200px) {
