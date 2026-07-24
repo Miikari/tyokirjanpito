@@ -10,6 +10,16 @@ const createPortalSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (requ
   }
 
   const stripe = getStripe();
+  try {
+    const customer = await stripe.customers.retrieve(org.stripeCustomerId);
+    if (customer.deleted) {
+      throw new HttpsError('failed-precondition', 'Billing account not found. Please start checkout again.');
+    }
+  } catch (e) {
+    if (e instanceof HttpsError) throw e;
+    throw new HttpsError('failed-precondition', 'Billing account not found. Please start checkout again.');
+  }
+
   const session = await stripe.billingPortal.sessions.create({
     customer: org.stripeCustomerId,
     return_url: `${APP_ORIGIN}/?tab=asetukset`,

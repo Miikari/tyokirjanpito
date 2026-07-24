@@ -12,6 +12,20 @@ const createCheckoutSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (re
   const stripe = getStripe();
 
   let stripeCustomerId = org.stripeCustomerId;
+  if (stripeCustomerId) {
+    // The stored id can go stale (e.g. someone clears test-mode data in the
+    // Stripe dashboard), which would otherwise crash checkout.sessions.create
+    // below with "No such customer". Verify it first and fall through to
+    // creating a fresh one if it's gone. Note: retrieving a deleted customer
+    // does NOT throw — it returns 200 with `deleted: true` — so a try/catch
+    // alone isn't enough, the flag must be checked explicitly.
+    try {
+      const existing = await stripe.customers.retrieve(stripeCustomerId);
+      if (existing.deleted) stripeCustomerId = null;
+    } catch (e) {
+      stripeCustomerId = null;
+    }
+  }
   if (!stripeCustomerId) {
     const customer = await stripe.customers.create({
       email: request.auth.token.email || undefined,
