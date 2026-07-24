@@ -38,3 +38,44 @@ export function calcErapaiva(invoiceDateStr, maksuehto) {
   d.setDate(d.getDate() + (parseInt(maksuehto) || 10));
   return d.toLocaleDateString('fi-FI', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
+
+// ── VALIDOINNIT (omat yritystiedot) ──
+
+export function isValidCompanyName(s) {
+  return /^[\p{L}\p{N}\s&.,'-]{2,100}$/u.test(s);
+}
+
+export function isValidAddress(s) {
+  return /^[\p{L}\p{N}\s.,'-]{4,150}$/u.test(s);
+}
+
+export function isValidPhone(s) {
+  return /^\+?[0-9\s-]{6,20}$/.test(s);
+}
+
+export function isValidEmailField(s) {
+  return s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+}
+
+export function isValidYtunnus(s) {
+  return /^\d{7}-\d$/.test(s);
+}
+
+export function isValidIbanFormat(s) {
+  return /^[A-Z]{2}\d{2}[A-Z0-9]{4,30}$/.test(s.replace(/\s+/g, '').toUpperCase());
+}
+
+function ibanChecksumValid(s) {
+  const iban = s.replace(/\s+/g, '').toUpperCase();
+  const rearranged = iban.slice(4) + iban.slice(0, 4);
+  const numeric = rearranged.replace(/[A-Z]/g, ch => (ch.charCodeAt(0) - 55).toString());
+  let remainder = 0;
+  for (let i = 0; i < numeric.length; i += 7) {
+    remainder = parseInt(String(remainder) + numeric.substring(i, i + 7), 10) % 97;
+  }
+  return remainder === 1;
+}
+
+export function isValidIban(s) {
+  return isValidIbanFormat(s) && ibanChecksumValid(s);
+}

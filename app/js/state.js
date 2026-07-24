@@ -1,4 +1,11 @@
-const DEFAULT_SERVICE_NAME = (localStorage.getItem('lang') || 'fi') === 'en' ? 'Hourly work' : 'Tuntityö';
+function detectLang() {
+  const stored = localStorage.getItem('lang');
+  if (stored) return stored;
+  const nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+  return nav.startsWith('en') ? 'en' : 'fi';
+}
+
+const DEFAULT_SERVICE_NAME = detectLang() === 'en' ? 'Hourly work' : 'Tuntityö';
 
 export function defaultCfg() {
   return {
@@ -17,7 +24,9 @@ export const state = {
   editingEntryId: null, editingInvId: null,
   pendingRecurring: null, pending: null,
   deferredPrompt: null, filterCustomers: new Set(),
-  lang: localStorage.getItem('lang') || 'fi',
+  lang: detectLang(),
+  orgPlan: 'free', orgSubStatus: 'none', orgPeriodEnd: null,
+  orgLifetimeEntryCount: 0, orgLifetimeInvoiceCount: 0,
 };
 export const STILL_IMG = 'images/background2.jpg';
 export const ANIM_GIF  = 'images/background3.gif';

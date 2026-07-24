@@ -1,28 +1,31 @@
-const CACHE = 'tyotunnit-v55';
+const CACHE = 'tyotunnit-v62';
 const FILES = [
-  '/tyokirjanpito/manifest.json',
-  '/tyokirjanpito/icons/icon-192.png',
-  '/tyokirjanpito/icons/icon-512.png',
-  '/tyokirjanpito/css/style.css',
-  '/tyokirjanpito/js/firebase.js',
-  '/tyokirjanpito/js/state.js',
-  '/tyokirjanpito/js/i18n.js',
-  '/tyokirjanpito/js/utils.js',
-  '/tyokirjanpito/js/storage.js',
-  '/tyokirjanpito/js/auth.js',
-  '/tyokirjanpito/js/ui.js',
-  '/tyokirjanpito/js/clock.js',
-  '/tyokirjanpito/js/entries.js',
-  '/tyokirjanpito/js/customers.js',
-  '/tyokirjanpito/js/demo.js',
-  '/tyokirjanpito/js/invoices.js',
-  '/tyokirjanpito/js/org.js',
-  '/tyokirjanpito/js/reports.js',
-  '/tyokirjanpito/js/settings.js',
-  '/tyokirjanpito/js/app.js',
+  'manifest.json',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'css/style.css',
+  'js/firebase.js',
+  'js/state.js',
+  'js/i18n.js',
+  'js/utils.js',
+  'js/storage.js',
+  'js/auth.js',
+  'js/ui.js',
+  'js/clock.js',
+  'js/entries.js',
+  'js/customers.js',
+  'js/demo.js',
+  'js/invoices.js',
+  'js/org.js',
+  'js/reports.js',
+  'js/settings.js',
+  'js/billing.js',
+  'js/app.js',
 ];
 
-const HTML_URLS = ['/tyokirjanpito/', '/tyokirjanpito/index.html'];
+// Suhteelliset polut: sama tiedosto toimii sekä hoyla.dev/app/ että
+// miikari.github.io/tyokirjanpito/app/ -asennuksissa (eri base path).
+const HTML_URLS = ['/', 'index.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -51,7 +54,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
           return response;
         })
-        .catch(() => caches.match('/tyokirjanpito/index.html'))
+        .catch(() => caches.match('index.html'))
     );
     return;
   }

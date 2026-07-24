@@ -18,6 +18,7 @@ function openAddCustomerModal() {
   document.getElementById('cust-postitoimipaikka').value = '';
   document.getElementById('cust-sposti').value = '';
   document.getElementById('cust-puhelin').value = '';
+  document.getElementById('cust-lang').value = 'fi';
   document.getElementById('cust-maksuehto').value = 10;
   document.getElementById('cust-maksuehto-sopimus').checked = false;
   document.getElementById('cust-maksuehto').disabled = false;
@@ -36,6 +37,7 @@ function openEditCustomerModal(name) {
   document.getElementById('cust-postitoimipaikka').value = c.postitoimipaikka || '';
   document.getElementById('cust-sposti').value = c.sposti || '';
   document.getElementById('cust-puhelin').value = c.puhelin || '';
+  document.getElementById('cust-lang').value = c.lang || 'fi';
   const isSopimus = c.maksuehto === 'sopimus';
   document.getElementById('cust-maksuehto-sopimus').checked = isSopimus;
   document.getElementById('cust-maksuehto').value = isSopimus ? '' : (c.maksuehto ?? 10);
@@ -57,6 +59,7 @@ function saveCustomerModal() {
     postitoimipaikka:  document.getElementById('cust-postitoimipaikka').value.trim(),
     sposti:            document.getElementById('cust-sposti').value.trim(),
     puhelin:           document.getElementById('cust-puhelin').value.trim(),
+    lang:              document.getElementById('cust-lang').value,
     maksuehto,
   };
 
@@ -143,7 +146,7 @@ export function renderCustChips() {
     const isActive = activeCustRow === c.name;
     const jsonName = esc(JSON.stringify(c.name));
     return `<div class="cust-row${isActive ? ' active' : ''}" onclick="toggleCustRow(${jsonName})">
-      <div class="cust-row-name">${esc(c.name)}${hasDetails ? '<span class="cust-has-details">•</span>' : ''}</div>
+      <div class="cust-row-name">${esc(c.name)}${hasDetails ? '<span class="cust-has-details"></span>' : ''}</div>
       <div class="cust-row-actions">
         <button type="button" class="cust-action-btn" onclick="event.stopPropagation(); openEditCustomerModal(${jsonName})">${t('edit')}</button>
         <button type="button" class="cust-action-btn cust-action-danger" onclick="event.stopPropagation(); removeCustomer(${jsonName})">${t('delete')}</button>

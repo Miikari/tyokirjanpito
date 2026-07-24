@@ -3,11 +3,22 @@ import { t } from './i18n.js';
 import { fmtDate, fmtDur, fmtEur, fmtShort, esc } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { save } from './storage.js';
+import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
 
 
+// Returns true if the entry was added, false if blocked by the free-tier
+// limit — callers must check this, since a caller mid-flow (e.g. clocking
+// out of a running timer) must not discard already-tracked time on a block.
 export function addEntry(date, secs, customer, src, notes = '', rate = null, km = 0, service = null) {
+  if (!isPro() && state.orgLifetimeEntryCount >= 50) {
+    toast(t('freeLimitEntries'));
+    showUpgradeModal();
+    return false;
+  }
   const entryRate = (rate !== null && !isNaN(rate) && rate >= 0) ? rate : state.cfg.hourly;
   state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, service: service || null, km: km || 0, selected: false, invoiced: false });
+  incrementEntryCount();
+  return true;
 }
 
 function selManualService(id) {
@@ -30,7 +41,8 @@ function addManual() {
   const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   const svc = state.cfg.services.find(s => s.id === parseInt(document.getElementById('m-service').value, 10));
   if (total < 1) { toast(t('enterTime')); return; }
-  addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
+  const ok = addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
+  if (!ok) return;
   document.getElementById('m-h').value = '';
   document.getElementById('m-m').value = '';
   document.getElementById('m-notes').value = '';

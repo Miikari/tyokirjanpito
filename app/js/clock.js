@@ -130,7 +130,17 @@ function clockOut() {
   const notes = document.getElementById('clock-notes').value.trim();
   const rate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
   const km = parseFloat(document.getElementById('clock-km').value) || 0;
-  addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate, km, getActiveService().name);
+  const wasRunning = state.clockState === 'running';
+  const ok = addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate, km, getActiveService().name);
+  if (!ok) {
+    // Never discard already-tracked time on a blocked add — restore the
+    // timer exactly as it was so the user can upgrade and try again.
+    if (wasRunning) {
+      state.startTime = Date.now();
+      state.timerRaf = requestAnimationFrame(tick);
+    }
+    return;
+  }
   document.getElementById('clock-notes').value = '';
   document.getElementById('clock-km').value = '';
   document.getElementById('notes-box').style.display = 'none';

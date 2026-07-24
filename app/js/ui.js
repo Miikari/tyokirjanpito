@@ -5,6 +5,7 @@ import { renderEntries } from './entries.js';
 import { renderArchive } from './invoices.js';
 import { renderReports } from './reports.js';
 import { renderSettings } from './settings.js';
+import { renderBillingSettings } from './billing.js';
 
 // ── LANG ──
 function setLang(l) {
@@ -70,7 +71,7 @@ export function applyLang() {
     btn.style.fontWeight = active ? '700' : '600';
   });
 
-  renderMainBtns(); renderPills(); renderEntries(); renderArchive();
+  renderMainBtns(); renderPills(); renderEntries(); renderArchive(); renderBillingSettings();
   if (document.getElementById('panel-raportointi').classList.contains('active')) renderReports();
   if (document.getElementById('panel-asetukset').classList.contains('active')) renderSettings();
 }

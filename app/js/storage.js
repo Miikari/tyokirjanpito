@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { fmtDate } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
 import { initClockRate, renderMainBtns, renderPills, setBadge, syncSelectLabel, tick } from './clock.js';
-import { renderAllSelects } from './customers.js';
+import { renderAllSelects, renderCustChips } from './customers.js';
 import { renderEntries } from './entries.js';
 import { renderServiceSelects } from './settings.js';
 
@@ -36,7 +36,7 @@ export async function loadFromFirestore() {
 
   renderServiceSelects();
   document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
-  renderAllSelects(); renderPills(); renderEntries();
+  renderAllSelects(); renderCustChips(); renderPills(); renderEntries();
   window.updateInvoiceBadge?.();
 
   try {

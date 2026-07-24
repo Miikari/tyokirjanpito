@@ -1,6 +1,9 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtEur, esc } from './utils.js';
+import {
+  fmtEur, esc, isValidCompanyName, isValidAddress, isValidPhone,
+  isValidEmailField, isValidYtunnus, isValidIban,
+} from './utils.js';
 import { toast } from './ui.js';
 import { save } from './storage.js';
 import { renderCustChips, renderAllSelects } from './customers.js';
@@ -45,12 +48,27 @@ export function renderSettings() {
 function saveAllSettings() {
   const kmRate = parseFloat(document.getElementById('set-kmrate').value);
   if (isNaN(kmRate) || kmRate < 0) { toast(t('invalidPrice')); return; }
-  state.cfg.company = document.getElementById('set-company').value.trim();
-  state.cfg.address = document.getElementById('set-address').value.trim();
-  state.cfg.phone = document.getElementById('set-phone').value.trim();
-  state.cfg.email = document.getElementById('set-email').value.trim();
-  state.cfg.ytunnus = document.getElementById('set-ytunnus').value.trim();
-  state.cfg.tilinumero = document.getElementById('set-tilinumero').value.trim();
+
+  const company    = document.getElementById('set-company').value.trim();
+  const address    = document.getElementById('set-address').value.trim();
+  const phone      = document.getElementById('set-phone').value.trim();
+  const email      = document.getElementById('set-email').value.trim();
+  const ytunnus    = document.getElementById('set-ytunnus').value.trim();
+  const tilinumero = document.getElementById('set-tilinumero').value.trim();
+
+  if (company    && !isValidCompanyName(company))    { toast(t('invalidCompanyName')); return; }
+  if (address    && !isValidAddress(address))         { toast(t('invalidAddress')); return; }
+  if (phone      && !isValidPhone(phone))              { toast(t('invalidPhone')); return; }
+  if (email      && !isValidEmailField(email))         { toast(t('invalidEmailField')); return; }
+  if (ytunnus    && !isValidYtunnus(ytunnus))          { toast(t('invalidYtunnus')); return; }
+  if (tilinumero && !isValidIban(tilinumero))          { toast(t('invalidIban')); return; }
+
+  state.cfg.company = company;
+  state.cfg.address = address;
+  state.cfg.phone = phone;
+  state.cfg.email = email;
+  state.cfg.ytunnus = ytunnus;
+  state.cfg.tilinumero = tilinumero;
   state.cfg.kmRate = kmRate;
   save(); updateUserNameDisplay(); toast(t('saved'));
 }

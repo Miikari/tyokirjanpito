@@ -207,6 +207,16 @@ body {
   outline-width: 2px;
   transition: opacity 0.15s;
 }
+.btn-upgrade {
+  width: 100%; padding: 13px; border-radius: var(--r-sm);
+  font-size: 15px; font-weight: 600;
+  background: var(--blue-txt); color: var(--blue-bg);
+  border: none; cursor: pointer; margin-top: 4px;
+  outline-style: solid;
+  outline-color: var(--blue-bg);
+  outline-width: 2px;
+  transition: opacity 0.15s;
+}
 .btn-add:active { opacity: 0.75; }
 
 /* ── SUMMARY GRID ── */
@@ -535,6 +545,29 @@ body {
 .user-menu-dropdown button:hover { background: var(--surface2); }
 .user-menu-dropdown button.danger { color: var(--red); }
 .user-menu-dropdown button.danger svg { color: var(--red); }
+.user-menu-plan {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  margin-top: 0px; padding: 9px 10px; border: none; border-top: 1px solid var(--border);
+  background: none; cursor: pointer; border-radius: 8px; text-align: left;
+  font-size: 14px; font-weight: 500; color: var(--text2); transition: background 0.15s;
+}
+.user-menu-plan:hover { background: var(--surface2); }
+.user-menu-plan-icon {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 18px; height: 18px; border-radius: 50%;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  border: 2px dashed var(--text3); color: var(--text3);
+}
+.user-menu-plan.is-pro { color: var(--text); }
+.user-menu-plan.is-pro .user-menu-plan-icon {
+  border-style: solid; border-color: var(--blue-txt); color: var(--blue-txt);
+}
+.user-menu-plan-upgrade {
+  margin: 0 0px 6px 38px; padding: 0px 8px; cursor: pointer;
+  font-size: 12px; font-weight: 600; color: var(--blue-txt);
+  border-radius: 6px; transition: background 0.15s;
+}
+.user-menu-plan-upgrade:hover { background: var(--surface2); }
 
 /* ── INSTALL BANNER ── */
 .install-banner {

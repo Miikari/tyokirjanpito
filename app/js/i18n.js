@@ -83,6 +83,9 @@ const i18n = {
     rounding: 'Pyöristys', roundingHint: 'Pyöristää tunnit ylöspäin', roundingNone: 'Ei pyöristystä',
     vatLabel: 'ALV', vatHint: 'Lisätään laskun loppusummaan',
     saved: 'Tallennettu: ', invalidPrice: 'Virheellinen hinta',
+    invalidCompanyName: 'Tarkista yrityksen nimi', invalidAddress: 'Tarkista osoite',
+    invalidPhone: 'Tarkista puhelinnumero', invalidEmailField: 'Tarkista sähköpostiosoite',
+    invalidYtunnus: 'Tarkista Y-tunnus (muoto 1234567-8)', invalidIban: 'Tarkista tilinumero (IBAN)',
     // Palvelut
     services: 'Palvelut', service: 'Palvelu', addService: '+ Lisää palvelu',
     serviceNamePlaceholder: 'esim. Editointi', noServices: 'Ei palveluita.',
@@ -125,6 +128,21 @@ const i18n = {
     invoiceSettings: 'Laskuasetukset',
     dueDate: 'Eräpäivä ja maksuehto', dueDateHint: 'Lasketaan asiakkaan maksuehdosta',
     referenceNumber: 'Viitenumero', referenceNumberHint: 'Automaattisesti generoitu',
+    // Laskun kieli & tulostus
+    custInvoiceLang: 'Laskun kieli', dueDateLabel: 'Eräpäivä', hourBreakdown: 'Tuntierittely',
+    // Tilaus (Stripe)
+    billingSection: 'Tilaus', planFree: 'Ilmainen', planPro: 'Hoyla Pro',
+    menuPlanFree: 'Ilmainen taso', menuPlanPro: 'Hoyla Pro -tilaus',
+    planFreeHint: '{entries}/50 kirjausta, {invoices}/5 laskua',
+    planProRenews: 'Uusiutuu', upgradeToProBtn: 'Päivitä Prohon', manageSubscriptionBtn: 'Hallitse tilausta',
+    freeLimitEntries: 'Ilmaisen tason kirjausraja (50) täynnä. Päivitä Prohon jatkaaksesi.',
+    freeLimitInvoices: 'Ilmaisen tason laskuraja (5) täynnä. Päivitä Prohon jatkaaksesi.',
+    upgradeModalTitle: 'Ilmaisen tason raja täynnä',
+    upgradeModalBody: 'Päivitä Prohon (9,90 €/kk) poistaaksesi rajan kokonaan.',
+    upgradeCta: 'Päivitä Prohon – 9,90 €/kk',
+    checkoutError: 'Maksun aloitus epäonnistui. Yritä uudelleen.',
+    demoNoCheckout: 'Luo oma tili tilausta varten. Vierastilillä ei voi tilata.',
+    billedHoursTotal: 'Laskutettu yhteensä {hours} h',
     // Varmuuskopiointi
     backupSection: 'Varmuuskopiointi',
     backupHint: 'Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.',
@@ -218,6 +236,9 @@ const i18n = {
     rounding: 'Rounding', roundingHint: 'Rounds hours up', roundingNone: 'No rounding',
     vatLabel: 'VAT', vatHint: 'Added to invoice total',
     saved: 'Saved: ', invalidPrice: 'Invalid price',
+    invalidCompanyName: 'Check the company name', invalidAddress: 'Check the address',
+    invalidPhone: 'Check the phone number', invalidEmailField: 'Check the email address',
+    invalidYtunnus: 'Check the business ID (format 1234567-8)', invalidIban: 'Check the bank account (IBAN)',
     // Services
     services: 'Services', service: 'Service', addService: '+ Add service',
     serviceNamePlaceholder: 'e.g. Editing', noServices: 'No services.',
@@ -260,6 +281,21 @@ const i18n = {
     invoiceSettings: 'Invoice settings',
     dueDate: 'Due date & payment terms', dueDateHint: 'Based on customer payment terms',
     referenceNumber: 'Reference number', referenceNumberHint: 'Automatically generated',
+    // Invoice language & print
+    custInvoiceLang: 'Invoice language', dueDateLabel: 'Due date', hourBreakdown: 'Hour breakdown',
+    // Subscription (Stripe)
+    billingSection: 'Subscription', planFree: 'Free', planPro: 'Hoyla Pro',
+    menuPlanFree: 'Free plan', menuPlanPro: 'Hoyla Pro subscription',
+    planFreeHint: '{entries}/50 entries, {invoices}/5 invoices',
+    planProRenews: 'Renews', upgradeToProBtn: 'Upgrade to Pro', manageSubscriptionBtn: 'Manage subscription',
+    freeLimitEntries: 'Free tier entry limit (50) reached. Upgrade to Pro to continue.',
+    freeLimitInvoices: 'Free tier invoice limit (5) reached. Upgrade to Pro to continue.',
+    upgradeModalTitle: 'Free tier limit reached',
+    upgradeModalBody: 'Upgrade to Pro (€9.90/mo) to remove the limit entirely.',
+    upgradeCta: 'Upgrade to Pro – €9.90/mo',
+    checkoutError: 'Could not start checkout. Please try again.',
+    demoNoCheckout: 'Create your own account to subscribe. Guest accounts cannot subscribe.',
+    billedHoursTotal: 'Billed {hours} h total',
     // Backup
     backupSection: 'Backup',
     backupHint: 'Download all your data (entries, invoices, customers, settings) as a single file to keep on your own device.',
@@ -273,4 +309,7 @@ const i18n = {
   }
 };
 
-export function t(key) { return i18n[state.lang][key] || i18n['fi'][key] || key; }
+export function t(key, lang) {
+  const l = lang || state.lang;
+  return i18n[l]?.[key] || i18n['fi'][key] || key;
+}

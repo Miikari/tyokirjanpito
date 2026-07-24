@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1976D2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Työtunnit">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.gstatic.com https://apis.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://www.googleapis.com wss://*.firebaseio.com https://us-central1-tyoaikakirjanpito.cloudfunctions.net; frame-src https://tyoaikakirjanpito.firebaseapp.com https://accounts.google.com; object-src 'none';">
+<title>Työtunnit</title>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-functions-compat.js"></script>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="login-screen visible" id="login-screen">
+ <div class="login-inner">
+  <div class="login-logo">⏱</div>
+  <div class="login-title">Työtunnit</div>
+  <div class="login-sub" id="login-sub-text">Seuraa työtunteja ja kokoa laskuja.<br>Kirjaudu sisään päästäksesi alkuun.</div>
+
+  <div id="login-view-main">
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Kirjaudu Google-tilillä
+    </button>
+    <div class="login-divider"><span>tai</span></div>
+    <button class="btn-email" onclick="showLoginView('signin')">Kirjaudu sähköpostilla</button>
+    <button class="btn-email btn-email-outline" onclick="showLoginView('signup')">Luo uusi tunnus</button>
+    <button class="btn-anon" onclick="signInAnonymously()">Kokeile ilman tunnusta</button>
+  </div>
+
+  <div id="login-view-signin" style="display:none; width:100%;">
+    <div class="login-form">
+      <input class="login-input" type="email" id="signin-email" placeholder="Sähköposti" autocomplete="off">
+      <input class="login-input" type="password" id="signin-password" placeholder="Salasana" autocomplete="off">
+      <div id="login-error" class="login-error"></div>
+      <button class="btn-email" onclick="signInWithEmail()">Kirjaudu sisään</button>
+      <button class="btn-link" onclick="showLoginView('reset')">Unohditko salasanan?</button>
+      <div class="login-divider"><span>tai</span></div>
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Kirjaudu Google-tilillä
+      </button>
+      <button class="btn-link" onclick="showLoginView('main')">Takaisin</button>
+    </div>
+  </div>
+
+  <div id="login-view-signup" style="display:none; width:100%;">
+    <div class="login-form">
+      <input class="login-input" type="email" id="signup-email" placeholder="Sähköposti" autocomplete="off">
+      <input class="login-input" type="password" id="signup-password" placeholder="Salasana (väh. 6 merkkiä)" autocomplete="off">
+      <input class="login-input" type="password" id="signup-password2" placeholder="Salasana uudelleen" autocomplete="off">
+      <div id="signup-error" class="login-error"></div>
+      <button class="btn-email" onclick="signUpWithEmail()">Luo tunnus</button>
+      <button class="btn-link" onclick="showLoginView('main')">Takaisin</button>
+    </div>
+  </div>
+
+  <div id="login-view-reset" style="display:none; width:100%;">
+    <div class="login-form">
+      <input class="login-input" type="email" id="reset-email" placeholder="Sähköposti" autocomplete="off">
+      <div id="reset-msg" class="login-error"></div>
+      <button class="btn-email" onclick="sendPasswordReset()">Lähetä palautuslinkki</button>
+      <button class="btn-link" onclick="showLoginView('signin')">Takaisin</button>
+    </div>
+  </div>
+
+  <div class="login-footer">Tietosi tallennetaan turvallisesti pilveen.<br>Käytä samalla tilillä puhelimella ja tietokoneella.</div>
+ </div>
+</div>
+
+<div class="install-banner" id="install-banner">
+  <span>📲 Lisää aloitusnäytölle käyttääksesi sovelluksena</span>
+  <button onclick="installApp()">Asenna</button>
+  <button class="dismiss" onclick="dismissInstall()">×</button>
+</div>
+
+<div class="header">
+ <div class="header-inner">
+  <div class="tabs">
+    <button class="tab active" data-tab="kello" onclick="showTab('kello',this)">Työnäkymä</button>
+    <button class="tab" data-tab="kirjanpito" onclick="showTab('kirjanpito',this)">Kirjaukset</button>
+    <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskut</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
+    <button class="tab" data-tab="raportointi" onclick="showTab('raportointi',this)">Raportit</button>
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-trigger" onclick="toggleUserMenu(event)">
+        <img class="user-avatar" id="user-avatar" src="" alt="">
+        <div class="user-avatar user-avatar-letter" id="user-avatar-letter"></div>
+        <svg class="user-avatar user-avatar-icon" id="user-avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
+        <span class="user-name" id="user-name"></span>
+        <svg class="user-menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <button id="menu-settings-btn" onclick="closeUserMenu();showTab('asetukset')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span data-i18n="asetukset">Asetukset</span>
+        </button>
+        <button id="menu-logout-btn" class="danger" onclick="closeUserMenu();signOut()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <span data-i18n="logout">Kirjaudu ulos</span>
+        </button>
+        <button class="user-menu-plan" id="user-menu-plan" onclick="closeUserMenu();handlePlanClick()">
+          <span class="user-menu-plan-icon" id="user-menu-plan-icon">F</span>
+          <span id="user-menu-plan-text"></span>
+        </button>
+        <div class="user-menu-plan-upgrade" id="user-menu-plan-upgrade" onclick="closeUserMenu();startCheckout()" data-i18n="upgradeToProBtn">Päivitä Prohon</div>
+      </div>
+    </div>
+  </div>
+ </div>
+</div>
+
+<div class="scroll">
+
+<!-- ── KELLO ── -->
+  <div class="panel active" id="panel-kello">
+    <div class="clock-card">
+      <div id="clock-bg" style="position:absolute;inset:0;border-radius:var(--r);transition:opacity 0.5s;opacity:0.9;pointer-events:none;z-index:0;"></div>
+      <div class="timer" id="timer">00:00:00</div>
+      <div class="timer-sub" id="timer-sub">—</div>
+      <span class="clock-badge cb-idle" id="clock-badge" data-i18n="idle">Ei käynnissä</span>
+      <div class="clock-cust-wrap">
+        <select class="clock-cust-select" id="cust-select" onchange="selCust(this.value)"></select>
+        <span class="clock-cust-label" id="cust-select-label"></span>
+      </div>
+      <div class="clock-cust-wrap" style="margin-top:8px;">
+        <select class="clock-cust-select" id="service-select" onchange="selService(this.value)"></select>
+        <span class="clock-cust-label" id="service-select-label"></span>
+      </div>
+      <div id="clock-rate-row" style="margin:2px 0 6px;display:flex;align-items:center;justify-content:center;gap:10px;">
+        <div id="clock-rate-value-wrap" style="display:flex;align-items:center;gap:8px;">
+          <div id="clock-rate-display" style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="enableClockRateEdit()">
+            <span id="clock-rate-val" style="color:rgba(255,255,255,0.85);font-size:14px;font-weight:600;"></span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:2px 7px;">✎</span>
+          </div>
+          <div id="clock-rate-edit" style="display:none;align-items:center;gap:6px;">
+            <input type="number" id="clock-rate-input" min="0" step="0.5" style="width:72px;padding:6px 8px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;" onkeydown="if(event.key==='Enter')confirmClockRateEdit()" autocomplete="off">
+            <span style="color:rgba(255,255,255,0.7);font-size:13px;">€/h</span>
+            <button onclick="confirmClockRateEdit()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;cursor:pointer;font-size:14px;padding:6px 10px;border-radius:8px;">✓</button>
+          </div>
+        </div>
+        <button type="button" id="hide-rate-btn" onclick="toggleHideRate()" title="Piilota tuntihinta" style="background:none;border:none;color:rgba(255,255,255,0.55);cursor:pointer;padding:4px;display:flex;align-items:center;">
+          <svg id="hide-rate-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        </button>
+      </div>
+      <div class="btn-row" id="main-btns">
+        <button class="btn btn-signin" onclick="clockIn()" data-i18n="clockIn">Kirjaudu sisään</button>
+      </div>
+      <div style="margin-top:16px;">
+        <button onclick="toggleNotes()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;"><span id="notes-toggle-icon" style="font-size:18px;line-height:1;">+</span><span data-i18n="addNotes">Lisää merkintöjä</span></button>
+        <div id="notes-box" style="display:none;margin-top:10px;">
+          <textarea id="clock-notes" placeholder="Merkintöjä tähän kirjaukseen..." style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(136, 136, 136, 0.713);color:#fff;font-size:14px;resize:none;height:72px;outline:none;margin-bottom:8px;"></textarea>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="color:rgba(255, 255, 255, 0.9);font-size:14px;font-weight:600;white-space:nowrap;">🚗 Km:</span>
+            <input type="number" id="clock-km" min="0" step="1" placeholder="0" autocomplete="off" style="width:80px;padding:8px 10px;border-radius:8px;border:none;background:rgba(255, 255, 255, 0.327);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;">
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">ajetut kilometrit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-form">
+      <div class="card-label" data-i18n="manualEntry">Manuaalinen kirjaus</div>
+      <div class="form-cols">
+        <div class="form-col">
+          <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off"></div>
+          <div class="fg"><label data-i18n="customer">Asiakas</label><select id="m-customer"></select></div>
+          <div class="row2" style="margin-bottom:0;">
+            <div class="fg" style="margin-bottom:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off"></div>
+            <div class="fg" style="margin-bottom:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off"></div>
+          </div>
+        </div>
+        <div class="form-col">
+          <div class="fg fg-grow"><label data-i18n="notes">Merkintöjä</label><textarea id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></textarea></div>
+          <div class="fg" style="margin-bottom:0;"><label data-i18n="service">Palvelu</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><select id="m-service" onchange="selManualService(this.value)" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;font-weight:600;"></select><input type="number" id="m-rate" min="0" step="0.5" style="width:80px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
+    </div>
+
+    <div class="card card-form">
+      <div class="card-label" data-i18n="expenses">Kulukorvaukset</div>
+      <div class="fg"><label data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." autocomplete="off"></div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
+      </div>
+      <button class="btn-add" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
+    </div>
+  </div><!-- /panel-kello -->
+
+  <!-- ── KIRJANPITO ── -->
+  <div class="panel" id="panel-kirjanpito">
+    <div class="sum-grid">
+      <div class="sum-card"><div class="sum-label" data-i18n="entries">Kirjauksia</div><div class="sum-val" id="s-count">0</div></div>
+      <div class="sum-card"><div class="sum-label" data-i18n="selected">Valittuna</div><div class="sum-val" id="s-sel">0</div></div>
+      <div class="sum-card"><div class="sum-label" data-i18n="total">Laskuttamattomat tunnit</div><div class="sum-val" id="s-total">0:00</div></div>
+      <div class="sum-card"><div class="sum-label" data-i18n="value">Laskutukseen tuleva summa</div><div class="sum-val" id="s-val">0€</div></div>
+    </div>
+    <div id="filter-pills-wrap" style="display:none;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="filterByCustomer">Suodata asiakkaan mukaan</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="filter-pills"></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-outline" onclick="selectAll()" data-i18n="selectAll">Valitse kaikki</button>
+      <button class="btn-invoice" onclick="startInvoice()" data-i18n="buildInvoice">Kokoa lasku ↗</button>
+    </div>
+    <div id="entries-list"></div>
+    <div id="kirjanpito-expenses"></div>
+  </div>
+
+  <!-- ── ARKISTO ── -->
+  <div class="panel" id="panel-arkisto">
+    <div class="card" style="margin-bottom:14px;">
+      <input type="text" id="arch-search" onkeydown="if(event.key==='Enter')searchArchive()" placeholder="Hae asiakkaan tai laskun numeron mukaan..." style="width:100%;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;margin-bottom:10px;" autocomplete="off">
+      <div class="row-search" style="margin-bottom:10px;">
+        <div class="fg" style="margin:0;"><label data-i18n="dateFrom">Alkaen</label><input type="date" id="arch-date-from" autocomplete="off"></div>
+        <div class="fg" style="margin:0;"><label data-i18n="dateTo">Päättyen</label><input type="date" id="arch-date-to" autocomplete="off"></div>
+      </div>
+      <div class="row-search">
+        <div class="fg" style="margin:0;"><label data-i18n="amountMin">Summa väh. (€)</label><input type="number" autocomplete="off" id="arch-amount-min" min="0" step="0.01"></div>
+        <div class="fg" style="margin:0;"><label data-i18n="amountMax">Summa enint. (€)</label><input type="number" autocomplete="off" id="arch-amount-max" min="0" step="0.01"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button class="btn-add" style="flex:1;margin:0;background:transparent;color:var(--text2);border:1.5px solid var(--border2);" onclick="clearArchiveFilters()" data-i18n="clearFilters">Tyhjennä haku</button>
+        <button class="btn-add" style="flex:1;margin:0;" onclick="searchArchive()" data-i18n="searchBtn">Hae</button>
+      </div>
+    </div>
+    <div id="archive-list"><div class="empty" data-i18n="noInvoices">Ei arkistoituja laskuja vielä.</div></div>
+  </div>
+
+  <!-- ── RAPORTOINTI ── -->
+  <div class="panel" id="panel-raportointi">
+    <div class="rep-year-bar">
+      <button class="rep-year-btn" onclick="reportPrevYear()">‹</button>
+      <span id="report-year" class="rep-year-label"></span>
+      <button class="rep-year-btn" onclick="reportNextYear()">›</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="downloadReport">Lataa raportti</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></select>
+          <button id="btn-dl-month" class="btn-dl-report" onclick="downloadMonthReport()">↓ Kuukausiraportti</button>
+        </div>
+        <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()" style="flex:1;">↓ Vuosiraportti</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="customerSummary">Asiakaskohtainen yhteenveto</div>
+      <div id="report-customers"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="hourDistribution">Tuntijakauma asiakkaiden välillä</div>
+      <div id="chart-pie-wrap" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <canvas id="chart-pie"></canvas>
+        <div id="chart-pie-legend" style="width:100%;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="monthlyComparison">Vertailu kuukausien välillä</div>
+      <div id="chart-bars-wrap">
+        <canvas id="chart-bars"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ASETUKSET ── -->
+  <div class="panel" id="panel-asetukset">
+  <div class="settings-grid" style="margin-bottom:14px;">
+    <div class="card">
+      <div class="card-label" data-i18n="companyInfo">Yritystiedot</div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language" data-i18n="language">Kieli</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;flex:1;">🇫🇮 Suomi</button>
+          <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;flex:1;">🇬🇧 English</button>
+        </div>
+      </div>
+      <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="bankAccount">Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" autocomplete="off"></div>
+      <button class="btn-add settings-save-mobile" onclick="saveAllSettings()" data-i18n="saveChanges">Tallenna muutokset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="pricing">Hinnoittelu</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="services">Palvelut</div>
+        <div id="services-list"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <input type="text" id="svc-name" placeholder="esim. Editointi" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
+          <input type="number" id="svc-rate" min="0" step="0.5" placeholder="€/h" style="width:60px;padding:9px 8px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
+          <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="addService()" data-i18n="addService">+ Lisää palvelu</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div><div class="set-label" data-i18n="rounding">Pyöristys</div><div class="set-sub" data-i18n="roundingHint">Pyöristää tunnit ylöspäin</div></div>
+        <div class="set-input-wrap">
+          <select id="set-rounding" onchange="saveRounding()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="1" data-i18n="roundingNone">Ei pyöristystä</option>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">60 min</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row">
+        <div><div class="set-label" data-i18n="vatLabel">ALV</div><div class="set-sub" data-i18n="vatHint">Lisätään laskun loppusummaan</div></div>
+        <div class="set-input-wrap">
+          <select id="set-vat" onchange="saveVat()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="14">14%</option>
+            <option value="25.5">25,5%</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row" style="margin-top:10px;">
+        <div><div class="set-label" data-i18n="kmReimbursement">Kilometrikorvaus</div><div class="set-sub" data-i18n="kmRateHint">Kilometrihinta laskuun</div></div>
+        <div class="set-input-wrap">
+          <input type="number" id="set-kmrate" min="0" step="0.01" autocomplete="off">
+          <span style="font-size:15px;font-weight:600;color:var(--text2);">€/km</span>
+        </div>
+      </div>
+      <button class="btn-add settings-save-mobile" onclick="saveAllSettings()" data-i18n="saveChanges">Tallenna muutokset</button>
+    </div>
+  </div>
+
+  <button class="btn-add settings-save-desktop" onclick="saveAllSettings()" style="margin-bottom:14px;" data-i18n="saveChanges">Tallenna muutokset</button>
+
+  <div class="settings-grid">
+    <div class="card">
+      <div class="card-label" data-i18n="recurring">Kuukausiveloitukset</div>
+      <div id="rec-list"></div>
+      <div style="margin-top:12px;">
+        <div class="fg"><label data-i18n="description">Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu" autocomplete="off"></div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="amount">Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+          <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="rec-customer" style="width:100%;"></select></div>
+        </div>
+        <button class="btn-add" onclick="addRecurring()" data-i18n="addRecurring">+ Lisää kuukausiveloitus</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="customersLabel">Asiakkaat</div>
+      <div id="cust-chips" style="margin-bottom:12px;"></div>
+      <button class="btn-add" onclick="openAddCustomerModal()" data-i18n="addCustomer">+ Lisää asiakas</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="card-label" data-i18n="invoiceSettings">Laskuasetukset</div>
+    <label class="toggle-row">
+      <input type="checkbox" id="inv-show-erapaiva" onchange="saveInvoiceSettings()">
+      <div><div class="set-label" data-i18n="dueDate">Eräpäivä ja maksuehto</div><div class="set-sub" data-i18n="dueDateHint">Lasketaan asiakkaan maksuehdosta</div></div>
+    </label>
+    <label class="toggle-row">
+      <input type="checkbox" id="inv-show-viitenumero" onchange="saveInvoiceSettings()">
+      <div><div class="set-label" data-i18n="referenceNumber">Viitenumero</div><div class="set-sub" data-i18n="referenceNumberHint">Automaattisesti generoitu</div></div>
+    </label>
+    <label class="toggle-row">
+      <input type="checkbox" id="inv-show-tilinumero" onchange="saveInvoiceSettings()">
+      <div><div class="set-label" data-i18n="bankAccount">Tilinumero</div><div class="set-sub" data-i18n="bankAccountHint">Asetuksissa määritetty tilinumero</div></div>
+    </label>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="card-label" data-i18n="backupSection">Varmuuskopiointi</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="backupHint">Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.</div>
+    <button class="btn-add" onclick="downloadBackup()" data-i18n="downloadBackup">↓ Lataa varmuuskopio</button>
+  </div>
+
+  <div class="card" style="margin-top:14px;" id="billing-card">
+    <div class="card-label" data-i18n="billingSection">Tilaus</div>
+    <div class="set-row">
+      <div>
+        <div class="set-label" id="billing-plan-label" data-i18n="planFree">Ilmainen</div>
+        <div class="set-sub" id="billing-plan-sub"></div>
+      </div>
+      <button class="btn-upgrade" id="billing-cta" style="width:auto;margin:0;" data-i18n="upgradeToProBtn">Päivitä Prohon</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;display:none;" id="org-card">
+    <div class="card-label" data-i18n="orgSection">Organisaatio</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px;" id="org-name-display">—</div>
+    <div id="org-members-list" style="margin-bottom:14px;"></div>
+    <div class="set-label" style="margin-bottom:6px;" data-i18n="orgInviteLink">Kutsu­linkki</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input type="text" id="org-invite-url" readonly style="flex:1;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text2);" autocomplete="off">
+      <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="copyInviteLink()" data-i18n="orgCopy">Kopioi</button>
+    </div>
+    <button class="btn-add" style="background:transparent;color:var(--text2);border:1.5px solid var(--border2);" onclick="refreshInviteCode()" data-i18n="orgNewCode">Luo uusi koodi</button>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div class="set-label" style="margin-bottom:6px;" data-i18n="orgJoinTitle">Liity toiseen organisaatioon</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="org-join-input" placeholder="Kutsukoodi" style="flex:1;font-size:14px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);" autocomplete="off">
+        <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="joinWithCodeUI()" data-i18n="orgJoinBtn">Liity</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;" data-i18n="orgJoinNote">Nykyiset tietosi eivät siirry uuteen organisaatioon.</div>
+    </div>
+  </div>
+
+  </div><!-- /panel-asetukset -->
+
+</div><!-- /scroll -->
+
+<!-- ── MODAL ── -->
+<div class="modal-wrap" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="recurring">Kuukausiveloitukset</h2>
+    <p id="modal-text"></p>
+    <button class="modal-opt primary" onclick="finishInvoice('customer')" data-i18n="addCustomerRecurring">Lisää kuukausiveloitukset</button>
+    <button class="modal-opt" onclick="finishInvoice(false)" data-i18n="noRecurringInvoice">Ei kuukausiveloituksia</button>
+    <button class="modal-opt modal-cancel" onclick="closeModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<!-- ── EDIT ENTRY MODAL ── -->
+<div class="modal-wrap" id="modal-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="editEntry">Muokkaa kirjausta</h2>
+    <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="edit-date" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="customer">Asiakas</label><select id="edit-customer"></select></div>
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div class="fg" style="flex:1;margin:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="edit-h" min="0" max="24" autocomplete="off"></div>
+      <div class="fg" style="flex:1;margin:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="edit-m" min="0" max="59" autocomplete="off"></div>
+    </div>
+    <div class="fg"><label data-i18n="notes">Merkintöjä</label><input type="text" id="edit-notes" placeholder="Vapaaehtoinen merkintä..." autocomplete="off"></div>
+    <div class="fg"><label data-i18n="service">Palvelu</label><select id="edit-service" onchange="selEditService(this.value)"></select></div>
+    <div class="fg"><label data-i18n="hourlyRateLabel">Tuntihinta</label><div style="display:flex;align-items:center;gap:8px;"><input type="number" id="edit-rate" min="0" step="0.5" style="flex:1;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
+    <button class="modal-opt primary" onclick="saveEditEntry()" data-i18n="saveChanges">Tallenna muutokset</button>
+    <button class="modal-opt" onclick="deleteEntry()" style="color:var(--red);border-color:var(--red-bg);" data-i18n="deleteEntry">Poista kirjaus</button>
+    <button class="modal-opt modal-cancel" onclick="closeEditModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<!-- ── EDIT INVOICE MODAL ── -->
+<div class="modal-wrap" id="modal-edit-inv">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="editInvoice">Muokkaa laskua</h2>
+    <div id="edit-inv-entries"></div>
+    <button class="modal-opt primary" onclick="saveEditInvoice()" data-i18n="saveChanges">Tallenna muutokset</button>
+    <button class="modal-opt modal-cancel" onclick="closeEditInvModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<!-- ── CUSTOMER MODAL ── -->
+<div class="modal-wrap" id="modal-customer">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-cust-title">Lisää asiakas</h2>
+    <div class="fg"><label data-i18n="custName">Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custAddress">Katuosoite</label><input type="text" id="cust-katuosoite" placeholder="Esimerkkitie 1" autocomplete="off"></div>
+    <div class="row2">
+      <div class="fg"><label data-i18n="custPostalCode">Postinumero</label><input type="text" id="cust-postinumero" placeholder="00100" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="custCity">Postitoimipaikka</label><input type="text" id="cust-postitoimipaikka" placeholder="Helsinki" autocomplete="off"></div>
+    </div>
+    <div class="fg"><label data-i18n="custEmail">Sähköposti</label><input type="email" id="cust-sposti" placeholder="yritys@esimerkki.fi" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custPhone">Puhelinnumero</label><input type="tel" id="cust-puhelin" placeholder="+358 40 123 4567" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="custInvoiceLang">Laskun kieli</label><select id="cust-lang"><option value="fi">Suomi</option><option value="en">English</option></select></div>
+    <div class="fg">
+      <label data-i18n="paymentTerms">Maksuehto</label>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" id="cust-maksuehto" min="1" max="365" value="10" style="width:70px;" autocomplete="off">
+          <span style="font-size:13px;color:var(--text2);" data-i18n="paymentTermsDays">pv</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" id="cust-maksuehto-sopimus" onchange="toggleMaksuehtoSopimus()">
+          <span data-i18n="paymentTermsContract">Erillisen sopimuksen mukaan</span>
+        </label>
+      </div>
+    </div>
+    <button class="modal-opt primary" onclick="saveCustomerModal()" data-i18n="save">Tallenna</button>
+    <button class="modal-opt modal-cancel" onclick="closeCustomerModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<!-- ── CONFIRM MODAL ── -->
+<div class="modal-wrap" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="confirm-title" data-i18n="confirm">Vahvista</h2>
+    <p id="confirm-text"></p>
+    <button class="modal-opt primary" id="confirm-ok" data-i18n="yes">Kyllä</button>
+    <button class="modal-opt modal-cancel" onclick="closeConfirm()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modal-upgrade">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="upgradeModalTitle">Ilmaisen tason raja täynnä</h2>
+    <p data-i18n="upgradeModalBody">Päivitä Prohon (9,90 €/kk) poistaaksesi rajan kokonaan.</p>
+    <button class="modal-opt primary" onclick="startCheckout()" data-i18n="upgradeCta">Päivitä Prohon – 9,90 €/kk</button>
+    <button class="modal-opt modal-cancel" onclick="closeUpgradeModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<div class="modal-wrap" id="join-modal" style="display:none !important;">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="orgJoinModal">Liity organisaatioon</h2>
+    <p><span data-i18n="orgJoinText">Sinut on kutsuttu organisaatioon</span> <strong id="join-org-name"></strong>. <span data-i18n="orgJoinConfirm">Haluatko liittyä?</span></p>
+    <button class="modal-opt primary" onclick="confirmJoin()" data-i18n="orgJoinBtn">Liity</button>
+    <button class="modal-opt modal-cancel" onclick="closeJoinModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/firebase.js"></script>
+<script type="module" src="js/state.js"></script>
+<script type="module" src="js/i18n.js"></script>
+<script type="module" src="js/utils.js"></script>
+<script type="module" src="js/storage.js"></script>
+<script type="module" src="js/auth.js"></script>
+<script type="module" src="js/ui.js"></script>
+<script type="module" src="js/clock.js"></script>
+<script type="module" src="js/entries.js"></script>
+<script type="module" src="js/customers.js"></script>
+<script type="module" src="js/invoices.js"></script>
+<script type="module" src="js/reports.js"></script>
+<script type="module" src="js/org.js"></script>
+<script type="module" src="js/billing.js"></script>
+<script type="module" src="js/settings.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

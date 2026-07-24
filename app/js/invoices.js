@@ -4,6 +4,7 @@ import { fmtDate, fmtDur, fmtEur, fmtHours, fmtShort, esc, calcViitenumero, calc
 import { toast, goTab } from './ui.js';
 import { save } from './storage.js';
 import { renderEntries, renderExpenses } from './entries.js';
+import { isPro, showUpgradeModal, incrementInvoiceCount } from './billing.js';
 
 function startInvoice() {
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
@@ -30,6 +31,13 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 
 function finishInvoice(mode) {
   document.getElementById('modal').classList.remove('open');
+  if (!isPro() && state.orgLifetimeInvoiceCount >= 5) {
+    // Leave state.pending / selected entries untouched — nothing is lost,
+    // the user can just try again after upgrading.
+    toast(t('freeLimitInvoices'));
+    showUpgradeModal();
+    return;
+  }
   const sel = state.pending; if (!sel) return; state.pending = null;
   const recurring = state.pendingRecurring || state.cfg.recurring;
   state.pendingRecurring = null;
@@ -63,6 +71,7 @@ function finishInvoice(mode) {
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
   selExpenses.forEach(e => { e.invoiced = true; e.selected = false; });
   state.filterCustomers.clear();
+  incrementInvoiceCount();
   save(); renderEntries(); renderExpenses();
   toast(t('invoicePrefix') + String(state.iId).padStart(3, '0') + ' arkistoitu');
   goTab('arkisto'); setTimeout(() => renderArchive(state.iId), 80);
@@ -125,7 +134,6 @@ function openMailto(to, subject, body) {
 }
 
 function sendInvoiceEmail(id) {
-  if (state.isDemo) { toast(t('notAvailableGuest')); return; }
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
   const { email, error } = resolveCustomerEmail(inv);
@@ -162,7 +170,6 @@ function sendInvoiceEmail(id) {
 }
 
 function sendReminder(id) {
-  if (state.isDemo) { toast(t('notAvailableGuest')); return; }
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
   const { email, error } = resolveCustomerEmail(inv);
@@ -340,9 +347,17 @@ export function renderArchive(highlightId) {
   }).join('');
 }
 
+function getInvoiceLang(inv) {
+  const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+  if (custs.length !== 1) return state.lang;
+  const cust = state.cfg.customers.find(c => c.name === custs[0]);
+  return cust?.lang || state.lang;
+}
+
 function printInvoice(id, asAttachment) {
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
+  const lang = getInvoiceLang(inv);
 
   const rows = inv.entries.map(e => `
     <tr>
@@ -362,7 +377,7 @@ function printInvoice(id, asAttachment) {
     </tr>`).join('');
   const kmPrintRow = inv.km > 0 ? `
     <tr>
-      <td>${t('kmReimbursement')}</td>
+      <td>${t('kmReimbursement', lang)}</td>
       <td>${String(inv.kmRate ?? 0.57).replace('.', ',')} €/km</td>
       <td>${inv.km} km</td>
       <td></td>
@@ -371,7 +386,7 @@ function printInvoice(id, asAttachment) {
   const expPrintRows = (inv.expenses || []).map(e => `
     <tr>
       <td>${esc(e.description)}</td>
-      <td>${t('expenseReimbursement')}</td>
+      <td>${t('expenseReimbursement', lang)}</td>
       <td></td>
       <td></td>
       <td>${fmtEur(e.amount)}</td>
@@ -380,7 +395,7 @@ function printInvoice(id, asAttachment) {
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
   const primaryCustObj = custs.length === 1 ? state.cfg.customers.find(c => c.name === custs[0]) : null;
   const custAddrLines = primaryCustObj ? [
-    primaryCustObj.ytunnus ? 'Y-tunnus: ' + esc(primaryCustObj.ytunnus) : '',
+    primaryCustObj.ytunnus ? t('ytunnus', lang) + ': ' + esc(primaryCustObj.ytunnus) : '',
     esc(primaryCustObj.katuosoite || ''),
     [primaryCustObj.postinumero, primaryCustObj.postitoimipaikka].filter(Boolean).map(esc).join(' '),
     esc(primaryCustObj.sposti || ''),
@@ -390,7 +405,7 @@ function printInvoice(id, asAttachment) {
   const companyBlock = state.cfg.company ? `
     <div class="company-block">
       <div class="company-name">${esc(state.cfg.company)}</div>
-      ${state.cfg.ytunnus ? `<div class="company-detail">Y-tunnus: ${esc(state.cfg.ytunnus)}</div>` : ''}
+      ${state.cfg.ytunnus ? `<div class="company-detail">${t('ytunnus', lang)}: ${esc(state.cfg.ytunnus)}</div>` : ''}
       ${state.cfg.address ? `<div class="company-detail">${esc(state.cfg.address)}</div>` : ''}
       ${state.cfg.phone ? `<div class="company-detail">${esc(state.cfg.phone)}</div>` : ''}
       ${state.cfg.email ? `<div class="company-detail">${esc(state.cfg.email)}</div>` : ''}
@@ -399,34 +414,34 @@ function printInvoice(id, asAttachment) {
   let headerLeft, paymentBlock;
   if (asAttachment) {
     headerLeft = `
-      <h1>Tuntierittely</h1>
+      <h1>${t('hourBreakdown', lang)}</h1>
       <div class="sub att-date">${fmtDate(inv.date)}</div>
       <div class="inv-customer">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     paymentBlock = '';
   } else {
     const maksuehto = inv.maksuehto ?? 10;
-    const maksuehtoText = maksuehto === 'sopimus' ? 'Erillisen sopimuksen mukaan' : maksuehto + ' pv';
+    const maksuehtoText = maksuehto === 'sopimus' ? t('paymentTermsContract', lang) : maksuehto + ' ' + t('paymentTermsDays', lang);
     const erapaiva = calcErapaiva(inv.date, maksuehto);
     const viitenumero = calcViitenumero(inv.id);
     const showPaymentBox = state.cfg.showErapaiva || state.cfg.showViitenumero || state.cfg.showTilinumero;
     headerLeft = `
-      <h1>${t('invoice')} #${String(inv.id).padStart(3, '0')}</h1>
+      <h1>${t('invoice', lang)} #${String(inv.id).padStart(3, '0')}</h1>
       <div class="sub">${fmtDate(inv.date)}</div>
       <div class="inv-customer">${custs.map(esc).join(', ') || '—'}</div>
       ${custAddrLines}`;
     const payItems = [
-      state.cfg.showErapaiva ? `<div><div class="pay-item-label">Maksuehto</div><div class="pay-item-val">${esc(maksuehtoText)}</div></div>` : '',
-      state.cfg.showErapaiva && maksuehto !== 'sopimus' ? `<div><div class="pay-item-label">Eräpäivä</div><div class="pay-item-val">${esc(erapaiva)}</div></div>` : '',
-      state.cfg.showViitenumero ? `<div><div class="pay-item-label">Viitenumero</div><div class="pay-item-val">${viitenumero}</div></div>` : '',
-      state.cfg.showTilinumero && state.cfg.tilinumero ? `<div><div class="pay-item-label">Tilinumero</div><div class="pay-item-val">${esc(state.cfg.tilinumero)}</div></div>` : '',
+      state.cfg.showErapaiva ? `<div><div class="pay-item-label">${t('paymentTerms', lang)}</div><div class="pay-item-val">${esc(maksuehtoText)}</div></div>` : '',
+      state.cfg.showErapaiva && maksuehto !== 'sopimus' ? `<div><div class="pay-item-label">${t('dueDateLabel', lang)}</div><div class="pay-item-val">${esc(erapaiva)}</div></div>` : '',
+      state.cfg.showViitenumero ? `<div><div class="pay-item-label">${t('referenceNumber', lang)}</div><div class="pay-item-val">${viitenumero}</div></div>` : '',
+      state.cfg.showTilinumero && state.cfg.tilinumero ? `<div><div class="pay-item-label">${t('bankAccount', lang)}</div><div class="pay-item-val">${esc(state.cfg.tilinumero)}</div></div>` : '',
     ].filter(Boolean).join('');
     paymentBlock = showPaymentBox && payItems ? `<div class="pay-box">${payItems}</div>` : '';
   }
 
   const title = asAttachment
-    ? `Tuntierittely - ${esc(custs.join(', ') || fmtDate(inv.date))}`
-    : `Lasku #${String(inv.id).padStart(3, '0')}`;
+    ? `${t('hourBreakdown', lang)} - ${esc(custs.join(', ') || fmtDate(inv.date))}`
+    : `${t('invoice', lang)} #${String(inv.id).padStart(3, '0')}`;
 
   const nonceBytes = new Uint8Array(16);
   crypto.getRandomValues(nonceBytes);
@@ -473,25 +488,25 @@ function printInvoice(id, asAttachment) {
     ${paymentBlock}
     <table>
       <thead><tr>
-        <th>${t('date')}</th>
-        <th>${t('hourlyRate')}</th>
-        <th>${t('total')}</th>
-        <th>${t('notes')}</th>
-        <th>${t('amount')}</th>
+        <th>${t('date', lang)}</th>
+        <th>${t('hourlyRate', lang)}</th>
+        <th>${t('total', lang)}</th>
+        <th>${t('notes', lang)}</th>
+        <th>${t('amount', lang)}</th>
       </tr></thead>
       <tbody>${rows}${recRows}${kmPrintRow}${expPrintRows}</tbody>
     </table>
     <div class="total-section">
       ${inv.vat > 0 ? `
-        <div class="total-line"><span>${t('vatExcl')}</span><span>${fmtEur(inv.subtotal)}</span></div>
-        <div class="total-line"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+        <div class="total-line"><span>${t('vatExcl', lang)}</span><span>${fmtEur(inv.subtotal)}</span></div>
+        <div class="total-line"><span>${t('vatLabel', lang)} ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
       ` : ''}
       <div class="grand">
-        <span class="grand-label">${t('grandTotal')}</span>
+        <span class="grand-label">${t('grandTotal', lang)}</span>
         <span class="grand-val">${fmtEur(inv.total)}</span>
       </div>
     </div>
-    <br><button id="print-btn" class="print-btn">🖨 ${t('printPdf')}</button>
+    <br><button id="print-btn" class="print-btn">🖨 ${t('printPdf', lang)}</button>
     <script nonce="${nonce}">document.getElementById('print-btn').addEventListener('click',function(){window.print();})</script>
   </body></html>`;
 

@@ -1,5 +1,6 @@
 import { state, defaultCfg } from './state.js';
 import { toast } from './ui.js';
+import { renderBillingSettings } from './billing.js';
 
 function genCode() {
   return Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -161,6 +162,13 @@ export async function removeMember(uid) {
 export async function renderOrgSettings() {
   const org = await loadOrgInfo();
   if (!org) return;
+
+  state.orgPlan = org.plan || 'free';
+  state.orgSubStatus = org.subscriptionStatus || 'none';
+  state.orgPeriodEnd = org.currentPeriodEnd || null;
+  state.orgLifetimeEntryCount = org.lifetimeEntryCount || 0;
+  state.orgLifetimeInvoiceCount = org.lifetimeInvoiceCount || 0;
+  renderBillingSettings();
 
   document.getElementById('org-name-display').textContent = org.name;
 

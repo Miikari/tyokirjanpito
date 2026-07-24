@@ -17,13 +17,21 @@ function calcInvoice(id, dateStr, entries, maksuehto, paid = true) {
 export function loadDemoData() {
   state.isDemo = true;
 
+  if (state.lang === 'en') {
+    loadDemoDataEn();
+  } else {
+    loadDemoDataFi();
+  }
+}
+
+function loadDemoDataFi() {
   state.cfg = {
     hourly: 50,
     company: 'Vierailija Oy',
     ytunnus: '1234567-8',
     address: 'Testikatu 1, 00100 Helsinki',
     phone: '040 123 4567',
-    email: 'laskutus@vierailija.fi',
+    email: 'laskutus@vierailijaoy.fi',
     tilinumero: 'FI21 1234 5600 0007 85',
     rounding: 15,
     vat: 0,
@@ -40,7 +48,7 @@ export function loadDemoData() {
         katuosoite: 'Esimerkkikatu 5 B',
         postinumero: '00200',
         postitoimipaikka: 'Helsinki',
-        sposti: 'laskut@esimerkki.fi',
+        sposti: 'laskut@esimerkkioy.fi',
         puhelin: '09 876 5432',
         maksuehto: 14,
       },
@@ -50,7 +58,7 @@ export function loadDemoData() {
         katuosoite: 'Kehräämöntie 12',
         postinumero: '33200',
         postitoimipaikka: 'Tampere',
-        sposti: 'talous@demosolutions.fi',
+        sposti: 'talous@demosolutionsoy.fi',
         puhelin: '03 555 6677',
         maksuehto: 10,
       },
@@ -102,6 +110,108 @@ export function loadDemoData() {
 
   state.invoices = [
     calcInvoice(6, '2026-06-01', inv6Entries, 14, false), // erääntynyt, maksamatta
+    calcInvoice(5, '2026-05-30', inv5Entries, 10, true),
+    calcInvoice(4, '2026-04-30', inv4Entries, 14, true),
+    calcInvoice(3, '2026-03-31', inv3Entries, 10, true),
+    calcInvoice(2, '2026-02-28', inv2Entries, 14, true),
+    calcInvoice(1, '2026-01-31', inv1Entries, 10, true),
+  ];
+
+  state.entries = [
+    ...openEntries,
+    ...inv6Entries, ...inv5Entries, ...inv4Entries,
+    ...inv3Entries, ...inv2Entries, ...inv1Entries,
+  ];
+  state.eId = 18;
+  state.iId = 6;
+}
+
+function loadDemoDataEn() {
+  state.cfg = {
+    hourly: 50,
+    company: 'Guest Ltd',
+    ytunnus: '1234567-8',
+    address: '1 Test Street, 00100 Helsinki',
+    phone: '040 123 4567',
+    email: 'billing@guestltd.com',
+    tilinumero: 'FI21 1234 5600 0007 85',
+    rounding: 15,
+    vat: 0,
+    showTilinumero: true,
+    showErapaiva: true,
+    showViitenumero: false,
+    recurring: [],
+    services: [{ id: 1, name: 'Hourly work', rate: 50 }],
+    hideRate: false,
+    customers: [
+      {
+        name: 'Example Ltd',
+        ytunnus: '8765432-1',
+        katuosoite: 'Example Street 5 B',
+        postinumero: '00200',
+        postitoimipaikka: 'Helsinki',
+        sposti: 'invoices@exampleltd.com',
+        puhelin: '09 876 5432',
+        maksuehto: 14,
+      },
+      {
+        name: 'Demo Solutions Ltd',
+        ytunnus: '9999888-7',
+        katuosoite: 'Mill Street 12',
+        postinumero: '33200',
+        postitoimipaikka: 'Tampere',
+        sposti: 'finance@demosolutionsltd.com',
+        puhelin: '03 555 6677',
+        maksuehto: 10,
+      },
+    ],
+  };
+
+  // ── Invoiced entries ──
+
+  const inv1Entries = [
+    { id: 1, date: d('2026-01-08'), secs: 21600, customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'Project planning and kickoff', rate: 50, selected: false, invoiced: true },
+    { id: 2, date: d('2026-01-20'), secs: 14400, customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'Architecture design',           rate: 50, selected: false, invoiced: true },
+  ];
+
+  const inv2Entries = [
+    { id: 3, date: d('2026-02-05'), secs: 18000, customer: 'Example Ltd', src: 'manuaalinen', notes: 'Requirements specification',  rate: 50, selected: false, invoiced: true },
+    { id: 4, date: d('2026-02-18'), secs: 10800, customer: 'Example Ltd', src: 'manuaalinen', notes: 'Prototype implementation',     rate: 50, selected: false, invoiced: true },
+  ];
+
+  const inv3Entries = [
+    { id: 5, date: d('2026-03-10'), secs: 21600, customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'Backend development, sprint 1', rate: 50, selected: false, invoiced: true },
+    { id: 6, date: d('2026-03-24'), secs: 14400, customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'API integrations',              rate: 50, selected: false, invoiced: true },
+  ];
+
+  const inv4Entries = [
+    { id: 7,  date: d('2026-04-07'), secs: 14400, customer: 'Example Ltd', src: 'manuaalinen', notes: 'UI design',              rate: 50, selected: false, invoiced: true },
+    { id: 8,  date: d('2026-04-15'), secs: 18000, customer: 'Example Ltd', src: 'manuaalinen', notes: 'Frontend development',    rate: 50, selected: false, invoiced: true },
+    { id: 9,  date: d('2026-04-28'), secs: 10800, customer: 'Example Ltd', src: 'manuaalinen', notes: 'Testing and fixes',       rate: 50, selected: false, invoiced: true },
+  ];
+
+  const inv5Entries = [
+    { id: 10, date: d('2026-05-06'), secs: 28800, customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'Backend development, sprint 2', rate: 50, selected: false, invoiced: true },
+    { id: 11, date: d('2026-05-19'), secs: 14400, customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'Performance testing',            rate: 50, selected: false, invoiced: true },
+  ];
+
+  // Most recent invoice — overdue, unpaid (invoice date 2026-06-01, terms 14 days → due 2026-06-15)
+  const inv6Entries = [
+    { id: 12, date: d('2026-05-26'), secs: 18000, customer: 'Example Ltd', src: 'manuaalinen', notes: 'UI development, polish', rate: 50, selected: false, invoiced: true },
+    { id: 13, date: d('2026-05-30'), secs: 14400, customer: 'Example Ltd', src: 'manuaalinen', notes: 'Testing and release',    rate: 50, selected: false, invoiced: true },
+  ];
+
+  // Open entries
+  const openEntries = [
+    { id: 14, date: d('2026-06-10'), secs: 7200,  customer: 'Example Ltd',       src: 'manuaalinen', notes: 'Follow-up and support',      rate: 50, selected: false, invoiced: false },
+    { id: 15, date: d('2026-06-16'), secs: 12600, customer: 'Example Ltd',       src: 'manuaalinen', notes: 'New feature implementation', rate: 50, selected: false, invoiced: false },
+    { id: 16, date: d('2026-06-18'), secs: 5400,  customer: 'Example Ltd',       src: 'manuaalinen', notes: 'Support request and fixes',  rate: 50, selected: false, invoiced: false },
+    { id: 17, date: d('2026-06-12'), secs: 9000,  customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'User testing, report',       rate: 50, selected: false, invoiced: false },
+    { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Ltd', src: 'manuaalinen', notes: 'Bug fixes',                  rate: 50, selected: false, invoiced: false },
+  ];
+
+  state.invoices = [
+    calcInvoice(6, '2026-06-01', inv6Entries, 14, false), // overdue, unpaid
     calcInvoice(5, '2026-05-30', inv5Entries, 10, true),
     calcInvoice(4, '2026-04-30', inv4Entries, 14, true),
     calcInvoice(3, '2026-03-31', inv3Entries, 10, true),

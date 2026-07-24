@@ -164,10 +164,10 @@ auth.onAuthStateChanged(async user => {
       if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
         const { loadDemoData } = await import('./demo.js');
         loadDemoData();
-        const { renderAllSelects } = await import('./customers.js');
+        const { renderAllSelects, renderCustChips } = await import('./customers.js');
         const { renderEntries } = await import('./entries.js');
         const { renderPills } = await import('./clock.js');
-        renderAllSelects(); renderServiceSelects(); renderPills(); renderEntries();
+        renderAllSelects(); renderCustChips(); renderServiceSelects(); renderPills(); renderEntries();
         window.updateInvoiceBadge?.();
       }
       renderOrgSettings();
