@@ -11,6 +11,12 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
+<script>
+  (function() {
+    var t = localStorage.getItem('theme');
+    if (t === 'dark') document.documentElement.dataset.theme = 'dark';
+  })();
+</script>
 <link rel="stylesheet" href="css/style.css">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.gstatic.com https://apis.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://www.googleapis.com wss://*.firebaseio.com https://us-central1-tyoaikakirjanpito.cloudfunctions.net; frame-src https://tyoaikakirjanpito.firebaseapp.com https://accounts.google.com; object-src 'none';">
 <title>Työtunnit</title>
@@ -82,7 +88,7 @@
 <div class="install-banner" id="install-banner">
   <span>📲 Lisää aloitusnäytölle käyttääksesi sovelluksena</span>
   <button onclick="installApp()">Asenna</button>
-  <button class="dismiss" onclick="dismissInstall()">×</button>
+  <button class="dismiss" onclick="snoozeInstallBanner()">×</button>
 </div>
 
 <div class="header">
@@ -222,7 +228,10 @@
   <!-- ── ARKISTO ── -->
   <div class="panel" id="panel-arkisto">
     <div class="card" style="margin-bottom:14px;">
-      <input type="text" id="arch-search" onkeydown="if(event.key==='Enter')searchArchive()" placeholder="Hae asiakkaan tai laskun numeron mukaan..." style="width:100%;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;margin-bottom:10px;" autocomplete="off">
+      <div class="fg">
+        <label data-i18n="archSearchLabel">Haku</label>
+        <input type="text" id="arch-search" onkeydown="if(event.key==='Enter')searchArchive()" placeholder="Hae asiakkaan tai laskun numeron mukaan..." style="width:100%;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
+      </div>
       <div class="row-search" style="margin-bottom:10px;">
         <div class="fg" style="margin:0;"><label data-i18n="dateFrom">Alkaen</label><input type="date" id="arch-date-from" autocomplete="off"></div>
         <div class="fg" style="margin:0;"><label data-i18n="dateTo">Päättyen</label><input type="date" id="arch-date-to" autocomplete="off"></div>
@@ -285,10 +294,17 @@
     <div class="card">
       <div class="card-label" data-i18n="companyInfo">Yritystiedot</div>
       <div style="margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language" data-i18n="language">Kieli</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language" data-i18n="language">Kieli</div>
         <div style="display:flex;gap:8px;">
           <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;flex:1;">🇫🇮 Suomi</button>
           <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;flex:1;">🇬🇧 English</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="theme">Teema</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="setTheme('light')" id="btn-theme-light" class="btn-add" style="margin:0;flex:1;" data-i18n="themeLight">☀️ Vaalea</button>
+          <button onclick="setTheme('dark')" id="btn-theme-dark" class="btn-add" style="margin:0;flex:1;" data-i18n="themeDark">🌙 Tumma</button>
         </div>
       </div>
       <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy" autocomplete="off"></div>
@@ -303,7 +319,7 @@
     <div class="card">
       <div class="card-label" data-i18n="pricing">Hinnoittelu</div>
       <div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="services">Palvelut</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="services">Palvelut</div>
         <div id="services-list"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
           <input type="text" id="svc-name" placeholder="esim. Editointi" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
@@ -312,11 +328,23 @@
         </div>
       </div>
       <div class="set-row">
-        <div><div class="set-label" data-i18n="rounding">Pyöristys</div><div class="set-sub" data-i18n="roundingHint">Pyöristää tunnit ylöspäin</div></div>
+        <div><div class="set-label"><span data-i18n="rounding">Pyöristys</span><span class="info-tip"><button type="button" class="info-btn" onclick="toggleInfoTip(this, event)">i</button><div class="info-tip-content" data-i18n="roundingInfo">15 min: 1:01 → 1:15, 1:32 → 1:45
+30 min: 0:10 → 0:30, 0:35 → 1:00
+60 min: 0:10 → 1:00</div></span></div><div class="set-sub" data-i18n="roundingHint">Pyöristää tunnit ylöspäin</div></div>
         <div class="set-input-wrap">
           <select id="set-rounding" onchange="saveRounding()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
             <option value="1" data-i18n="roundingNone">Ei pyöristystä</option>
             <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">60 min</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row">
+        <div><div class="set-label" data-i18n="minRounding">Vähimmäiskirjaus</div><div class="set-sub" data-i18n="minRoundingHint">Lyhyetkin kirjaukset pyöristetään vähintään tähän.</div></div>
+        <div class="set-input-wrap">
+          <select id="set-min-rounding" onchange="saveMinRounding()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="0" data-i18n="minRoundingNone">Ei vähimmäistä</option>
             <option value="30">30 min</option>
             <option value="60">60 min</option>
           </select>

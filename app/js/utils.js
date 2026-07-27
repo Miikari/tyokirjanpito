@@ -13,6 +13,22 @@ export function fmtEur(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
 
 export function fmtHours(secs) { return (secs / 3600).toFixed(2).replace('.', ',') + ' h'; }
 
+export function roundDuration(rawSecs, cfg) {
+  const interval = (cfg.rounding || 15) * 60;
+  let total = cfg.rounding === 1 ? rawSecs : Math.ceil(rawSecs / interval) * interval;
+  if (cfg.minRounding) total = Math.max(total, cfg.minRounding * 60);
+  return total;
+}
+
+const BUSINESS_PREFIXES = ['tmi', 'toiminimi', 'oy', 'ab'];
+
+export function avatarInitial(name) {
+  const words = String(name || '').trim().split(/\s+/);
+  const first = (words[0] || '').toLowerCase().replace(/[:.]/g, '');
+  if (words.length > 1 && BUSINESS_PREFIXES.includes(first)) return words[1].charAt(0);
+  return words[0] ? words[0].charAt(0) : '';
+}
+
 export function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;')

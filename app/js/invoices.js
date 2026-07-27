@@ -14,9 +14,6 @@ function startInvoice() {
   state.pending = sel;
   if (!state.cfg.recurring.length) { finishInvoice(false); return; }
 
-  const primaryCustObj = state.cfg.customers.find(c => c.name === custs[0]);
-  if (!primaryCustObj?.ytunnus) { finishInvoice(false); return; }
-
   const relevantRecurring = state.cfg.recurring.filter(r => r.customer === custs[0]);
   if (!relevantRecurring.length) { finishInvoice(false); return; }
 

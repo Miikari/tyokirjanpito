@@ -6,7 +6,6 @@ import { save } from './storage.js';
 import { renderPills } from './clock.js';
 
 let editingCustomerName = null; // null = adding new, string = editing existing
-let activeCustRow = null; // name of the customer row currently expanded (showing edit/delete) in settings
 
 function openAddCustomerModal() {
   editingCustomerName = null;
@@ -63,18 +62,20 @@ function saveCustomerModal() {
     maksuehto,
   };
 
+  const sameName = (a, b) => a.localeCompare(b, 'fi', { sensitivity: 'base' }) === 0;
+
   if (editingCustomerName === null) {
     // Adding new
-    if (state.cfg.customers.some(c => c.name === name)) { toast(t('customerExists')); return; }
+    if (state.cfg.customers.some(c => sameName(c.name, name))) { toast(t('customerExists')); return; }
     state.cfg.customers.push(data);
     toast(t('customerAdded'));
   } else {
     // Editing existing
     const idx = state.cfg.customers.findIndex(c => c.name === editingCustomerName);
     if (idx === -1) return;
-    // If name changed, update activeCustomer and entries references
+    // If name (or just its casing) changed, update activeCustomer and entries references
     if (editingCustomerName !== name) {
-      if (state.cfg.customers.some((c, i) => c.name === name && i !== idx)) { toast(t('customerExists')); return; }
+      if (state.cfg.customers.some((c, i) => sameName(c.name, name) && i !== idx)) { toast(t('customerExists')); return; }
       state.entries.forEach(e => { if (e.customer === editingCustomerName) e.customer = name; });
       if (state.activeCustomer === editingCustomerName) state.activeCustomer = name;
     }
@@ -83,7 +84,6 @@ function saveCustomerModal() {
   }
 
   closeCustomerModal();
-  activeCustRow = null;
   save(); renderCustChips(); renderAllSelects(); renderPills();
 }
 
@@ -100,11 +100,6 @@ function closeCustomerModal() {
   editingCustomerName = null;
 }
 
-function toggleCustRow(name) {
-  activeCustRow = activeCustRow === name ? null : name;
-  renderCustChips();
-}
-
 function removeCustomer(name) {
   const openEntries = state.entries.filter(e => !e.invoiced && e.customer === name);
 
@@ -116,7 +111,6 @@ function removeCustomer(name) {
         state.entries = state.entries.filter(e => !(e.customer === name && !e.invoiced));
         state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
         if (state.activeCustomer === name) state.activeCustomer = null;
-        activeCustRow = null;
         save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
@@ -127,7 +121,6 @@ function removeCustomer(name) {
       () => {
         state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
         if (state.activeCustomer === name) state.activeCustomer = null;
-        activeCustRow = null;
         save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
       }
     );
@@ -143,13 +136,12 @@ export function renderCustChips() {
   const sorted = [...state.cfg.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
   el.innerHTML = `<div class="cust-list">${sorted.map(c => {
     const hasDetails = c.ytunnus || c.katuosoite || c.sposti || c.puhelin;
-    const isActive = activeCustRow === c.name;
     const jsonName = esc(JSON.stringify(c.name));
-    return `<div class="cust-row${isActive ? ' active' : ''}" onclick="toggleCustRow(${jsonName})">
+    return `<div class="cust-row">
       <div class="cust-row-name">${esc(c.name)}${hasDetails ? '<span class="cust-has-details"></span>' : ''}</div>
       <div class="cust-row-actions">
-        <button type="button" class="cust-action-btn" onclick="event.stopPropagation(); openEditCustomerModal(${jsonName})">${t('edit')}</button>
-        <button type="button" class="cust-action-btn cust-action-danger" onclick="event.stopPropagation(); removeCustomer(${jsonName})">${t('delete')}</button>
+        <button type="button" class="cust-action-btn" onclick="openEditCustomerModal(${jsonName})">${t('edit')}</button>
+        <button type="button" class="cust-action-btn cust-action-danger" onclick="removeCustomer(${jsonName})">${t('delete')}</button>
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -170,4 +162,3 @@ window.saveCustomerModal = saveCustomerModal;
 window.closeCustomerModal = closeCustomerModal;
 window.removeCustomer = removeCustomer;
 window.toggleMaksuehtoSopimus = toggleMaksuehtoSopimus;
-window.toggleCustRow = toggleCustRow;

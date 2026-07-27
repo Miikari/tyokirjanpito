@@ -14,12 +14,33 @@ function setLang(l) {
   ['fi', 'en'].forEach(code => {
     const btn = document.getElementById('btn-' + code);
     const active = code === l;
-    btn.style.background = active ? 'var(--blue)' : '#fff';
+    btn.style.background = active ? 'var(--blue)' : 'var(--surface)';
     btn.style.color = active ? '#fff' : 'var(--blue-txt)';
     btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
     btn.style.fontWeight = active ? '700' : '600';
   });
   applyLang();
+}
+
+// ── THEME ──
+function setTheme(theme) {
+  state.theme = theme;
+  localStorage.setItem('theme', theme);
+  applyTheme();
+}
+
+export function applyTheme() {
+  if (state.theme === 'dark') document.documentElement.dataset.theme = 'dark';
+  else delete document.documentElement.dataset.theme;
+  ['light', 'dark'].forEach(mode => {
+    const btn = document.getElementById('btn-theme-' + mode);
+    if (!btn) return;
+    const active = state.theme === mode;
+    btn.style.background = active ? 'var(--blue)' : 'var(--surface)';
+    btn.style.color = active ? '#fff' : 'var(--blue-txt)';
+    btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
+    btn.style.fontWeight = active ? '700' : '600';
+  });
 }
 
 export function applyLang() {
@@ -65,7 +86,7 @@ export function applyLang() {
   ['fi', 'en'].forEach(l => {
     const btn = document.getElementById('btn-' + l);
     const active = state.lang === l;
-    btn.style.background = active ? 'var(--blue)' : '#fff';
+    btn.style.background = active ? 'var(--blue)' : 'var(--surface)';
     btn.style.color = active ? '#fff' : 'var(--blue-txt)';
     btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
     btn.style.fontWeight = active ? '700' : '600';
@@ -129,6 +150,21 @@ document.addEventListener('click', (e) => {
   if (menu && menu.classList.contains('open') && !menu.contains(e.target)) closeUserMenu();
 });
 
+// ── INFO TOOLTIPS ──
+function toggleInfoTip(btn, e) {
+  if (e) e.stopPropagation();
+  const tip = btn.closest('.info-tip');
+  const wasOpen = tip.classList.contains('open');
+  document.querySelectorAll('.info-tip.open').forEach(el => el.classList.remove('open'));
+  if (!wasOpen) tip.classList.add('open');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.info-tip')) {
+    document.querySelectorAll('.info-tip.open').forEach(el => el.classList.remove('open'));
+  }
+});
+
 // ── NOTES ──
 function toggleNotes() {
   const box = document.getElementById('notes-box');
@@ -152,7 +188,9 @@ function closeConfirm() {
 
 window.showTab = showTab;
 window.setLang = setLang;
+window.setTheme = setTheme;
 window.toggleNotes = toggleNotes;
 window.closeConfirm = closeConfirm;
 window.toggleUserMenu = toggleUserMenu;
 window.closeUserMenu = closeUserMenu;
+window.toggleInfoTip = toggleInfoTip;

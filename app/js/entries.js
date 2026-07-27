@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDate, fmtDur, fmtEur, fmtShort, esc } from './utils.js';
+import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { save } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
@@ -34,8 +34,7 @@ function addManual() {
   const m = parseInt(document.getElementById('m-m').value) || 0;
   const rawTotal = h * 3600 + m * 60;
   if (rawTotal < 1) { toast(t('enterTime')); return; }
-  const interval = (state.cfg.rounding || 15) * 60;
-  const total = state.cfg.rounding === 1 ? rawTotal : Math.ceil(rawTotal / interval) * interval;
+  const total = roundDuration(rawTotal, state.cfg);
   const notes = document.getElementById('m-notes').value;
   const rateVal = parseFloat(document.getElementById('m-rate').value);
   const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;

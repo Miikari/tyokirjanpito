@@ -1,5 +1,6 @@
 import { state, defaultCfg } from './state.js';
 import { t } from './i18n.js';
+import { avatarInitial } from './utils.js';
 import { toast, applyLang } from './ui.js';
 import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
 import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
@@ -25,7 +26,7 @@ export function updateUserNameDisplay() {
   const avLetter = document.getElementById('user-avatar-letter');
   const avIcon = document.getElementById('user-avatar-icon');
   if (company) {
-    avLetter.textContent = company.charAt(0);
+    avLetter.textContent = avatarInitial(company);
     avLetter.style.display = 'flex';
     av.style.display = 'none';
     avIcon.style.display = 'none';

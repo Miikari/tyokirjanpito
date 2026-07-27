@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDur, fmtDate, esc } from './utils.js';
+import { fmtDur, fmtDate, esc, roundDuration } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
 import { save } from './storage.js';
 import { addEntry } from './entries.js';
@@ -125,8 +125,7 @@ function clockOut() {
   cancelAnimationFrame(state.timerRaf);
   const rawSecs = Math.floor(state.elapsedMs / 1000);
   if (rawSecs < 1) { toast(t('noTime')); return; }
-  const interval = (state.cfg.rounding || 15) * 60;
-  const secs = state.cfg.rounding === 1 ? rawSecs : Math.ceil(rawSecs / interval) * interval;
+  const secs = roundDuration(rawSecs, state.cfg);
   const notes = document.getElementById('clock-notes').value.trim();
   const rate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
   const km = parseFloat(document.getElementById('clock-km').value) || 0;

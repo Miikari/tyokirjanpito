@@ -16,6 +16,11 @@ function saveRounding() {
   save(); toast(t('saved'));
 }
 
+function saveMinRounding() {
+  state.cfg.minRounding = parseInt(document.getElementById('set-min-rounding').value);
+  save(); toast(t('saved'));
+}
+
 function saveVat() {
   state.cfg.vat = parseFloat(document.getElementById('set-vat').value);
   save(); toast(t('saved'));
@@ -32,12 +37,13 @@ export function renderSettings() {
   document.getElementById('inv-show-erapaiva').checked = state.cfg.showErapaiva !== false;
   document.getElementById('inv-show-viitenumero').checked = state.cfg.showViitenumero === true;
   document.getElementById('set-rounding').value = state.cfg.rounding || 15;
+  document.getElementById('set-min-rounding').value = state.cfg.minRounding || 0;
   document.getElementById('set-kmrate').value = state.cfg.kmRate ?? 0.57;
   document.getElementById('set-vat').value = state.cfg.vat || 0;
   ['fi', 'en'].forEach(l => {
     const btn = document.getElementById('btn-' + l);
     const active = state.lang === l;
-    btn.style.background = active ? 'var(--blue)' : '#fff';
+    btn.style.background = active ? 'var(--blue)' : 'var(--surface)';
     btn.style.color = active ? '#fff' : 'var(--blue-txt)';
     btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
     btn.style.fontWeight = active ? '700' : '600';
@@ -166,7 +172,8 @@ function addRecurring() {
   const a = parseFloat(document.getElementById('rec-amount').value);
   const c = document.getElementById('rec-customer').value;
   if (!n || isNaN(a) || a <= 0) { toast(t('fillDesc')); return; }
-  state.cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c === '—' ? null : c });
+  if (!c || c === '—') { toast(t('selectCustomer')); return; }
+  state.cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c });
   document.getElementById('rec-name').value = '';
   document.getElementById('rec-amount').value = '';
   save(); renderRecList(); toast(t('added'));
@@ -177,34 +184,71 @@ function removeRecurring(id) {
   save(); renderRecList();
 }
 
+let editingRecurringId = null;
+
+function startEditRecurring(id) {
+  editingRecurringId = id;
+  renderRecList();
+}
+
+function updateRecurringAmount(id, value) {
+  const r = state.cfg.recurring.find(x => x.id === id);
+  const a = parseFloat(value);
+  if (r && !isNaN(a) && a > 0) {
+    r.amount = a;
+    save();
+  }
+  editingRecurringId = null;
+  renderRecList();
+}
+
 function renderRecList() {
   const el = document.getElementById('rec-list');
   if (!state.cfg.recurring.length) {
     el.innerHTML = `<div style="font-size:14px;color:var(--text2);padding:4px 0">${t('noRecurring')}</div>`;
     return;
   }
-  el.innerHTML = state.cfg.recurring.map(r => `
+  el.innerHTML = state.cfg.recurring.map(r => {
+    const isEditing = editingRecurringId === r.id;
+    const amountHtml = isEditing
+      ? `<input type="number" min="0" step="0.5" value="${r.amount}"
+           onblur="updateRecurringAmount(${r.id}, this.value)"
+           onkeydown="if(event.key==='Enter'){this.blur()}"
+           style="width:72px;border:1.5px solid var(--border2);border-radius:8px;padding:5px 6px;font-size:14px;font-weight:700;text-align:right;background:var(--bg);color:var(--text);">`
+      : `<span class="rec-eur">${fmtEur(r.amount)}${t('perMonth')}</span>`;
+    return `
     <div class="rec-item">
       <div>
         <div class="rec-name">${esc(r.name)}</div>
         <div class="rec-sub">${esc(r.customer || t('allCustomers'))}</div>
       </div>
       <div class="rec-right">
-        <span class="rec-eur">${fmtEur(r.amount)}${t('perMonth')}</span>
+        ${amountHtml}
+        <span class="rec-edit" onclick="startEditRecurring(${r.id})" title="${t('edit')}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </span>
         <span class="rec-rm" onclick="removeRecurring(${r.id})">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </span>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  if (editingRecurringId !== null) {
+    const input = el.querySelector('input[type="number"]');
+    if (input) { input.focus(); input.select(); }
+  }
 }
 
 window.saveAllSettings = saveAllSettings;
 window.saveRounding = saveRounding;
+window.saveMinRounding = saveMinRounding;
 window.saveVat = saveVat;
 window.saveInvoiceSettings = saveInvoiceSettings;
 window.downloadBackup = downloadBackup;
 window.addRecurring = addRecurring;
 window.removeRecurring = removeRecurring;
+window.startEditRecurring = startEditRecurring;
+window.updateRecurringAmount = updateRecurringAmount;
 window.addService = addService;
 window.removeService = removeService;
 window.updateServiceName = updateServiceName;

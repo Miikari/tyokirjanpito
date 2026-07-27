@@ -37,6 +37,7 @@ const i18n = {
     // Laskut (arkisto)
     invoice: 'Lasku', invoicePrefix: 'Lasku #', noInvoices: 'Ei laskuja vielä.',
     noSearchResults: 'Ei hakuehtoja vastaavia laskuja.',
+    archSearchLabel: 'Haku',
     archSearchPlaceholder: 'Hae asiakkaan tai laskun numeron mukaan...',
     dateFrom: 'Alkaen', dateTo: 'Päättyen', amountMin: 'Summa väh. (€)', amountMax: 'Summa enint. (€)',
     clearFilters: 'Tyhjennä haku', searchBtn: 'Hae',
@@ -81,6 +82,8 @@ const i18n = {
     companyPhone: 'Puhelin', companyEmail: 'Sähköposti', save: 'Tallenna',
     pricing: 'Hinnoittelu', hourlyRateLabel: 'Tuntihinta', hourlyRate: 'Tuntihinta',
     rounding: 'Pyöristys', roundingHint: 'Pyöristää tunnit ylöspäin', roundingNone: 'Ei pyöristystä',
+    roundingInfo: '15 min: 1:01 → 1:15, 1:32 → 1:45\n30 min: 0:10 → 0:30, 0:35 → 1:00\n60 min: 0:10 → 1:00',
+    minRounding: 'Vähimmäiskirjaus', minRoundingHint: 'Lyhyetkin kirjaukset pyöristetään vähintään tähän', minRoundingNone: 'Ei vähimmäistä',
     vatLabel: 'ALV', vatHint: 'Lisätään laskun loppusummaan',
     saved: 'Tallennettu: ', invalidPrice: 'Virheellinen hinta',
     invalidCompanyName: 'Tarkista yrityksen nimi', invalidAddress: 'Tarkista osoite',
@@ -110,6 +113,7 @@ const i18n = {
     loginFooter2: 'Käytä samalla tilillä puhelimella ja tietokoneella.',
     // PWA
     language: 'Kieli', appInstalled: 'Sovellus asennettu!',
+    theme: 'Teema', themeLight: '☀️ Vaalea', themeDark: '🌙 Tumma',
     installBanner: '📲 Lisää aloitusnäytölle käyttääksesi sovelluksena', install: 'Asenna',
     // Misc
     description: 'Kuvaus', amount: 'Summa (€)', added: 'Lisätty', enterName: 'Syötä nimi',
@@ -190,6 +194,7 @@ const i18n = {
     // Invoices (archive)
     invoice: 'Invoice', invoicePrefix: 'Invoice #', noInvoices: 'No invoices yet.',
     noSearchResults: 'No invoices match your search.',
+    archSearchLabel: 'Search',
     archSearchPlaceholder: 'Search by customer or invoice number...',
     dateFrom: 'From', dateTo: 'To', amountMin: 'Min amount (€)', amountMax: 'Max amount (€)',
     clearFilters: 'Clear search', searchBtn: 'Search',
@@ -234,6 +239,8 @@ const i18n = {
     companyPhone: 'Phone', companyEmail: 'Email', save: 'Save',
     pricing: 'Pricing', hourlyRateLabel: 'Hourly rate', hourlyRate: 'Hourly rate',
     rounding: 'Rounding', roundingHint: 'Rounds hours up', roundingNone: 'No rounding',
+    roundingInfo: '15 min: 1:01 → 1:15, 1:32 → 1:45\n30 min: 0:10 → 0:30, 0:35 → 1:00\n60 min: 0:10 → 1:00',
+    minRounding: 'Minimum entry', minRoundingHint: 'Even short entries get rounded up to at least this', minRoundingNone: 'No minimum',
     vatLabel: 'VAT', vatHint: 'Added to invoice total',
     saved: 'Saved: ', invalidPrice: 'Invalid price',
     invalidCompanyName: 'Check the company name', invalidAddress: 'Check the address',
@@ -263,6 +270,7 @@ const i18n = {
     loginFooter2: 'Use the same account on phone and computer.',
     // PWA
     language: 'Language', appInstalled: 'App installed!',
+    theme: 'Theme', themeLight: '☀️ Light', themeDark: '🌙 Dark',
     installBanner: '📲 Add to home screen to use as an app', install: 'Install',
     // Misc
     description: 'Description', amount: 'Amount (€)', added: 'Added', enterName: 'Enter name',

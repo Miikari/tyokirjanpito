@@ -102,6 +102,7 @@ section { padding: 72px 0; }
   display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
 }
 @media (min-width: 720px) { .features-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 720px) { .features-grid.cols-3 { grid-template-columns: repeat(3, 1fr); } }
 .feature-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
   padding: 24px 20px; box-shadow: var(--shadow);
