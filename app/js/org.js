@@ -31,6 +31,9 @@ export async function initOrg(user) {
   const orgId = db.collection('orgs').doc().id;
   state.orgId = orgId;
 
+  const referralCode = localStorage.getItem('referralCode');
+  if (referralCode) localStorage.removeItem('referralCode');
+
   await db.collection('orgs').doc(orgId).set({
     name: user.displayName || user.email || 'Oma organisaatio',
     ownerId: user.uid,
@@ -43,6 +46,7 @@ export async function initOrg(user) {
     },
     inviteCode: genCode(),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    ...(referralCode ? { referredBy: referralCode } : {}),
   });
 
   // Migrate existing user data to org

@@ -10,6 +10,12 @@
 <meta property="og:type" content="website">
 <link rel="icon" type="image/png" href="app/icons/icon-192.png">
 <link rel="stylesheet" href="landing.css">
+<script>
+  (function() {
+    var ref = new URLSearchParams(location.search).get('v');
+    if (ref) localStorage.setItem('referralCode', ref);
+  })();
+</script>
 </head>
 <body>
 
