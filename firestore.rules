@@ -92,11 +92,43 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.ownerId;
 
-      // Org data access is gated on the org-side members map — not on the
-      // user's self-declared orgId field, which the user could freely rewrite.
-      match /data/{docId} {
-        allow read, write: if request.auth != null
+      // Shared gate for every org-scoped subcollection below: the caller
+      // must be a member of this org, per the org doc's own members map —
+      // never the user's self-declared orgId field, which they could
+      // freely rewrite to point at someone else's org (BOLA/IDOR).
+      function isOrgMember() {
+        return request.auth != null
           && get(/databases/$(database)/documents/orgs/$(orgId)).data.members[request.auth.uid] != null;
+      }
+
+      // Legacy single-blob doc (orgs/{orgId}/data/main), pre-subcollection
+      // migration. Kept readable/writable during the migration window so
+      // any client still on the old code path keeps working; safe to
+      // delete this block once data/main has been removed for every org
+      // (see functions/scripts/migrate-to-subcollections.js --delete-old).
+      match /data/{docId} {
+        allow read, write: if isOrgMember();
+      }
+
+      // ── Per-entity subcollections ───────────────────────────────────────
+      match /customers/{customerId} {
+        allow read, write: if isOrgMember();
+      }
+
+      match /entries/{entryId} {
+        allow read, write: if isOrgMember();
+      }
+
+      match /expenses/{expenseId} {
+        allow read, write: if isOrgMember();
+      }
+
+      match /invoices/{invoiceId} {
+        allow read, write: if isOrgMember();
+      }
+
+      match /settings/{docId} {
+        allow read, write: if isOrgMember();
       }
     }
   }

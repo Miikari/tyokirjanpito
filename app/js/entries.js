@@ -2,21 +2,25 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration } from './utils.js';
 import { toast, showConfirm } from './ui.js';
-import { save } from './storage.js';
+import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
+import { customerName } from './customers.js';
 
 
 // Returns true if the entry was added, false if blocked by the free-tier
 // limit — callers must check this, since a caller mid-flow (e.g. clocking
 // out of a running timer) must not discard already-tracked time on a block.
-export function addEntry(date, secs, customer, src, notes = '', rate = null, km = 0, service = null) {
+export async function addEntry(date, secs, customerId, src, notes = '', rate = null, km = 0, service = null) {
   if (!isPro() && state.orgLifetimeEntryCount >= 50) {
     toast(t('freeLimitEntries'));
     showUpgradeModal();
     return false;
   }
   const entryRate = (rate !== null && !isNaN(rate) && rate >= 0) ? rate : state.cfg.hourly;
-  state.entries.unshift({ id: ++state.eId, date: new Date(date).toISOString(), secs, customer, src, notes, rate: entryRate, service: service || null, km: km || 0, selected: false, invoiced: false });
+  const id = await nextId('entry');
+  const entry = { id, date: new Date(date).toISOString(), secs, customerId: customerId || null, src, notes, rate: entryRate, service: service || null, km: km || 0, selected: false, invoiced: false };
+  state.entries.unshift(entry);
+  await createEntry(entry);
   incrementEntryCount();
   return true;
 }
@@ -26,9 +30,10 @@ function selManualService(id) {
   if (svc) document.getElementById('m-rate').value = svc.rate;
 }
 
-function addManual() {
-  const cust = document.getElementById('m-customer').value;
-  if (!cust || cust === '—') { toast(t('selectCustomer')); return; }
+async function addManual() {
+  const custVal = document.getElementById('m-customer').value;
+  if (!custVal || custVal === '—') { toast(t('selectCustomer')); return; }
+  const customerId = parseInt(custVal, 10);
   const d = document.getElementById('m-date').value;
   const h = parseInt(document.getElementById('m-h').value) || 0;
   const m = parseInt(document.getElementById('m-m').value) || 0;
@@ -40,12 +45,12 @@ function addManual() {
   const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   const svc = state.cfg.services.find(s => s.id === parseInt(document.getElementById('m-service').value, 10));
   if (total < 1) { toast(t('enterTime')); return; }
-  const ok = addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, cust, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
+  const ok = await addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, customerId, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
   if (!ok) return;
   document.getElementById('m-h').value = '';
   document.getElementById('m-m').value = '';
   document.getElementById('m-notes').value = '';
-  save(); toast(t('entryAdded'));
+  renderEntries(); toast(t('entryAdded'));
 }
 
 function toggleEntry(id) {
@@ -57,7 +62,7 @@ function toggleEntry(id) {
 }
 
 function matchesFilter(e) {
-  return !state.filterCustomers.size || (e.customer && state.filterCustomers.has(e.customer));
+  return !state.filterCustomers.size || (e.customerId != null && state.filterCustomers.has(e.customerId));
 }
 
 function selectAll() {
@@ -68,44 +73,32 @@ function selectAll() {
   renderEntries();
 }
 
-function setFilter(c) {
-  if (state.filterCustomers.has(c)) {
-    state.filterCustomers.delete(c);
-    state.entries.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = false);
-    state.expenses.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = false);
+function setFilter(id) {
+  if (state.filterCustomers.has(id)) {
+    state.filterCustomers.delete(id);
+    state.entries.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = false);
+    state.expenses.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = false);
   } else {
-    state.filterCustomers.add(c);
-    state.entries.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = true);
-    state.expenses.filter(e => !e.invoiced && e.customer === c).forEach(e => e.selected = true);
+    state.filterCustomers.add(id);
+    state.entries.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = true);
+    state.expenses.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = true);
   }
   renderEntries();
 }
 
 function renderFilterPills() {
-  const customers = [...new Set(state.entries.filter(e => !e.invoiced && e.customer).map(e => e.customer))];
+  const customerIds = [...new Set(state.entries.filter(e => !e.invoiced && e.customerId != null).map(e => e.customerId))];
   const el = document.getElementById('filter-pills');
   if (!el) return;
   const wrap = document.getElementById('filter-pills-wrap');
-  if (wrap) wrap.style.display = customers.length ? 'block' : 'none';
+  if (wrap) wrap.style.display = customerIds.length ? 'block' : 'none';
 
-  const existing = el.querySelectorAll('.pill');
-  if (existing.length === customers.length) {
-    existing.forEach(pill => {
-      const isActive = state.filterCustomers.has(pill.textContent.trim());
-      pill.classList.toggle('active', isActive);
-      pill.style.background = isActive ? 'var(--blue)' : 'var(--surface)';
-      pill.style.color = isActive ? '#fff' : 'var(--text2)';
-      pill.style.borderColor = isActive ? 'var(--blue)' : 'var(--border2)';
-    });
-    return;
-  }
-
-  if (!customers.length) { el.innerHTML = ''; return; }
-  el.innerHTML = customers.map(c => {
-    const isActive = state.filterCustomers.has(c);
+  if (!customerIds.length) { el.innerHTML = ''; return; }
+  el.innerHTML = customerIds.map(id => {
+    const isActive = state.filterCustomers.has(id);
     return `<div class="pill ${isActive ? 'active' : ''}"
       style="background:${isActive ? 'var(--blue)' : 'var(--surface)'};color:${isActive ? '#fff' : 'var(--text2)'};border-color:${isActive ? 'var(--blue)' : 'var(--border2)'};"
-      onclick="setFilter(${esc(JSON.stringify(c))})">${esc(c)}</div>`;
+      onclick="setFilter(${id})">${esc(customerName(id) || '—')}</div>`;
   }).join('');
 }
 
@@ -120,7 +113,7 @@ export function renderEntries() {
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0));
   renderFilterPills();
   if (!active.length) {
-    const filterLabel = [...state.filterCustomers].join(', ');
+    const filterLabel = [...state.filterCustomers].map(id => customerName(id) || '—').join(', ');
     list.innerHTML = `<div class="empty">${state.filterCustomers.size ? t('noEntriesFor') + ' ' + esc(filterLabel) : t('noEntries')}<br><br>${!state.filterCustomers.size ? t('loginFirst') : ''}</div>`;
     return;
   }
@@ -134,7 +127,7 @@ export function renderEntries() {
         ${e.km ? `<div style="font-size:12px;color:var(--text2);margin-top:2px;">🚗 ${e.km} km</div>` : ''}
       </div>
       <div class="entry-right">
-        ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
+        ${e.customerId != null ? `<span class="tag tag-cust">${esc(customerName(e.customerId) || '—')}</span>` : ''}
         ${e.service ? `<span class="tag tag-svc">${esc(e.service)}</span>` : ''}
         <span class="entry-eur">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</span>
         <span class="tag tag-open">${t('open') || 'Avoin'}</span>
@@ -158,7 +151,7 @@ function openEditEntry(id) {
   document.getElementById('edit-notes').value = e.notes || '';
   document.getElementById('edit-rate').value = e.rate ?? state.cfg.hourly;
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...state.cfg.customers.map(c => `<option value="${esc(c.name)}" ${e.customer === c.name ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
+    ...state.customers.map(c => `<option value="${c.id}" ${e.customerId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
   document.getElementById('edit-customer').innerHTML = opts;
   const svcOpts = [`<option value="—">— ${t('noService')} —</option>`,
     ...state.cfg.services.map(s => `<option value="${s.id}" ${e.service === s.name ? 'selected' : ''}>${esc(s.name)}</option>`)].join('');
@@ -171,19 +164,19 @@ function selEditService(id) {
   if (svc) document.getElementById('edit-rate').value = svc.rate;
 }
 
-function saveEditEntry() {
+async function saveEditEntry() {
   const e = state.entries.find(x => x.id === state.editingEntryId);
   if (!e) return;
   const d = document.getElementById('edit-date').value;
   const h = parseInt(document.getElementById('edit-h').value) || 0;
   const m = parseInt(document.getElementById('edit-m').value) || 0;
-  const cust = document.getElementById('edit-customer').value;
+  const custVal = document.getElementById('edit-customer').value;
   const notes = document.getElementById('edit-notes').value.trim();
   const total = h * 3600 + m * 60;
   if (total < 1) { toast(t('enterTime')); return; }
   e.date = d ? new Date(d + 'T12:00:00').toISOString() : e.date;
   e.secs = total;
-  e.customer = cust === '—' ? null : cust;
+  e.customerId = custVal === '—' ? null : parseInt(custVal, 10);
   e.notes = notes;
   const svcId = document.getElementById('edit-service').value;
   const svc = state.cfg.services.find(s => s.id === parseInt(svcId, 10));
@@ -191,17 +184,20 @@ function saveEditEntry() {
   const rateVal = parseFloat(document.getElementById('edit-rate').value);
   e.rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   closeEditModal();
-  save(); renderEntries(); toast(t('entryUpdated'));
+  await updateEntry(e.id, { date: e.date, secs: e.secs, customerId: e.customerId, notes: e.notes, service: e.service, rate: e.rate });
+  renderEntries(); toast(t('entryUpdated'));
 }
 
 function deleteEntry() {
   showConfirm(
     t('deleteEntry'),
     t('deleteEntryConfirm'),
-    () => {
-      state.entries = state.entries.filter(x => x.id !== state.editingEntryId);
+    async () => {
+      const id = state.editingEntryId;
+      state.entries = state.entries.filter(x => x.id !== id);
       closeEditModal();
-      save(); renderEntries(); toast(t('entryRemoved'));
+      await deleteEntryDoc(id);
+      renderEntries(); toast(t('entryRemoved'));
     }
   );
 }
@@ -212,24 +208,27 @@ function closeEditModal() {
 }
 
 // ── EXPENSES ──
-export function addExpense() {
+export async function addExpense() {
   const desc = document.getElementById('exp-desc').value.trim();
   const amount = parseFloat(document.getElementById('exp-amount').value);
-  const cust = document.getElementById('exp-customer').value;
+  const custVal = document.getElementById('exp-customer').value;
   if (!desc) { toast(t('expenseDescRequired')); return; }
   if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
-  state.expenses.unshift({
-    id: ++state.eExpId,
+  const id = await nextId('expense');
+  const expense = {
+    id,
     date: new Date().toISOString(),
     description: desc,
     amount,
-    customer: cust === '—' ? null : cust,
+    customerId: custVal === '—' ? null : parseInt(custVal, 10),
     selected: false,
     invoiced: false,
-  });
+  };
+  state.expenses.unshift(expense);
+  await createExpense(expense);
   document.getElementById('exp-desc').value = '';
   document.getElementById('exp-amount').value = '';
-  save(); renderExpenses(); toast(t('expenseAdded'));
+  renderExpenses(); toast(t('expenseAdded'));
 }
 
 export function toggleExpense(id) {
@@ -237,9 +236,10 @@ export function toggleExpense(id) {
   if (e && !e.invoiced) e.selected = !e.selected;
 }
 
-function deleteExpense(id) {
+async function deleteExpense(id) {
   state.expenses = state.expenses.filter(x => x.id !== id);
-  save(); renderExpenses(); toast(t('expenseRemoved'));
+  await deleteExpenseDoc(id);
+  renderExpenses(); toast(t('expenseRemoved'));
 }
 
 export function renderExpenses() {
@@ -256,7 +256,7 @@ export function renderExpenses() {
           <div class="entry-dur" style="font-size:15px;">${esc(e.description)}</div>
         </div>
         <div class="entry-right">
-          ${e.customer ? `<span class="tag tag-cust">${esc(e.customer)}</span>` : ''}
+          ${e.customerId != null ? `<span class="tag tag-cust">${esc(customerName(e.customerId) || '—')}</span>` : ''}
           <span class="entry-eur">${fmtEur(e.amount)}</span>
           <span class="tag tag-open">${t('open')}</span>
         </div>

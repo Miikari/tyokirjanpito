@@ -2,13 +2,22 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { esc } from './utils.js';
 import { toast, showConfirm } from './ui.js';
-import { save } from './storage.js';
+import { nextId, createCustomer, updateCustomer, deleteCustomerBatch } from './storage.js';
 import { renderPills } from './clock.js';
+import { renderEntries } from './entries.js';
 
-let editingCustomerName = null; // null = adding new, string = editing existing
+let editingCustomerId = null; // null = adding new, number = editing existing
+
+export function customerById(id) {
+  return id == null ? null : state.customers.find(c => c.id === id) || null;
+}
+
+export function customerName(id) {
+  return customerById(id)?.name || null;
+}
 
 function openAddCustomerModal() {
-  editingCustomerName = null;
+  editingCustomerId = null;
   document.getElementById('modal-cust-title').textContent = t('addCustomerTitle');
   document.getElementById('cust-name').value = '';
   document.getElementById('cust-ytunnus').value = '';
@@ -24,10 +33,10 @@ function openAddCustomerModal() {
   document.getElementById('modal-customer').classList.add('open');
 }
 
-function openEditCustomerModal(name) {
-  const c = state.cfg.customers.find(x => x.name === name);
+function openEditCustomerModal(id) {
+  const c = customerById(id);
   if (!c) return;
-  editingCustomerName = name;
+  editingCustomerId = id;
   document.getElementById('modal-cust-title').textContent = t('editCustomerTitle');
   document.getElementById('cust-name').value = c.name || '';
   document.getElementById('cust-ytunnus').value = c.ytunnus || '';
@@ -44,7 +53,7 @@ function openEditCustomerModal(name) {
   document.getElementById('modal-customer').classList.add('open');
 }
 
-function saveCustomerModal() {
+async function saveCustomerModal() {
   const name = document.getElementById('cust-name').value.trim();
   if (!name) { toast(t('companyNameRequired')); return; }
 
@@ -64,27 +73,28 @@ function saveCustomerModal() {
 
   const sameName = (a, b) => a.localeCompare(b, 'fi', { sensitivity: 'base' }) === 0;
 
-  if (editingCustomerName === null) {
+  if (editingCustomerId === null) {
     // Adding new
-    if (state.cfg.customers.some(c => sameName(c.name, name))) { toast(t('customerExists')); return; }
-    state.cfg.customers.push(data);
+    if (state.customers.some(c => sameName(c.name, name))) { toast(t('customerExists')); return; }
+    const id = await nextId('customer');
+    const customer = { id, ...data };
+    state.customers.push(customer);
+    await createCustomer(customer);
     toast(t('customerAdded'));
   } else {
-    // Editing existing
-    const idx = state.cfg.customers.findIndex(c => c.name === editingCustomerName);
+    // Editing existing. Entries/expenses reference the customer by id, so
+    // a rename needs no cascade into them — they keep pointing at the same
+    // customer automatically.
+    const idx = state.customers.findIndex(c => c.id === editingCustomerId);
     if (idx === -1) return;
-    // If name (or just its casing) changed, update activeCustomer and entries references
-    if (editingCustomerName !== name) {
-      if (state.cfg.customers.some((c, i) => sameName(c.name, name) && i !== idx)) { toast(t('customerExists')); return; }
-      state.entries.forEach(e => { if (e.customer === editingCustomerName) e.customer = name; });
-      if (state.activeCustomer === editingCustomerName) state.activeCustomer = name;
-    }
-    state.cfg.customers[idx] = data;
+    if (state.customers.some((c, i) => sameName(c.name, name) && i !== idx)) { toast(t('customerExists')); return; }
+    state.customers[idx] = { id: editingCustomerId, ...data };
+    await updateCustomer(editingCustomerId, data);
     toast(t('customerUpdated'));
   }
 
   closeCustomerModal();
-  save(); renderCustChips(); renderAllSelects(); renderPills();
+  renderCustChips(); renderAllSelects(); renderPills();
 }
 
 function toggleMaksuehtoSopimus() {
@@ -97,51 +107,52 @@ function toggleMaksuehtoSopimus() {
 
 function closeCustomerModal() {
   document.getElementById('modal-customer').classList.remove('open');
-  editingCustomerName = null;
+  editingCustomerId = null;
 }
 
-function removeCustomer(name) {
-  const openEntries = state.entries.filter(e => !e.invoiced && e.customer === name);
+function removeCustomer(id) {
+  const c = customerById(id);
+  if (!c) return;
+  const openEntries = state.entries.filter(e => !e.invoiced && e.customerId === id);
+
+  const doRemove = async () => {
+    const openIds = openEntries.map(e => e.id);
+    state.entries = state.entries.filter(e => !(e.customerId === id && !e.invoiced));
+    state.customers = state.customers.filter(x => x.id !== id);
+    if (state.activeCustomerId === id) state.activeCustomerId = null;
+    await deleteCustomerBatch(id, openIds);
+    renderCustChips(); renderAllSelects(); renderPills(); renderEntries(); toast(t('customerRemoved'));
+  };
 
   if (openEntries.length > 0) {
     showConfirm(
       t('deleteCustomer'),
-      `${t('customerHas')} "${name}" ${t('has')} ${openEntries.length} ${t('customerHasEntries')}`,
-      () => {
-        state.entries = state.entries.filter(e => !(e.customer === name && !e.invoiced));
-        state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
-        if (state.activeCustomer === name) state.activeCustomer = null;
-        save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
-      }
+      `${t('customerHas')} "${c.name}" ${t('has')} ${openEntries.length} ${t('customerHasEntries')}`,
+      doRemove
     );
   } else {
     showConfirm(
       t('deleteCustomer'),
-      `${t('deleteCustomerConfirm')} "${name}" ?`,
-      () => {
-        state.cfg.customers = state.cfg.customers.filter(c => c.name !== name);
-        if (state.activeCustomer === name) state.activeCustomer = null;
-        save(); renderCustChips(); renderAllSelects(); renderPills(); toast(t('customerRemoved'));
-      }
+      `${t('deleteCustomerConfirm')} "${c.name}" ?`,
+      doRemove
     );
   }
 }
 
 export function renderCustChips() {
   const el = document.getElementById('cust-chips');
-  if (!state.cfg.customers.length) {
+  if (!state.customers.length) {
     el.innerHTML = `<div style="font-size:14px;color:var(--text2);padding:4px 0">${t('noCustomersYet')}</div>`;
     return;
   }
-  const sorted = [...state.cfg.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
+  const sorted = [...state.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
   el.innerHTML = `<div class="cust-list">${sorted.map(c => {
     const hasDetails = c.ytunnus || c.katuosoite || c.sposti || c.puhelin;
-    const jsonName = esc(JSON.stringify(c.name));
     return `<div class="cust-row">
       <div class="cust-row-name">${esc(c.name)}${hasDetails ? '<span class="cust-has-details"></span>' : ''}</div>
       <div class="cust-row-actions">
-        <button type="button" class="cust-action-btn" onclick="openEditCustomerModal(${jsonName})">${t('edit')}</button>
-        <button type="button" class="cust-action-btn cust-action-danger" onclick="removeCustomer(${jsonName})">${t('delete')}</button>
+        <button type="button" class="cust-action-btn" onclick="openEditCustomerModal(${c.id})">${t('edit')}</button>
+        <button type="button" class="cust-action-btn cust-action-danger" onclick="removeCustomer(${c.id})">${t('delete')}</button>
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -149,7 +160,7 @@ export function renderCustChips() {
 
 export function renderAllSelects() {
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...state.cfg.customers.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`)].join('');
+    ...state.customers.map(c => `<option value="${c.id}">${esc(c.name)}</option>`)].join('');
   ['m-customer', 'rec-customer', 'exp-customer'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;

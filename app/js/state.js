@@ -13,7 +13,7 @@ const DEFAULT_SERVICE_NAME = detectLang() === 'en' ? 'Hourly work' : 'Tuntityö'
 
 export function defaultCfg() {
   return {
-    hourly: 50, kmRate: 0.57, customers: [], recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, minRounding: 0, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false,
+    hourly: 50, kmRate: 0.57, recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, minRounding: 0, vat: 0, showTilinumero: true, showErapaiva: true, showViitenumero: false,
     services: [{ id: 1, name: DEFAULT_SERVICE_NAME, rate: 50 }], hideRate: false,
   };
 }
@@ -21,10 +21,10 @@ export function defaultCfg() {
 export const state = {
   uid: null, orgId: null, accountName: '', accountPhotoURL: '',
   timerRaf: null, startTime: null, elapsedMs: 0,
-  clockState: 'idle', clockInDate: null, activeCustomer: null, activeServiceId: null,
-  entries: [], invoices: [], expenses: [], eId: 0, iId: 0, eExpId: 0,
+  clockState: 'idle', clockInDate: null, activeCustomerId: null, activeServiceId: null,
+  entries: [], invoices: [], expenses: [], customers: [], eId: 0, iId: 0, eExpId: 0, cId: 0,
   cfg: defaultCfg(),
-  saveTimer: null,
+  configSaveTimer: null,
   editingEntryId: null, editingInvId: null,
   pendingRecurring: null, pending: null,
   deferredPrompt: null, filterCustomers: new Set(),

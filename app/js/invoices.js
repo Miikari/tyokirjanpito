@@ -2,23 +2,25 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, fmtDur, fmtEur, fmtHours, fmtShort, esc, calcViitenumero, calcErapaiva } from './utils.js';
 import { toast, goTab } from './ui.js';
-import { save } from './storage.js';
+import { nextId, finalizeInvoiceBatch, updateInvoiceDoc } from './storage.js';
 import { renderEntries, renderExpenses } from './entries.js';
 import { isPro, showUpgradeModal, incrementInvoiceCount } from './billing.js';
+import { customerById, customerName } from './customers.js';
 
 function startInvoice() {
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
   if (!sel.length) { toast(t('selectEntries')); return; }
-  const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
+  const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
   if (custs.length !== 1) { toast(t('selectOneCustomer')); return; }
   state.pending = sel;
   if (!state.cfg.recurring.length) { finishInvoice(false); return; }
 
-  const relevantRecurring = state.cfg.recurring.filter(r => r.customer === custs[0]);
+  const relevantRecurring = state.cfg.recurring.filter(r => r.customerId === custs[0]);
   if (!relevantRecurring.length) { finishInvoice(false); return; }
 
+  const custNames = custs.map(id => customerName(id)).filter(Boolean);
   document.getElementById('modal-text').textContent =
-    `Valitsit ${sel.length} ${t('entries_count')} ${custs.length ? ' (' + custs.join(', ') + ')' : ''}.  ${t('doAddRecurring')}`;
+    `Valitsit ${sel.length} ${t('entries_count')} ${custNames.length ? ' (' + custNames.join(', ') + ')' : ''}.  ${t('doAddRecurring')}`;
 
   state.pendingRecurring = relevantRecurring;
   document.getElementById('modal').classList.add('open');
@@ -26,7 +28,7 @@ function startInvoice() {
 
 function closeModal() { document.getElementById('modal').classList.remove('open'); state.pending = null; }
 
-function finishInvoice(mode) {
+async function finishInvoice(mode) {
   document.getElementById('modal').classList.remove('open');
   if (!isPro() && state.orgLifetimeInvoiceCount >= 5) {
     // Leave state.pending / selected entries untouched — nothing is lost,
@@ -41,9 +43,11 @@ function finishInvoice(mode) {
   let rec = [];
   if (mode === true) rec = [...recurring];
   else if (mode === 'customer') {
-    const custs = [...new Set(sel.map(e => e.customer).filter(Boolean))];
-    rec = recurring.filter(r => r.customer && custs.includes(r.customer));
+    const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+    rec = recurring.filter(r => r.customerId != null && custs.includes(r.customerId));
   }
+  // Freeze a customer-name snapshot here too, same as entries/expenses.
+  rec = rec.map(r => ({ ...r, customer: customerName(r.customerId) }));
   const totalSecs = sel.reduce((a, e) => a + e.secs, 0);
   const hourly = sel.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
   const monthly = rec.reduce((a, r) => a + r.amount, 0);
@@ -54,24 +58,32 @@ function finishInvoice(mode) {
   const kmAmount = totalKm * kmRate;
   const subtotal = hourly + monthly + kmAmount + expenseTotal;
   const vatAmount = subtotal * (state.cfg.vat || 0) / 100;
-  const invoiceCustomers = [...new Set(sel.map(e => e.customer).filter(Boolean))];
-  const primaryCust = invoiceCustomers.length === 1 ? state.cfg.customers.find(c => c.name === invoiceCustomers[0]) : null;
+  const invoiceCustomerIds = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+  const primaryCust = invoiceCustomerIds.length === 1 ? customerById(invoiceCustomerIds[0]) : null;
   const maksuehto = primaryCust?.maksuehto ?? 10;
-  state.invoices.unshift({
-    id: ++state.iId, date: new Date().toISOString(),
-    entries: sel.map(e => ({ ...e })), totalSecs, hourly, monthly,
+
+  const id = await nextId('invoice');
+  // Freeze a customer-name snapshot into each entry/expense copy — invoice
+  // history must never change retroactively just because a customer is
+  // renamed (or deleted) afterwards.
+  const freeze = e => ({ ...e, customer: customerName(e.customerId) });
+  const invoice = {
+    id, date: new Date().toISOString(),
+    entries: sel.map(freeze), totalSecs, hourly, monthly,
     km: totalKm, kmRate, kmAmount,
-    expenses: selExpenses.map(e => ({ ...e })), expenseTotal,
+    expenses: selExpenses.map(freeze), expenseTotal,
     subtotal, vatAmount, vat: state.cfg.vat || 0,
-    total: subtotal + vatAmount, recurring: rec, maksuehto
-  });
+    total: subtotal + vatAmount, recurring: rec, maksuehto,
+  };
+  state.invoices.unshift(invoice);
   sel.forEach(e => { e.invoiced = true; e.selected = false; });
   selExpenses.forEach(e => { e.invoiced = true; e.selected = false; });
   state.filterCustomers.clear();
   incrementInvoiceCount();
-  save(); renderEntries(); renderExpenses();
-  toast(t('invoicePrefix') + String(state.iId).padStart(3, '0') + ' arkistoitu');
-  goTab('arkisto'); setTimeout(() => renderArchive(state.iId), 80);
+  await finalizeInvoiceBatch(invoice, sel.map(e => e.id), selExpenses.map(e => e.id));
+  renderEntries(); renderExpenses();
+  toast(t('invoicePrefix') + String(id).padStart(3, '0') + ' arkistoitu');
+  goTab('arkisto'); setTimeout(() => renderArchive(id), 80);
 }
 
 function isOverdue(inv) {
@@ -92,11 +104,11 @@ function updateInvoiceBadge() {
   badge.textContent = overdue > 5 ? '5+' : String(overdue);
 }
 
-function markInvoicePaid(id) {
+async function markInvoicePaid(id) {
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
   inv.paid = !inv.paid;
-  save();
+  await updateInvoiceDoc(id, { paid: inv.paid });
   renderArchive();
   toast(inv.paid ? t('markedPaid') : t('paidRemoved'));
 }
@@ -118,7 +130,7 @@ function resolveCustomerEmail(inv) {
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
   if (!custs.length) return { error: t('noCustomerOnInvoice') };
   if (custs.length > 1) return { error: t('multipleCustomersInvoice') };
-  const custObj = state.cfg.customers.find(c => c.name === custs[0]);
+  const custObj = state.customers.find(c => c.name === custs[0]);
   if (!custObj?.sposti) return { error: `${esc(custs[0])} ${t('noCustomerEmail')}` };
   if (!isValidEmail(custObj.sposti)) return { error: `${t('invalidEmailAddr')} ${custObj.sposti}` };
   return { email: custObj.sposti };
@@ -347,7 +359,7 @@ export function renderArchive(highlightId) {
 function getInvoiceLang(inv) {
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
   if (custs.length !== 1) return state.lang;
-  const cust = state.cfg.customers.find(c => c.name === custs[0]);
+  const cust = state.customers.find(c => c.name === custs[0]);
   return cust?.lang || state.lang;
 }
 
@@ -390,7 +402,7 @@ function printInvoice(id, asAttachment) {
     </tr>`).join('');
 
   const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
-  const primaryCustObj = custs.length === 1 ? state.cfg.customers.find(c => c.name === custs[0]) : null;
+  const primaryCustObj = custs.length === 1 ? state.customers.find(c => c.name === custs[0]) : null;
   const custAddrLines = primaryCustObj ? [
     primaryCustObj.ytunnus ? t('ytunnus', lang) + ': ' + esc(primaryCustObj.ytunnus) : '',
     esc(primaryCustObj.katuosoite || ''),
@@ -534,7 +546,7 @@ function openEditInvoice(id) {
   document.getElementById('modal-edit-inv').classList.add('open');
 }
 
-function saveEditInvoice() {
+async function saveEditInvoice() {
   const inv = state.invoices.find(x => x.id === state.editingInvId);
   if (!inv) return;
   inv.entries.forEach((e, i) => {
@@ -553,7 +565,8 @@ function saveEditInvoice() {
   inv.vatAmount = vatAmount;
   inv.total = subtotal + vatAmount;
   closeEditInvModal();
-  save(); renderArchive(); toast(t('invoiceUpdated'));
+  await updateInvoiceDoc(inv.id, { entries: inv.entries, totalSecs, hourly, subtotal, vatAmount, total: inv.total });
+  renderArchive(); toast(t('invoiceUpdated'));
 }
 
 function closeEditInvModal() {

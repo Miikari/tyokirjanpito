@@ -2,8 +2,9 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDur, fmtDate, esc, roundDuration } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
-import { save } from './storage.js';
 import { addEntry } from './entries.js';
+import { saveConfig } from './storage.js';
+import { customerName } from './customers.js';
 
 export function tick() {
   const total = Math.floor((state.elapsedMs + (Date.now() - state.startTime)) / 1000);
@@ -67,7 +68,7 @@ function selService(id) {
 
 function toggleHideRate() {
   state.cfg.hideRate = !state.cfg.hideRate;
-  save();
+  saveConfig();
   applyHideRate();
 }
 
@@ -89,20 +90,20 @@ function confirmClockRateEdit() {
 }
 
 function clockIn() {
-  if (!state.activeCustomer) { toast(t('selectCustomer')); return; }
+  if (!state.activeCustomerId) { toast(t('selectCustomer')); return; }
   state.clockState = 'running'; state.clockInDate = new Date(); state.startTime = Date.now(); state.elapsedMs = 0;
   const clockRate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
   const clockService = getActiveService().name;
   if (state.uid) {
     db.collection('users').doc(state.uid).collection('data').doc('active').set({
-      startTime: state.startTime, clockInDate: state.clockInDate.toISOString(), customer: state.activeCustomer, rate: clockRate, service: clockService
+      startTime: state.startTime, clockInDate: state.clockInDate.toISOString(), customerId: state.activeCustomerId, rate: clockRate, service: clockService
     });
   }
   state.timerRaf = requestAnimationFrame(tick);
   const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
   document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
   setBadge('running', '● Töissä'); renderMainBtns();
-  toast(t('clockedIn') + state.activeCustomer);
+  toast(t('clockedIn') + customerName(state.activeCustomerId));
   updateClockBg();
 }
 
@@ -120,7 +121,7 @@ function togglePause() {
   }
 }
 
-function clockOut() {
+async function clockOut() {
   if (state.clockState === 'running') state.elapsedMs += Date.now() - state.startTime;
   cancelAnimationFrame(state.timerRaf);
   const rawSecs = Math.floor(state.elapsedMs / 1000);
@@ -130,7 +131,7 @@ function clockOut() {
   const rate = parseFloat(document.getElementById('clock-rate-input').value) || state.cfg.hourly;
   const km = parseFloat(document.getElementById('clock-km').value) || 0;
   const wasRunning = state.clockState === 'running';
-  const ok = addEntry(state.clockInDate, secs, state.activeCustomer, t('kello'), notes, rate, km, getActiveService().name);
+  const ok = await addEntry(state.clockInDate, secs, state.activeCustomerId, t('kello'), notes, rate, km, getActiveService().name);
   if (!ok) {
     // Never discard already-tracked time on a blocked add — restore the
     // timer exactly as it was so the user can upgrade and try again.
@@ -150,7 +151,7 @@ function clockOut() {
   setBadge('idle', t('idle')); renderMainBtns();
   if (state.uid) db.collection('users').doc(state.uid).collection('data').doc('active').delete();
   initClockRate();
-  save(); toast(t('kirjattu') + fmtDur(secs));
+  toast(t('kirjattu') + fmtDur(secs));
   updateClockBg();
 }
 
@@ -175,22 +176,22 @@ export function renderPills() {
   const isLocked = state.clockState !== 'idle';
   const svcEl = document.getElementById('service-select');
   if (svcEl) svcEl.disabled = isLocked;
-  if (!state.cfg.customers.length) {
+  if (!state.customers.length) {
     el.innerHTML = `<option value="">${t('noCustomer')}</option>`;
     el.disabled = true;
     syncSelectLabel('cust-select', 'cust-select-label');
     return;
   }
-  const sorted = [...state.cfg.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
-  el.innerHTML = [`<option value=""${state.activeCustomer ? '' : ' selected'}>— ${t('noCustomer')} —</option>`,
-    ...sorted.map(c => `<option value="${esc(c.name)}"${state.activeCustomer === c.name ? ' selected' : ''}>${esc(c.name)}</option>`)
+  const sorted = [...state.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
+  el.innerHTML = [`<option value=""${state.activeCustomerId ? '' : ' selected'}>— ${t('noCustomer')} —</option>`,
+    ...sorted.map(c => `<option value="${c.id}"${state.activeCustomerId === c.id ? ' selected' : ''}>${esc(c.name)}</option>`)
   ].join('');
   el.disabled = isLocked;
   syncSelectLabel('cust-select', 'cust-select-label');
 }
 
-function selCust(n) {
-  state.activeCustomer = n || null;
+function selCust(id) {
+  state.activeCustomerId = id ? parseInt(id, 10) : null;
   renderPills();
 }
 

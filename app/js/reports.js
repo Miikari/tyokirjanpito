@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, fmtEur, fmtShort, fmtHours, esc } from './utils.js';
+import { customerName } from './customers.js';
 
 const PALETTE = [
   '#1976D2', '#43A047', '#E53935', '#FB8C00', '#8E24AA',
@@ -317,7 +318,7 @@ function downloadYearReport() {
   const openRows = openEntries.map(e => `
     <tr>
       <td>${fmtDate(e.date)}</td>
-      <td>${esc(e.customer || '—')}</td>
+      <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtHours(e.secs)}</td>
       <td class="num">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
       <td style="font-size:12px;color:#666;">${esc(e.notes || '')}</td>
@@ -327,7 +328,7 @@ function downloadYearReport() {
     <tr>
       <td>${fmtDate(e.date)}</td>
       <td>${esc(e.description)}</td>
-      <td>${esc(e.customer || '—')}</td>
+      <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtEur(e.amount)}</td>
       <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
     </tr>`).join('');
@@ -442,7 +443,7 @@ function downloadMonthReport() {
   const entryRows = allEntries.map(e => `
     <tr>
       <td>${fmtDate(e.date)}</td>
-      <td>${esc(e.customer || '—')}</td>
+      <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtHours(e.secs)}</td>
       <td class="num">${fmtEur(e.rate ?? state.cfg.hourly)}/h</td>
       <td class="num">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
@@ -465,7 +466,7 @@ function downloadMonthReport() {
     <tr>
       <td>${fmtDate(e.date)}</td>
       <td>${esc(e.description)}</td>
-      <td>${esc(e.customer || '—')}</td>
+      <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtEur(e.amount)}</td>
       <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
     </tr>`).join('');

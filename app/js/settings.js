@@ -5,25 +5,25 @@ import {
   isValidEmailField, isValidYtunnus, isValidIban,
 } from './utils.js';
 import { toast } from './ui.js';
-import { save } from './storage.js';
-import { renderCustChips, renderAllSelects } from './customers.js';
+import { saveConfig } from './storage.js';
+import { renderCustChips, renderAllSelects, customerName } from './customers.js';
 import { renderOrgSettings } from './org.js';
 import { updateUserNameDisplay } from './auth.js';
 import { initClockRate } from './clock.js';
 
 function saveRounding() {
   state.cfg.rounding = parseInt(document.getElementById('set-rounding').value);
-  save(); toast(t('saved'));
+  saveConfig(); toast(t('saved'));
 }
 
 function saveMinRounding() {
   state.cfg.minRounding = parseInt(document.getElementById('set-min-rounding').value);
-  save(); toast(t('saved'));
+  saveConfig(); toast(t('saved'));
 }
 
 function saveVat() {
   state.cfg.vat = parseFloat(document.getElementById('set-vat').value);
-  save(); toast(t('saved'));
+  saveConfig(); toast(t('saved'));
 }
 
 export function renderSettings() {
@@ -76,7 +76,7 @@ function saveAllSettings() {
   state.cfg.ytunnus = ytunnus;
   state.cfg.tilinumero = tilinumero;
   state.cfg.kmRate = kmRate;
-  save(); updateUserNameDisplay(); toast(t('saved'));
+  saveConfig(); updateUserNameDisplay(); toast(t('saved'));
 }
 
 // ── PALVELUT ──
@@ -88,21 +88,21 @@ function addService() {
   document.getElementById('svc-name').value = '';
   document.getElementById('svc-rate').value = '';
   state.cfg.hourly = state.cfg.services[0].rate;
-  save(); renderServices(); renderServiceSelects(); toast(t('serviceAdded'));
+  saveConfig(); renderServices(); renderServiceSelects(); toast(t('serviceAdded'));
 }
 
 function removeService(id) {
   if (state.cfg.services.length <= 1) { toast(t('minOneService')); return; }
   state.cfg.services = state.cfg.services.filter(s => s.id !== id);
   state.cfg.hourly = state.cfg.services[0].rate;
-  save(); renderServices(); renderServiceSelects(); toast(t('serviceRemoved'));
+  saveConfig(); renderServices(); renderServiceSelects(); toast(t('serviceRemoved'));
 }
 
 function updateServiceName(id, name) {
   const s = state.cfg.services.find(x => x.id === id);
   if (!s || !name.trim()) return;
   s.name = name.trim();
-  save(); renderServiceSelects();
+  saveConfig(); renderServiceSelects();
 }
 
 function updateServiceRate(id, rate) {
@@ -111,7 +111,7 @@ function updateServiceRate(id, rate) {
   if (!s || isNaN(r) || r < 0) return;
   s.rate = r;
   if (state.cfg.services[0].id === id) state.cfg.hourly = r;
-  save(); renderServiceSelects();
+  saveConfig(); renderServiceSelects();
 }
 
 function renderServices() {
@@ -145,17 +145,18 @@ function saveInvoiceSettings() {
   state.cfg.showTilinumero = document.getElementById('inv-show-tilinumero').checked;
   state.cfg.showErapaiva = document.getElementById('inv-show-erapaiva').checked;
   state.cfg.showViitenumero = document.getElementById('inv-show-viitenumero').checked;
-  save();
+  saveConfig();
 }
 
 function downloadBackup() {
   const data = {
     exportedAt: new Date().toISOString(),
     cfg: state.cfg,
+    customers: state.customers,
     entries: state.entries,
     invoices: state.invoices,
     expenses: state.expenses,
-    eId: state.eId, iId: state.iId, eExpId: state.eExpId,
+    eId: state.eId, iId: state.iId, eExpId: state.eExpId, cId: state.cId,
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -173,15 +174,15 @@ function addRecurring() {
   const c = document.getElementById('rec-customer').value;
   if (!n || isNaN(a) || a <= 0) { toast(t('fillDesc')); return; }
   if (!c || c === '—') { toast(t('selectCustomer')); return; }
-  state.cfg.recurring.push({ id: Date.now(), name: n, amount: a, customer: c });
+  state.cfg.recurring.push({ id: Date.now(), name: n, amount: a, customerId: parseInt(c, 10) });
   document.getElementById('rec-name').value = '';
   document.getElementById('rec-amount').value = '';
-  save(); renderRecList(); toast(t('added'));
+  saveConfig(); renderRecList(); toast(t('added'));
 }
 
 function removeRecurring(id) {
   state.cfg.recurring = state.cfg.recurring.filter(r => r.id !== id);
-  save(); renderRecList();
+  saveConfig(); renderRecList();
 }
 
 let editingRecurringId = null;
@@ -196,7 +197,7 @@ function updateRecurringAmount(id, value) {
   const a = parseFloat(value);
   if (r && !isNaN(a) && a > 0) {
     r.amount = a;
-    save();
+    saveConfig();
   }
   editingRecurringId = null;
   renderRecList();
@@ -220,7 +221,7 @@ function renderRecList() {
     <div class="rec-item">
       <div>
         <div class="rec-name">${esc(r.name)}</div>
-        <div class="rec-sub">${esc(r.customer || t('allCustomers'))}</div>
+        <div class="rec-sub">${esc(customerName(r.customerId) || t('allCustomers'))}</div>
       </div>
       <div class="rec-right">
         ${amountHtml}
