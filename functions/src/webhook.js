@@ -53,6 +53,12 @@ const stripeWebhook = onRequest({ secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SE
         break;
       }
 
+      // .created and .updated carry the same shape and both need to sync
+      // status/currentPeriodEnd — Stripe doesn't reliably fire .updated
+      // right after Checkout creates a fresh subscription, only .created,
+      // so relying on .updated alone left currentPeriodEnd blank until the
+      // first renewal.
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const orgRef = await resolveOrgRef(obj);
         if (orgRef) {
@@ -64,7 +70,7 @@ const stripeWebhook = onRequest({ secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SE
               : null,
           });
         } else {
-          logger.error('customer.subscription.updated: could not resolve org', { subscriptionId: obj.id });
+          logger.error(`${event.type}: could not resolve org`, { subscriptionId: obj.id });
         }
         break;
       }
