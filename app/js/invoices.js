@@ -330,7 +330,7 @@ export function renderArchive(highlightId) {
           <div class="inv-meta">${fmtDate(inv.date)} · ${fmtShort(inv.totalSecs)} h</div>
           ${rows}${recRows}${kmRow}${expRows}
           <div class="inv-subtotals">
-            ${inv.vat > 0 ? `
+            ${inv.vat !== undefined && inv.vat !== null ? `
               <div class="inv-subtotal-line"><span>${t('vatExcl')}</span><span>${fmtEur(inv.subtotal)}</span></div>
               <div class="inv-subtotal-line"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
             ` : ''}
@@ -506,7 +506,7 @@ function printInvoice(id, asAttachment) {
       <tbody>${rows}${recRows}${kmPrintRow}${expPrintRows}</tbody>
     </table>
     <div class="total-section">
-      ${inv.vat > 0 ? `
+      ${inv.vat !== undefined && inv.vat !== null ? `
         <div class="total-line"><span>${t('vatExcl', lang)}</span><span>${fmtEur(inv.subtotal)}</span></div>
         <div class="total-line"><span>${t('vatLabel', lang)} ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
       ` : ''}
