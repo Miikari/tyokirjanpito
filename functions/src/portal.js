@@ -1,9 +1,9 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { STRIPE_SECRET_KEY, APP_ORIGIN, getStripe } = require('./stripe.js');
-const { requireOrgMember } = require('./org.js');
+const { requireOrgOwner } = require('./org.js');
 
 const createPortalSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (request) => {
-  const { org } = await requireOrgMember(request);
+  const { org } = await requireOrgOwner(request);
 
   if (!org.stripeCustomerId) {
     throw new HttpsError('failed-precondition', 'No billing account yet for this organization.');

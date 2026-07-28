@@ -119,7 +119,7 @@ async function reloadOrgData() {
   const { loadFromFirestore } = await import('./storage.js');
   // Reset state data before reload
   const { state } = await import('./state.js');
-  state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
+  state.entries = []; state.invoices = []; state.expenses = []; state.eId = 0; state.iId = 0; state.eExpId = 0;
   state.cfg = defaultCfg();
   await loadFromFirestore();
   await renderOrgSettings();

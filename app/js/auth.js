@@ -180,7 +180,7 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('login-screen').classList.add('visible');
     showLoginView('main');
     state.uid = null; state.orgId = null; state.accountName = ''; state.accountPhotoURL = '';
-    state.entries = []; state.invoices = []; state.eId = 0; state.iId = 0;
+    state.entries = []; state.invoices = []; state.expenses = []; state.eId = 0; state.iId = 0; state.eExpId = 0;
     state.cfg = defaultCfg();
     document.getElementById('user-name').textContent = '';
     document.getElementById('user-avatar').style.display = 'none';

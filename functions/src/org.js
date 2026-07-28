@@ -25,4 +25,16 @@ async function requireOrgMember(request) {
   return { orgRef, org };
 }
 
-module.exports = { requireOrgMember };
+// Stricter than requireOrgMember: for actions that affect the org's billing
+// (cancelling, changing payment method, viewing invoices/address) — any
+// member could otherwise reach these via a member-only check, even one who
+// self-joined through a shared invite code.
+async function requireOrgOwner(request) {
+  const result = await requireOrgMember(request);
+  if (result.org.ownerId !== request.auth.uid) {
+    throw new HttpsError('permission-denied', 'Only the organization owner can manage billing.');
+  }
+  return result;
+}
+
+module.exports = { requireOrgMember, requireOrgOwner };
