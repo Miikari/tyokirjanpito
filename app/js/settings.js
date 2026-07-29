@@ -21,9 +21,11 @@ function saveMinRounding() {
   saveConfig(); toast(t('saved'));
 }
 
-function saveVat() {
-  state.cfg.vat = parseFloat(document.getElementById('set-vat').value);
-  saveConfig(); toast(t('saved'));
+// Pure UI toggle — the 0%-reason row only makes sense once 0% is picked,
+// but nothing is saved until saveAllSettings() runs (Tallenna muutokset).
+function onVatSelectChange() {
+  const val = document.getElementById('set-vat').value;
+  document.getElementById('set-vat-zero-reason-row').style.display = val === '0' ? '' : 'none';
 }
 
 export function renderSettings() {
@@ -39,7 +41,9 @@ export function renderSettings() {
   document.getElementById('set-rounding').value = state.cfg.rounding || 15;
   document.getElementById('set-min-rounding').value = state.cfg.minRounding || 0;
   document.getElementById('set-kmrate').value = state.cfg.kmRate ?? 0.57;
-  document.getElementById('set-vat').value = state.cfg.vat || 0;
+  document.getElementById('set-vat').value = state.cfg.vat === null || state.cfg.vat === undefined ? '' : state.cfg.vat;
+  document.getElementById('set-vat-zero-reason').value = state.cfg.vatZeroReason || '';
+  document.getElementById('set-vat-zero-reason-row').style.display = state.cfg.vat === 0 ? '' : 'none';
   ['fi', 'en'].forEach(l => {
     const btn = document.getElementById('btn-' + l);
     const active = state.lang === l;
@@ -54,6 +58,12 @@ export function renderSettings() {
 function saveAllSettings() {
   const kmRate = parseFloat(document.getElementById('set-kmrate').value);
   if (isNaN(kmRate) || kmRate < 0) { toast(t('invalidPrice')); return; }
+
+  const vatRaw = document.getElementById('set-vat').value;
+  if (vatRaw === '') { toast(t('invalidVat')); return; }
+  const vat = parseFloat(vatRaw);
+  const vatZeroReason = document.getElementById('set-vat-zero-reason').value;
+  if (vat === 0 && !vatZeroReason) { toast(t('invalidVatZeroReason')); return; }
 
   const company    = document.getElementById('set-company').value.trim();
   const address    = document.getElementById('set-address').value.trim();
@@ -76,6 +86,8 @@ function saveAllSettings() {
   state.cfg.ytunnus = ytunnus;
   state.cfg.tilinumero = tilinumero;
   state.cfg.kmRate = kmRate;
+  state.cfg.vat = vat;
+  state.cfg.vatZeroReason = vat === 0 ? vatZeroReason : null;
   saveConfig(); updateUserNameDisplay(); toast(t('saved'));
 }
 
@@ -243,7 +255,7 @@ function renderRecList() {
 window.saveAllSettings = saveAllSettings;
 window.saveRounding = saveRounding;
 window.saveMinRounding = saveMinRounding;
-window.saveVat = saveVat;
+window.onVatSelectChange = onVatSelectChange;
 window.saveInvoiceSettings = saveInvoiceSettings;
 window.downloadBackup = downloadBackup;
 window.addRecurring = addRecurring;

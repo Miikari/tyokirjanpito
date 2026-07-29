@@ -165,15 +165,17 @@ function drawBars(invs) {
   const slot = cW / 12;
   const bW = Math.max(slot * 0.6, 4);
 
+  const dark = document.documentElement.dataset.theme === 'dark';
+
   ctx.font = '10px -apple-system, sans-serif';
   const steps = 4;
   for (let i = 0; i <= steps; i++) {
     const y = pt + cH - (i / steps) * cH;
     const val = (i / steps) * maxVal;
-    ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pl, y); ctx.lineTo(W - pr, y); ctx.stroke();
-    ctx.fillStyle = '#070707';
+    ctx.fillStyle = dark ? '#f2f2f2' : '#070707';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     const label = val >= 1000 ? (val / 1000).toFixed(val >= 10000 ? 0 : 1) + 'k' : Math.round(val).toString();

@@ -8,6 +8,11 @@ import { isPro, showUpgradeModal, incrementInvoiceCount } from './billing.js';
 import { customerById, customerName } from './customers.js';
 
 function startInvoice() {
+  if (state.cfg.vat === null || state.cfg.vat === undefined) {
+    toast(t('invalidVat'));
+    goTab('asetukset');
+    return;
+  }
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
   if (!sel.length) { toast(t('selectEntries')); return; }
   const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];

@@ -359,11 +359,22 @@
       <div class="set-row">
         <div><div class="set-label" data-i18n="vatLabel">ALV</div><div class="set-sub" data-i18n="vatHint">Lisätään laskun loppusummaan</div></div>
         <div class="set-input-wrap">
-          <select id="set-vat" onchange="saveVat()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+          <select id="set-vat" onchange="onVatSelectChange()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="" data-i18n="vatChoose">Valitse ALV-kanta</option>
             <option value="0">0%</option>
             <option value="10">10%</option>
             <option value="14">14%</option>
             <option value="25.5">25,5%</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row" id="set-vat-zero-reason-row" style="display:none;">
+        <div><div class="set-label" data-i18n="vatZeroReasonLabel">ALV 0% syy</div></div>
+        <div class="set-input-wrap">
+          <select id="set-vat-zero-reason" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+            <option value="" data-i18n="vatZeroReasonChoose">Valitse syy</option>
+            <option value="reverse" data-i18n="vatReverseCharge">Käänteinen ALV</option>
+            <option value="exempt" data-i18n="vatExempt">Ei arvonlisäverovelvollinen</option>
           </select>
         </div>
       </div>
