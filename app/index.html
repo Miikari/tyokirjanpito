@@ -121,7 +121,7 @@
           <span class="user-menu-plan-icon" id="user-menu-plan-icon">F</span>
           <span id="user-menu-plan-text"></span>
         </button>
-        <div class="user-menu-plan-upgrade" id="user-menu-plan-upgrade" onclick="closeUserMenu();startCheckout()" data-i18n="upgradeToProBtn">Päivitä Prohon</div>
+        <div class="user-menu-plan-upgrade" id="user-menu-plan-upgrade" onclick="closeUserMenu();startCheckout()" data-i18n="upgradeToProBtn">Päivitä Pro versioon</div>
       </div>
     </div>
   </div>
@@ -162,7 +162,7 @@
         </button>
       </div>
       <div class="btn-row" id="main-btns">
-        <button class="btn btn-signin" onclick="clockIn()" data-i18n="clockIn">Kirjaudu sisään</button>
+        <button class="btn btn-signin" onclick="clockIn()" data-i18n="clockIn">Aloita työ</button>
       </div>
       <div style="margin-top:16px;">
         <button onclick="toggleNotes()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;"><span id="notes-toggle-icon" style="font-size:18px;line-height:1;">+</span><span data-i18n="addNotes">Lisää merkintöjä</span></button>
@@ -260,12 +260,16 @@
 
     <div class="card">
       <div class="card-label" data-i18n="downloadReport">Lataa raportti</div>
-      <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
         <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
           <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></select>
           <button id="btn-dl-month" class="btn-dl-report" onclick="downloadMonthReport()">↓ Kuukausiraportti</button>
+          <button class="btn-dl-report-alt" onclick="downloadMonthReportCsv()">↓ CSV</button>
         </div>
-        <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()" style="flex:1;">↓ Vuosiraportti</button>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()">↓ Vuosiraportti</button>
+          <button class="btn-dl-report-alt" onclick="downloadYearReportCsv()">↓ CSV</button>
+        </div>
       </div>
     </div>
 
@@ -275,7 +279,7 @@
     </div>
 
     <div class="card">
-      <div class="card-label" data-i18n="hourDistribution">Tuntijakauma asiakkaiden välillä</div>
+      <div class="card-label" data-i18n="hourDistribution">Asiakas tuntijakauma</div>
       <div id="chart-pie-wrap" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
         <canvas id="chart-pie"></canvas>
         <div id="chart-pie-legend" style="width:100%;"></div>
@@ -283,7 +287,7 @@
     </div>
 
     <div class="card">
-      <div class="card-label" data-i18n="monthlyComparison">Vertailu kuukausien välillä</div>
+      <div class="card-label" data-i18n="monthlyComparison">Kuukausimyynnit</div>
       <div id="chart-bars-wrap">
         <canvas id="chart-bars"></canvas>
       </div>
@@ -545,8 +549,8 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 data-i18n="upgradeModalTitle">Ilmaisen tason raja täynnä</h2>
-    <p data-i18n="upgradeModalBody">Päivitä Prohon (9,90 €/kk) poistaaksesi rajan kokonaan.</p>
-    <button class="modal-opt primary" onclick="startCheckout()" data-i18n="upgradeCta">Päivitä Prohon – 9,90 €/kk</button>
+    <p data-i18n="upgradeModalBody">Päivitä Prohon (14,90 €/kk) poistaaksesi rajan kokonaan.</p>
+    <button class="modal-opt primary" onclick="startCheckout()" data-i18n="upgradeCta">Päivitä Prohon – 14,90 €/kk</button>
     <button class="modal-opt modal-cancel" onclick="closeUpgradeModal()" data-i18n="cancel">Peruuta</button>
   </div>
 </div>

@@ -252,8 +252,9 @@ function nonce() {
   return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
 }
 
-function downloadYearReport() {
-  const year = reportYear;
+// Shared by the HTML report and the CSV export, so both always describe
+// exactly the same set of invoices/entries/expenses for a given year.
+function getYearReportData(year) {
   const invs = state.invoices.filter(inv => new Date(inv.date).getFullYear() === year);
   const allEntries = state.entries.filter(e => new Date(e.date).getFullYear() === year);
   const allExpenses = state.expenses.filter(e => new Date(e.date).getFullYear() === year);
@@ -283,6 +284,20 @@ function downloadYearReport() {
     custMap[key].secs += inv.totalSecs;
     custMap[key].count++;
   }
+
+  const openEntries = allEntries.filter(e => !e.invoiced);
+
+  return {
+    year, invs, allEntries, allExpenses, monthlyData, totalInvoiced, totalSecs,
+    openSecs, totalExpenses, paidTotal, unpaidTotal, custMap, openEntries,
+  };
+}
+
+function downloadYearReport() {
+  const {
+    year, invs, allEntries, allExpenses, monthlyData, totalInvoiced, totalSecs,
+    openSecs, totalExpenses, paidTotal, unpaidTotal, custMap, openEntries,
+  } = getYearReportData(reportYear);
 
   const nc = nonce();
 
@@ -314,7 +329,6 @@ function downloadYearReport() {
     </tr>`;
   }).join('');
 
-  const openEntries = allEntries.filter(e => !e.invoiced);
   const openRows = openEntries.map(e => `
     <tr>
       <td>${fmtDate(e.date)}</td>
@@ -413,10 +427,9 @@ function downloadYearReport() {
   openReport(html, `${t('yearReport')} ${year}`);
 }
 
-function downloadMonthReport() {
-  const sel = document.getElementById('rep-month-sel');
-  const month = parseInt(sel.value);
-  const year = reportYear;
+// Shared by the HTML report and the CSV export, same reasoning as
+// getYearReportData above.
+function getMonthReportData(year, month) {
   const monthName = monthNames()[month];
 
   const invs = state.invoices.filter(inv => {
@@ -437,6 +450,16 @@ function downloadMonthReport() {
   const totalInvoiced = invs.reduce((a, i) => a + i.total, 0);
   const totalExpenses = allExpenses.reduce((a, e) => a + e.amount, 0);
   const openSecs = allEntries.filter(e => !e.invoiced).reduce((a, e) => a + e.secs, 0);
+
+  return { year, month, monthName, invs, allEntries, allExpenses, totalSecs, totalVal, totalInvoiced, totalExpenses, openSecs };
+}
+
+function downloadMonthReport() {
+  const sel = document.getElementById('rep-month-sel');
+  const {
+    year, monthName, invs, allEntries, allExpenses, totalSecs, totalVal,
+    totalInvoiced, totalExpenses, openSecs,
+  } = getMonthReportData(reportYear, parseInt(sel.value));
 
   const nc = nonce();
 
@@ -538,7 +561,102 @@ function downloadMonthReport() {
   openReport(html, `${monthName} ${year}`);
 }
 
+// ── CSV-VIENTI ──
+// Semicolon-delimited (Finnish Excel treats comma as the decimal separator,
+// so a comma-delimited CSV misreads every numeric column), UTF-8 BOM so
+// Excel picks up ä/ö/å correctly instead of guessing Latin-1.
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function csvRow(fields) { return fields.map(csvEscape).join(';'); }
+function csvNum(n) { return n.toFixed(2).replace('.', ','); }
+function csvHours(secs) { return (secs / 3600).toFixed(2).replace('.', ','); }
+function csvSection(title, headers, rows) {
+  return [title, csvRow(headers), ...rows.map(csvRow)].join('\r\n');
+}
+
+function downloadCsv(filename, sections) {
+  const content = '﻿' + sections.filter(Boolean).join('\r\n\r\n') + '\r\n';
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadYearReportCsv() {
+  const { year, invs, monthlyData, custMap, openEntries, allExpenses } = getYearReportData(reportYear);
+
+  const monthlySection = csvSection(t('monthlyBreakdown'),
+    [t('date'), t('invoiceSuffix'), t('hours'), t('invoicedLabel')],
+    monthlyData.map((d, i) => [monthNames()[i], d.count, csvHours(d.secs), csvNum(d.invoiced)]));
+
+  const custSection = Object.keys(custMap).length ? csvSection(t('customerSummary'),
+    [t('customer'), t('invoiceSuffix'), t('hours'), t('invoicedLabel')],
+    Object.entries(custMap).sort((a, b) => b[1].total - a[1].total)
+      .map(([name, v]) => [name, v.count, csvHours(v.secs), csvNum(v.total)])) : '';
+
+  const invSection = invs.length ? csvSection(t('invoice'),
+    [t('numberLabel'), t('date'), t('customer'), t('hours'), t('amount'), t('statusLabel')],
+    invs.map(inv => [
+      `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`, fmtDate(inv.date),
+      [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
+      csvHours(inv.totalSecs), csvNum(inv.total), inv.paid ? t('paid') : t('unpaid'),
+    ])) : '';
+
+  const openSection = openEntries.length ? csvSection(t('uninvoicedEntries'),
+    [t('date'), t('customer'), t('hours'), t('valueLabel'), t('notes')],
+    openEntries.map(e => [
+      fmtDate(e.date), customerName(e.customerId) || '—', csvHours(e.secs),
+      csvNum((e.secs / 3600) * (e.rate ?? state.cfg.hourly)), e.notes || '',
+    ])) : '';
+
+  const expSection = allExpenses.length ? csvSection(t('expenses'),
+    [t('date'), t('description'), t('customer'), t('amount'), t('statusLabel')],
+    allExpenses.map(e => [
+      fmtDate(e.date), e.description, customerName(e.customerId) || '—',
+      csvNum(e.amount), e.invoiced ? t('invoicedLabel') : t('open'),
+    ])) : '';
+
+  downloadCsv(`${t('yearReport')}-${year}.csv`, [monthlySection, custSection, invSection, openSection, expSection]);
+}
+
+function downloadMonthReportCsv() {
+  const sel = document.getElementById('rep-month-sel');
+  const { year, monthName, invs, allEntries, allExpenses } = getMonthReportData(reportYear, parseInt(sel.value));
+
+  const entrySection = allEntries.length ? csvSection(t('kirjanpito'),
+    [t('date'), t('customer'), t('hours'), t('rateLabel'), t('amount'), t('statusLabel'), t('notes')],
+    allEntries.map(e => [
+      fmtDate(e.date), customerName(e.customerId) || '—', csvHours(e.secs),
+      csvNum(e.rate ?? state.cfg.hourly), csvNum((e.secs / 3600) * (e.rate ?? state.cfg.hourly)),
+      e.invoiced ? t('invoicedLabel') : t('open'), e.notes || '',
+    ])) : '';
+
+  const invSection = invs.length ? csvSection(t('invoice'),
+    [t('numberLabel'), t('date'), t('customer'), t('amount'), t('statusLabel')],
+    invs.map(inv => [
+      `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`, fmtDate(inv.date),
+      [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
+      csvNum(inv.total), inv.paid ? t('paid') : t('unpaid'),
+    ])) : '';
+
+  const expSection = allExpenses.length ? csvSection(t('expenses'),
+    [t('date'), t('description'), t('customer'), t('amount'), t('statusLabel')],
+    allExpenses.map(e => [
+      fmtDate(e.date), e.description, customerName(e.customerId) || '—',
+      csvNum(e.amount), e.invoiced ? t('invoicedLabel') : t('open'),
+    ])) : '';
+
+  downloadCsv(`${monthName}-${year}.csv`, [entrySection, invSection, expSection]);
+}
+
 window.reportPrevYear = reportPrevYear;
 window.reportNextYear = reportNextYear;
 window.downloadYearReport = downloadYearReport;
 window.downloadMonthReport = downloadMonthReport;
+window.downloadYearReportCsv = downloadYearReportCsv;
+window.downloadMonthReportCsv = downloadMonthReportCsv;
