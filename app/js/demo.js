@@ -39,7 +39,7 @@ function loadDemoDataFi() {
     showErapaiva: true,
     showViitenumero: false,
     recurring: [],
-    services: [{ id: 1, name: 'Tuntityö', rate: 50 }],
+    services: [{ id: 1, name: 'Tuntityö', rate: 50 }, { id: 2, name: 'Konsultointi', rate: 90 }],
     hideRate: false,
   };
   state.customers = [
@@ -106,8 +106,8 @@ function loadDemoDataFi() {
     { id: 14, date: d('2026-06-10'), secs: 7200,  customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Jälkiseuranta ja tuki',       rate: 50, selected: false, invoiced: false },
     { id: 15, date: d('2026-06-16'), secs: 12600, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Uuden ominaisuuden toteutus',  rate: 50, selected: false, invoiced: false },
     { id: 16, date: d('2026-06-18'), secs: 5400,  customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Tukipyyntö ja korjaukset',     rate: 50, selected: false, invoiced: false },
-    { id: 17, date: d('2026-06-12'), secs: 9000,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Käyttäjätestaus, raportti',    rate: 50, selected: false, invoiced: false },
-    { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Bugikorjaukset',               rate: 50, selected: false, invoiced: false },
+    { id: 17, date: d('2026-06-12'), secs: 9000,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Arkkitehtuurikatselmus',       rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
+    { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Käyttöönottotuki',             rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
   ];
 
   state.invoices = [
@@ -144,7 +144,7 @@ function loadDemoDataEn() {
     showErapaiva: true,
     showViitenumero: false,
     recurring: [],
-    services: [{ id: 1, name: 'Hourly work', rate: 50 }],
+    services: [{ id: 1, name: 'Hourly work', rate: 50 }, { id: 2, name: 'Consulting', rate: 90 }],
     hideRate: false,
   };
   state.customers = [
@@ -211,8 +211,8 @@ function loadDemoDataEn() {
     { id: 14, date: d('2026-06-10'), secs: 7200,  customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Follow-up and support',      rate: 50, selected: false, invoiced: false },
     { id: 15, date: d('2026-06-16'), secs: 12600, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'New feature implementation', rate: 50, selected: false, invoiced: false },
     { id: 16, date: d('2026-06-18'), secs: 5400,  customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Support request and fixes',  rate: 50, selected: false, invoiced: false },
-    { id: 17, date: d('2026-06-12'), secs: 9000,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'User testing, report',       rate: 50, selected: false, invoiced: false },
-    { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Bug fixes',                  rate: 50, selected: false, invoiced: false },
+    { id: 17, date: d('2026-06-12'), secs: 9000,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Architecture review',        rate: 90, service: 'Consulting', selected: false, invoiced: false },
+    { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Onboarding support',          rate: 90, service: 'Consulting', selected: false, invoiced: false },
   ];
 
   state.invoices = [
