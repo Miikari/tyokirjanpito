@@ -11,7 +11,23 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hoyla.dev/ajanseuranta/">
 <link rel="icon" type="image/png" href="../app/icons/icon-192.png">
+<link rel="apple-touch-icon" href="../app/icons/icon-192.png">
+<link rel="manifest" href="../app/manifest.json">
+<meta name="theme-color" content="#1976D2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Työtunnit">
 <link rel="stylesheet" href="../landing.css">
+<script>
+  (function() {
+    // See index.html's copy of this check: sends anyone who launches this
+    // page as an installed/home-screen app straight into the real app
+    // instead of leaving them stuck on the marketing page.
+    var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (standalone) location.replace('../app/');
+  })();
+</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
