@@ -131,6 +131,19 @@ auth.getRedirectResult().then(() => {}).catch(e => {
 
 auth.onAuthStateChanged(async user => {
   if (user) {
+    // signInWithPopup can switch straight from one signed-in account to a
+    // different one without ever passing through the null (signed-out)
+    // branch below, so this is the only place a stale-account guard runs.
+    // Without it, the previous account's in-memory entries/invoices/
+    // expenses/customers stay rendered on screen for however long initOrg
+    // + loadFromFirestore below take to resolve.
+    if (state.uid && state.uid !== user.uid) {
+      state.entries = []; state.invoices = []; state.expenses = []; state.customers = [];
+      state.eId = 0; state.iId = 0; state.eExpId = 0; state.cId = 0;
+      state.cfg = defaultCfg();
+      renderAllSelects(); renderServiceSelects(); renderPills(); renderEntries();
+      window.updateInvoiceBadge?.();
+    }
     state.uid = user.uid;
     state.accountName = user.isAnonymous ? 'Vieras' : (user.displayName || user.email);
     state.accountPhotoURL = user.photoURL || '';
