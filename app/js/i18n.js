@@ -77,6 +77,7 @@ const i18n = {
     invoiceSuffix: 'laskua', invoiceSuffix1: 'lasku',
     statusLabel: 'Tila', rateLabel: 'Hinta', valueLabel: 'Arvo', numberLabel: 'Numero',
     noEntriesMonth: 'Ei kirjauksia',
+    showVat: 'Näytä ALV', hideVat: 'Piilota ALV', vatIncl: 'Sis. alv',
     // Asetukset
     companyInfo: 'Yritystiedot', companyName: 'Nimi / Yritys', companyAddress: 'Osoite',
     companyPhone: 'Puhelin', companyEmail: 'Sähköposti', save: 'Tallenna',
@@ -237,6 +238,7 @@ const i18n = {
     invoiceSuffix: 'invoices', invoiceSuffix1: 'invoice',
     statusLabel: 'Status', rateLabel: 'Rate', valueLabel: 'Value', numberLabel: 'Number',
     noEntriesMonth: 'No entries for',
+    showVat: 'Show VAT', hideVat: 'Hide VAT', vatIncl: 'Incl. VAT',
     // Settings
     companyInfo: 'Company details', companyName: 'Name / Company', companyAddress: 'Address',
     companyPhone: 'Phone', companyEmail: 'Email', save: 'Save',

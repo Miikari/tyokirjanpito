@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#1976D2">
+<meta name="theme-color" content="#112439">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -200,9 +200,15 @@
       <div class="card-label" data-i18n="expenses">Kulukorvaukset</div>
       <div class="fg"><label data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." autocomplete="off"></div>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
+        <div class="fg" style="flex:2;min-width:0;margin:0;"><label data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="vatLabel">ALV</label><select id="exp-vat" style="width:100%;padding:12px 13px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:16px;background:var(--bg);color:var(--text);">
+          <option value="0">0%</option>
+          <option value="10">10%</option>
+          <option value="14">14%</option>
+          <option value="25.5">25,5%</option>
+        </select></div>
       </div>
+      <div class="fg"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
       <button class="btn-add" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
     </div>
   </div><!-- /panel-kello -->
@@ -274,7 +280,10 @@
     </div>
 
     <div class="card">
-      <div class="card-label" data-i18n="customerSummary">Asiakaskohtainen yhteenveto</div>
+      <div class="card-label-row">
+        <div class="card-label" style="margin-bottom:0;" data-i18n="customerSummary">Asiakaskohtainen yhteenveto</div>
+        <button id="btn-toggle-vat" class="vat-toggle-btn" onclick="toggleReportVat()">Näytä ALV</button>
+      </div>
       <div id="report-customers"></div>
     </div>
 
@@ -287,7 +296,10 @@
     </div>
 
     <div class="card">
-      <div class="card-label" data-i18n="monthlyComparison">Kuukausimyynnit</div>
+      <div class="card-label-row">
+        <div class="card-label" style="margin-bottom:0;" data-i18n="monthlyComparison">Kuukausimyynnit</div>
+        <button id="btn-toggle-vat-2" class="vat-toggle-btn" onclick="toggleReportVat()">Näytä ALV</button>
+      </div>
       <div id="chart-bars-wrap">
         <canvas id="chart-bars"></canvas>
       </div>

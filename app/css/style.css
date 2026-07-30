@@ -692,7 +692,16 @@ body {
 .rep-name { font-size:14px; font-weight:600; }
 .rep-sub { font-size:12px; color:var(--text2); margin-top:2px; }
 .rep-val { font-size:15px; font-weight:700; flex-shrink:0; }
+.rep-val-wrap { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
+.rep-vat-note { font-size:11px; font-weight:500; color:var(--text3); margin-top:2px; white-space:nowrap; }
 .rep-grand { display:flex; justify-content:space-between; padding-top:12px; margin-top:4px; border-top:2px solid var(--border2); font-size:15px; font-weight:700; }
+.card-label-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+.vat-toggle-btn {
+  font-size:11px; font-weight:600; padding:5px 12px; border-radius:99px;
+  background:var(--blue-bg); color:var(--blue-txt); border:none; cursor:pointer;
+  white-space:nowrap; flex-shrink:0;
+}
+.vat-toggle-btn:active { opacity:0.7; }
 .pie-leg { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); }
 .pie-leg:last-child { border-bottom:none; }
 .pie-leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }

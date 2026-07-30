@@ -13,6 +13,12 @@ const months = () => t('monthNamesShort');
 const monthNames = () => t('monthNames');
 
 let reportYear = new Date().getFullYear();
+let showVat = false;
+
+function toggleReportVat() {
+  showVat = !showVat;
+  renderReports();
+}
 
 function yearInvoices() {
   return state.invoices.filter(inv => new Date(inv.date).getFullYear() === reportYear);
@@ -39,6 +45,10 @@ export function renderReports() {
   document.getElementById('report-year').textContent = reportYear;
   document.getElementById('btn-dl-year').textContent = `↓ ${t('yearReport')} ${reportYear}`;
   document.getElementById('btn-dl-month').textContent = `↓ ${t('monthReport')}`;
+  ['btn-toggle-vat', 'btn-toggle-vat-2'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.textContent = showVat ? t('hideVat') : t('showVat');
+  });
   const sel = document.getElementById('rep-month-sel');
   if (sel) {
     const prev = sel.dataset.userChanged ? parseInt(sel.value) : (reportYear === new Date().getFullYear() ? new Date().getMonth() : 0);
@@ -60,13 +70,18 @@ function renderCustomerSummary(invs) {
   const map = {};
   for (const inv of invs) {
     const key = custKey(inv);
-    if (!map[key]) map[key] = { total: 0, secs: 0, count: 0 };
-    map[key].total += inv.total;
+    if (!map[key]) map[key] = { net: 0, vat: 0, secs: 0, count: 0 };
+    map[key].net += inv.subtotal ?? inv.total;
+    map[key].vat += inv.vatAmount ?? 0;
     map[key].secs += inv.totalSecs;
     map[key].count++;
   }
-  const entries = Object.entries(map).sort((a, b) => b[1].total - a[1].total);
-  const grandTotal = entries.reduce((a, [, v]) => a + v.total, 0);
+  const entries = Object.entries(map).sort((a, b) => (b[1].net + b[1].vat) - (a[1].net + a[1].vat));
+  const grandNet = entries.reduce((a, [, v]) => a + v.net, 0);
+  const grandVat = entries.reduce((a, [, v]) => a + v.vat, 0);
+
+  const vatNote = (v) => showVat && v.net > 0
+    ? `<div class="rep-vat-note">${t('vatIncl')} ${fmtEur(v.vat)}</div>` : '';
 
   el.innerHTML = entries.map(([name, v], i) => `
     <div class="rep-row">
@@ -75,12 +90,18 @@ function renderCustomerSummary(invs) {
         <div class="rep-name">${name}</div>
         <div class="rep-sub">${v.count} ${v.count !== 1 ? t('invoiceSuffix') : t('invoiceSuffix1')} · ${fmtShort(v.secs)} h</div>
       </div>
-      <div class="rep-val">${fmtEur(v.total)}</div>
+      <div class="rep-val-wrap">
+        <div class="rep-val">${fmtEur(showVat ? v.net + v.vat : v.net)}</div>
+        ${vatNote(v)}
+      </div>
     </div>
   `).join('') + `
     <div class="rep-grand">
       <span>${t('totalRow')} ${reportYear}</span>
-      <span>${fmtEur(grandTotal)}</span>
+      <div class="rep-val-wrap">
+        <span>${fmtEur(showVat ? grandNet + grandVat : grandNet)}</span>
+        ${vatNote({ net: grandNet, vat: grandVat })}
+      </div>
     </div>
   `;
 }
@@ -147,16 +168,24 @@ function drawPie(invs) {
   `).join('');
 }
 
+function chartValLabel(val) {
+  return (val >= 1000 ? (val / 1000).toFixed(val >= 10000 ? 0 : 1) + 'k' : Math.round(val).toString()) + '€';
+}
+
 function drawBars(invs) {
   const wrap = document.getElementById('chart-bars-wrap');
   const W = wrap.clientWidth;
   const H = 180;
   const { ctx } = sizeCanvas('chart-bars', W, H);
 
-  const monthlyTotals = Array(12).fill(0);
+  const monthlyNet = Array(12).fill(0);
+  const monthlyVat = Array(12).fill(0);
   for (const inv of invs) {
-    monthlyTotals[new Date(inv.date).getMonth()] += inv.total;
+    const m = new Date(inv.date).getMonth();
+    monthlyNet[m] += inv.subtotal ?? inv.total;
+    monthlyVat[m] += inv.vatAmount ?? 0;
   }
+  const monthlyTotals = monthlyNet.map((net, i) => showVat ? net + monthlyVat[i] : net);
 
   const pt = 14, pb = 30, pl = 48, pr = 8;
   const cW = W - pl - pr;
@@ -178,19 +207,45 @@ function drawBars(invs) {
     ctx.fillStyle = dark ? '#f2f2f2' : '#070707';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    const label = val >= 1000 ? (val / 1000).toFixed(val >= 10000 ? 0 : 1) + 'k' : Math.round(val).toString();
-    ctx.fillText(label + '€', pl - 4, y);
+    ctx.fillText(chartValLabel(val), pl - 4, y);
   }
 
   const now = new Date();
-  monthlyTotals.forEach((val, i) => {
+  monthlyNet.forEach((net, i) => {
+    const vat = monthlyVat[i];
+    const val = monthlyTotals[i];
     const x = pl + i * slot + (slot - bW) / 2;
-    const bH = val > 0 ? Math.max((val / maxVal) * cH, 3) : 3;
-    const y = pt + cH - bH;
     const isCurrent = reportYear === now.getFullYear() && i === now.getMonth();
 
-    ctx.fillStyle = val > 0 ? (isCurrent ? '#1565C0' : '#1976D2') : '#e8e8e8';
-    ctx.fillRect(x, y, bW, bH);
+    const bH = val > 0 ? Math.max((val / maxVal) * cH, 3) : 3;
+    const netH = val > 0 && showVat ? (net / maxVal) * cH : bH;
+    const vatH = val > 0 && showVat ? Math.max(bH - netH, 0) : 0;
+    const y = pt + cH - bH;
+
+    ctx.fillStyle = val > 0 ? (isCurrent ? '#1565C0' : '#1976D2') : (dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8');
+    ctx.fillRect(x, y + vatH, bW, netH);
+
+    if (showVat && vatH > 0) {
+      ctx.fillStyle = isCurrent ? '#4a9d82' : '#6ab89c';
+      ctx.fillRect(x, y, bW, vatH);
+    }
+
+    // Rotated value labels drawn inside each segment, skipped when the
+    // segment is too short to fit readable text without overflowing it.
+    const drawSegLabel = (segY, segH, text) => {
+      if (segH < 24) return;
+      ctx.save();
+      ctx.translate(x + bW / 2, segY + segH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = '#fff';
+      ctx.font = '8px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    };
+    if (val > 0) drawSegLabel(y + vatH, netH, chartValLabel(net));
+    if (showVat && vatH > 0) drawSegLabel(y, vatH, chartValLabel(vat));
 
     ctx.fillStyle = isCurrent ? '#1565C0' : '#505050';
     ctx.font = isCurrent ? 'bold 9px -apple-system, sans-serif' : '9px -apple-system, sans-serif';
@@ -327,6 +382,7 @@ function downloadYearReport() {
       <td>${custs.map(esc).join(', ') || '—'}</td>
       <td class="num">${fmtShort(inv.totalSecs)} h</td>
       <td class="num">${fmtEur(inv.total)}</td>
+      <td class="num">${fmtEur(inv.vatAmount ?? 0)}</td>
       <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? t('paid') : t('unpaid')}</span></td>
     </tr>`;
   }).join('');
@@ -346,6 +402,7 @@ function downloadYearReport() {
       <td>${esc(e.description)}</td>
       <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtEur(e.amount)}</td>
+      <td class="num">${e.vat != null ? fmtEur(e.vatAmount ?? (e.amount * e.vat / 100)) : '—'}</td>
       <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
     </tr>`).join('');
 
@@ -404,7 +461,7 @@ function downloadYearReport() {
     ${invs.length > 0 ? `
     <h2>${t('invoice')}</h2>
     <table>
-      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
+      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('amount')}</th><th class="num">${t('vatLabel')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${invRows}</tbody>
     </table>` : ''}
 
@@ -418,7 +475,7 @@ function downloadYearReport() {
     ${allExpenses.length > 0 ? `
     <h2>${t('expenses')}</h2>
     <table>
-      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th class="num">${t('vatLabel')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${expRows}</tbody>
     </table>` : ''}
 
@@ -465,17 +522,6 @@ function downloadMonthReport() {
 
   const nc = nonce();
 
-  const entryRows = allEntries.map(e => `
-    <tr>
-      <td>${fmtDate(e.date)}</td>
-      <td>${esc(customerName(e.customerId) || '—')}</td>
-      <td class="num">${fmtHours(e.secs)}</td>
-      <td class="num">${fmtEur(e.rate ?? state.cfg.hourly)}/h</td>
-      <td class="num">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
-      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
-      <td style="font-size:12px;color:#666;">${esc(e.notes || '')}</td>
-    </tr>`).join('');
-
   const invRows = invs.map(inv => {
     const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
     return `<tr>
@@ -483,6 +529,7 @@ function downloadMonthReport() {
       <td>${fmtDate(inv.date)}</td>
       <td>${custs.map(esc).join(', ') || '—'}</td>
       <td class="num">${fmtEur(inv.total)}</td>
+      <td class="num">${fmtEur(inv.vatAmount ?? 0)}</td>
       <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? t('paid') : t('unpaid')}</span></td>
     </tr>`;
   }).join('');
@@ -493,6 +540,7 @@ function downloadMonthReport() {
       <td>${esc(e.description)}</td>
       <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtEur(e.amount)}</td>
+      <td class="num">${e.vat != null ? fmtEur(e.vatAmount ?? (e.amount * e.vat / 100)) : '—'}</td>
       <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
     </tr>`).join('');
 
@@ -529,30 +577,21 @@ function downloadMonthReport() {
     ${allEntries.length > 0 ? `
     <h2>${t('kirjanpito')}</h2>
     <table>
-      <thead><tr><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('rateLabel')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th><th>${t('notes')}</th></tr></thead>
-      <tbody>
-        ${entryRows}
-        <tr class="total-row">
-          <td colspan="2">${t('totalRow')}</td>
-          <td class="num">${fmtShort(totalSecs)} h</td>
-          <td></td>
-          <td class="num">${fmtEur(totalVal)}</td>
-          <td colspan="2"></td>
-        </tr>
-      </tbody>
+      <thead><tr><th class="num">${t('hours')}</th><th class="num">${t('amount')}</th></tr></thead>
+      <tbody><tr><td class="num">${fmtShort(totalSecs)} h</td><td class="num">${fmtEur(totalVal)}</td></tr></tbody>
     </table>` : `<p style="color:#999;margin:16px 0;">${t('noEntriesMonth')} ${monthName} ${year}.</p>`}
 
     ${invs.length > 0 ? `
     <h2>${t('invoice')}</h2>
     <table>
-      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
+      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th class="num">${t('vatLabel')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${invRows}</tbody>
     </table>` : ''}
 
     ${allExpenses.length > 0 ? `
     <h2>${t('expenses')}</h2>
     <table>
-      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th>${t('statusLabel')}</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th class="num">${t('vatLabel')}</th><th>${t('statusLabel')}</th></tr></thead>
       <tbody>${expRows}</tbody>
     </table>` : ''}
 
@@ -602,11 +641,11 @@ function downloadYearReportCsv() {
       .map(([name, v]) => [name, v.count, csvHours(v.secs), csvNum(v.total)])) : '';
 
   const invSection = invs.length ? csvSection(t('invoice'),
-    [t('numberLabel'), t('date'), t('customer'), t('hours'), t('amount'), t('statusLabel')],
+    [t('numberLabel'), t('date'), t('customer'), t('hours'), t('amount'), t('vatLabel'), t('statusLabel')],
     invs.map(inv => [
       `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`, fmtDate(inv.date),
       [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
-      csvHours(inv.totalSecs), csvNum(inv.total), inv.paid ? t('paid') : t('unpaid'),
+      csvHours(inv.totalSecs), csvNum(inv.total), csvNum(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid'),
     ])) : '';
 
   const openSection = openEntries.length ? csvSection(t('uninvoicedEntries'),
@@ -617,10 +656,11 @@ function downloadYearReportCsv() {
     ])) : '';
 
   const expSection = allExpenses.length ? csvSection(t('expenses'),
-    [t('date'), t('description'), t('customer'), t('amount'), t('statusLabel')],
+    [t('date'), t('description'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')],
     allExpenses.map(e => [
       fmtDate(e.date), e.description, customerName(e.customerId) || '—',
-      csvNum(e.amount), e.invoiced ? t('invoicedLabel') : t('open'),
+      csvNum(e.amount), e.vat != null ? csvNum(e.vatAmount ?? (e.amount * e.vat / 100)) : '',
+      e.invoiced ? t('invoicedLabel') : t('open'),
     ])) : '';
 
   downloadCsv(`${t('yearReport')}-${year}.csv`, [monthlySection, custSection, invSection, openSection, expSection]);
@@ -639,18 +679,19 @@ function downloadMonthReportCsv() {
     ])) : '';
 
   const invSection = invs.length ? csvSection(t('invoice'),
-    [t('numberLabel'), t('date'), t('customer'), t('amount'), t('statusLabel')],
+    [t('numberLabel'), t('date'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')],
     invs.map(inv => [
       `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`, fmtDate(inv.date),
       [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
-      csvNum(inv.total), inv.paid ? t('paid') : t('unpaid'),
+      csvNum(inv.total), csvNum(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid'),
     ])) : '';
 
   const expSection = allExpenses.length ? csvSection(t('expenses'),
-    [t('date'), t('description'), t('customer'), t('amount'), t('statusLabel')],
+    [t('date'), t('description'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')],
     allExpenses.map(e => [
       fmtDate(e.date), e.description, customerName(e.customerId) || '—',
-      csvNum(e.amount), e.invoiced ? t('invoicedLabel') : t('open'),
+      csvNum(e.amount), e.vat != null ? csvNum(e.vatAmount ?? (e.amount * e.vat / 100)) : '',
+      e.invoiced ? t('invoicedLabel') : t('open'),
     ])) : '';
 
   downloadCsv(`${monthName}-${year}.csv`, [entrySection, invSection, expSection]);
@@ -658,6 +699,7 @@ function downloadMonthReportCsv() {
 
 window.reportPrevYear = reportPrevYear;
 window.reportNextYear = reportNextYear;
+window.toggleReportVat = toggleReportVat;
 window.downloadYearReport = downloadYearReport;
 window.downloadMonthReport = downloadMonthReport;
 window.downloadYearReportCsv = downloadYearReportCsv;

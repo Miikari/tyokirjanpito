@@ -211,6 +211,7 @@ function closeEditModal() {
 export async function addExpense() {
   const desc = document.getElementById('exp-desc').value.trim();
   const amount = parseFloat(document.getElementById('exp-amount').value);
+  const vat = parseFloat(document.getElementById('exp-vat').value) || 0;
   const custVal = document.getElementById('exp-customer').value;
   if (!desc) { toast(t('expenseDescRequired')); return; }
   if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
@@ -220,6 +221,8 @@ export async function addExpense() {
     date: new Date().toISOString(),
     description: desc,
     amount,
+    vat,
+    vatAmount: amount * vat / 100,
     customerId: custVal === '—' ? null : parseInt(custVal, 10),
     selected: false,
     invoiced: false,
@@ -243,6 +246,11 @@ async function deleteExpense(id) {
 }
 
 export function renderExpenses() {
+  const vatSel = document.getElementById('exp-vat');
+  if (vatSel && !vatSel.dataset.defaulted) {
+    vatSel.value = state.cfg.vat ?? '0';
+    vatSel.dataset.defaulted = '1';
+  }
   const kirjEl = document.getElementById('kirjanpito-expenses');
   if (!kirjEl) return;
   const uninv = state.expenses.filter(e => !e.invoiced);
