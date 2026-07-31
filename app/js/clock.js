@@ -112,7 +112,7 @@ function clockIn() {
   state.timerRaf = requestAnimationFrame(tick);
   const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
   document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
-  setBadge('running', '● Töissä'); renderMainBtns();
+  setBadge('running', t('working')); renderMainBtns();
   toast(t('clockedIn') + customerName(state.activeCustomerId));
   updateClockBg();
 }
@@ -175,7 +175,7 @@ export function renderMainBtns() {
   if (state.clockState === 'idle') {
     r.innerHTML = `<button class="btn btn-signin" onclick="clockIn()">${t('clockIn')}</button>`;
   } else {
-    const pauseLabel = state.clockState === 'paused' ? '▶ Jatka' : '⏸ Tauko';
+    const pauseLabel = state.clockState === 'paused' ? t('resume') : t('pause');
     r.innerHTML = `<button class="btn btn-pause" onclick="togglePause()">${pauseLabel}</button>
                    <button class="btn btn-signout" onclick="clockOut()">${t('logout')}</button>`;
   }

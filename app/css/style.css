@@ -472,6 +472,15 @@ body {
 .modal-opt.primary:active { opacity: 0.85; }
 .modal-opt:disabled, .btn-add:disabled, .btn-invoice:disabled { opacity: 0.6; cursor: not-allowed; }
 .modal-cancel { color: var(--text2); border-color: transparent; background: transparent; font-weight: 500; }
+.modal-close-x {
+  position: absolute; top: 14px; right: 14px; z-index: 5;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--red); color: #fff; border: none;
+  font-size: 18px; font-weight: 700; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;
+}
+.modal-close-x:active { opacity: 0.85; }
 
 /* ── TOAST ── */
 .toast {

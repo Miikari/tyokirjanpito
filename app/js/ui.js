@@ -147,32 +147,64 @@ export function goTab(tab) {
 
 // ── PHONE BACK BUTTON ──
 // A bare SPA has no history entries of its own, so the phone's back button
-// exits the app immediately from anywhere. This traps it instead: a back
-// press from any tab other than Työnäkymä just goes home. A back press while
-// already on Työnäkymä also doesn't exit right away — it re-arms the trap and
-// shows a hint, and only a second such press within a short window is left
-// alone to actually exit (the classic Android "press back again to exit").
+// exits the app immediately from anywhere. This traps it instead:
+//  - an open modal/dialog is closed first, consuming the press;
+//  - a back press from any tab other than Työnäkymä just goes home;
+//  - a back press while already on Työnäkymä arms a short "press again to
+//    exit" window *without* re-arming the history trap, so there's nothing
+//    left to catch a second physical back press within that window and the
+//    OS closes the app for real (the classic Android "press back again to
+//    exit"). If no second press comes, the trap is silently restored once
+//    the window expires.
+const MODAL_CLOSERS = {
+  modal: 'closeModal',
+  'modal-edit': 'closeEditModal',
+  'modal-edit-inv': 'closeEditInvModal',
+  'modal-invoice-view': 'closeInvoicePopup',
+  'modal-customer': 'closeCustomerModal',
+  'modal-recurring': 'closeRecurringModal',
+  'modal-confirm': 'closeConfirm',
+  'modal-24h-warning': 'closeConfirm24h',
+  'modal-upgrade': 'closeUpgradeModal',
+  'join-modal': 'closeJoinModal',
+};
+
 function armBackTrap() {
   history.pushState({ tyoaikaBackTrap: true }, '', location.href);
 }
 
 const EXIT_CONFIRM_WINDOW_MS = 2000;
 let exitArmedAt = 0;
+let exitRearmTimer = null;
 
 window.addEventListener('popstate', () => {
+  clearTimeout(exitRearmTimer);
+
+  const openModalId = Object.keys(MODAL_CLOSERS).find(id => {
+    const el = document.getElementById(id);
+    return el && el.classList.contains('open');
+  });
+  if (openModalId) {
+    window[MODAL_CLOSERS[openModalId]]();
+    exitArmedAt = 0;
+    armBackTrap();
+    return;
+  }
+
   const onKello = document.getElementById('panel-kello').classList.contains('active');
   if (!onKello) {
     showTab('kello', document.querySelector('.tab[data-tab="kello"]'));
+    exitArmedAt = 0;
     armBackTrap();
     return;
   }
   if (Date.now() - exitArmedAt < EXIT_CONFIRM_WINDOW_MS) {
-    exitArmedAt = 0; // second press in time — let this one actually exit
+    exitArmedAt = 0; // second press in time — leave the trap down, let this one exit
     return;
   }
   exitArmedAt = Date.now();
   toast(t('pressBackAgainExit'));
-  armBackTrap();
+  exitRearmTimer = setTimeout(() => { exitArmedAt = 0; armBackTrap(); }, EXIT_CONFIRM_WINDOW_MS);
 });
 
 armBackTrap();

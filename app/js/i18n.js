@@ -243,7 +243,7 @@ const i18n = {
     reports: 'Reports', customerSummary: 'Customer summary',
     hourDistribution: 'Hour distribution by customer', monthlyComparison: 'Monthly comparison',
     noInvoicesYear: 'No invoices for',
-    downloadReport: 'Download report', monthReport: 'Monthly report', yearReport: 'Annual report',
+    downloadReport: 'Download report', monthReport: 'Monthly', yearReport: 'Annual',
     downloadPdf: 'Download PDF', downloadCsv: 'Download CSV',
     monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     monthNamesShort: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],

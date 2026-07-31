@@ -533,10 +533,10 @@
 
 <!-- ── INVOICE VIEW MODAL (shown right after composing an invoice, in place of navigating away) ── -->
 <div class="modal-wrap" id="modal-invoice-view">
-  <div class="modal">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close-x" onclick="closeInvoicePopup()" aria-label="Sulje">&times;</button>
     <div class="modal-handle"></div>
     <div id="invoice-popup-body"></div>
-    <button class="modal-opt modal-cancel" onclick="closeInvoicePopup()" data-i18n="close">Sulje</button>
   </div>
 </div>
 

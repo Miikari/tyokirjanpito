@@ -45,6 +45,17 @@ function sizeCanvas(id, w, h) {
   return { ctx, W: w, H: h };
 }
 
+// Canvas charts are sized from the wrap's clientWidth at draw time, so they
+// go stale when the window is resized (desktop) rather than reloaded — redraw
+// them, debounced, whenever that happens and the Raportit view is showing.
+let resizeRedrawTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeRedrawTimer);
+  resizeRedrawTimer = setTimeout(() => {
+    if (document.getElementById('subpanel-raportit')?.classList.contains('active')) renderReports();
+  }, 150);
+});
+
 function reportYearOptions() {
   const years = new Set([reportYear, new Date().getFullYear()]);
   state.invoices.forEach(inv => years.add(new Date(inv.date).getFullYear()));
@@ -62,7 +73,7 @@ export function renderReports() {
   if (yearSel) {
     yearSel.innerHTML = reportYearOptions().map(y => `<option value="${y}"${y === reportYear ? ' selected' : ''}>${y}</option>`).join('');
   }
-  document.getElementById('rep-year-title-btn').textContent = `${t('yearReport')} ${reportYear}`;
+  document.getElementById('rep-year-title-btn').textContent = `${t('yearReport')}`;
   const btnVatCust = document.getElementById('btn-toggle-vat');
   if (btnVatCust) btnVatCust.textContent = showVatCustomers ? t('hideVat') : t('showVat');
   const btnVatMonth = document.getElementById('btn-toggle-vat-2');
@@ -236,12 +247,20 @@ function drawBars(invs) {
 
   ctx.font = '11px -apple-system, sans-serif';
   const axisLabelWidth = ctx.measureText(chartAxisLabel(axisTop)).width;
+  const valLabelMaxWidth = Math.max(0, ...monthlyTotals.filter(v => v > 0).map(v => ctx.measureText(chartValLabel(v)).width));
 
-  const pt = 24, pb = 44, pl = Math.ceil(axisLabelWidth) + 14, pr = 8;
+  const pl = Math.ceil(axisLabelWidth) + 14, pr = 8;
   const cW = W - pl - pr;
-  const cH = H - pt - pb;
   const slot = cW / 12;
   const bW = Math.max(slot * 0.6, 4);
+  // A horizontal label only fits without colliding into its neighbour if
+  // it's narrower than its own slot — true on desktop-width charts, not on
+  // phone-width ones. When it doesn't fit, rotate it (reads bottom-to-top)
+  // so it only needs ~11px of horizontal room instead of the full string.
+  const rotateValLabel = valLabelMaxWidth > slot - 4;
+
+  const pt = 24, pb = 24 + (valLabelMaxWidth > 0 ? (rotateValLabel ? valLabelMaxWidth : 15) + 8 : 0);
+  const cH = H - pt - pb;
 
   const dark = document.documentElement.dataset.theme === 'dark';
 
@@ -292,9 +311,24 @@ function drawBars(invs) {
     ctx.textBaseline = 'top';
     ctx.fillText(months()[i], x + bW / 2, H - pb + 4);
     if (val > 0) {
+      ctx.save();
       ctx.fillStyle = dark ? '#c8ccd2' : '#707070';
       ctx.font = '11px -apple-system, sans-serif';
-      ctx.fillText(chartValLabel(val), x + bW / 2, H - pb + 16);
+      if (rotateValLabel) {
+        // Rotated (reads bottom-to-top), anchored near the canvas bottom —
+        // a vertical label is only ~11px wide instead of the full string
+        // width, so it no longer overlaps the neighbouring month's label.
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.translate(x + bW / 2, H - 4);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(chartValLabel(val), 0, 0);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(chartValLabel(val), x + bW / 2, H - pb + 20);
+      }
+      ctx.restore();
     }
   });
 }
