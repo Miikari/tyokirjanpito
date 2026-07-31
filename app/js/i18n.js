@@ -6,7 +6,7 @@ const i18n = {
     appName: 'Työtunnit', latausVirhe: 'Latausvirhe', tallennusVirhe: 'Tallennusvirhe',
     // Navigaatio
     kello: 'Työnäkymä', kirjanpito: 'Kirjaukset', arkisto: 'Laskut', raportointi: 'Raportit', asetukset: 'Asetukset',
-    logTab: 'Kirjaa',
+    logTab: 'Kirjaa', pressBackAgainExit: 'Paina back vielä kerran poistuaksesi',
     // Kello
     clockIn: 'Kirjaudu sisään', clockOut: 'Kirjaudu ulos', pause: '⏸ Tauko', resume: '▶ Jatka',
     idle: 'Ei käynnissä', working: '● Töissä', onBreak: '⏸ Tauolla', taukoAlkaa: 'Tauko käynnistetty',
@@ -176,7 +176,7 @@ const i18n = {
     appName: 'Work Hours', latausVirhe: 'Loading error', tallennusVirhe: 'Save error',
     // Navigation
     kello: 'Work', kirjanpito: 'Entries', arkisto: 'Invoices', raportointi: 'Reports', asetukset: 'Settings',
-    logTab: 'Log',
+    logTab: 'Log', pressBackAgainExit: 'Press back again to exit',
     // Clock
     clockIn: 'Clock in', clockOut: 'Clock out', pause: '⏸ Pause', resume: '▶ Resume',
     idle: 'Not running', working: '● Working', onBreak: '⏸ On break', taukoAlkaa: 'Break started',

@@ -145,6 +145,38 @@ export function goTab(tab) {
   document.querySelectorAll('.tab').forEach(tb => { if (tb.dataset.tab === tab) tb.classList.add('active'); });
 }
 
+// ── PHONE BACK BUTTON ──
+// A bare SPA has no history entries of its own, so the phone's back button
+// exits the app immediately from anywhere. This traps it instead: a back
+// press from any tab other than Työnäkymä just goes home. A back press while
+// already on Työnäkymä also doesn't exit right away — it re-arms the trap and
+// shows a hint, and only a second such press within a short window is left
+// alone to actually exit (the classic Android "press back again to exit").
+function armBackTrap() {
+  history.pushState({ tyoaikaBackTrap: true }, '', location.href);
+}
+
+const EXIT_CONFIRM_WINDOW_MS = 2000;
+let exitArmedAt = 0;
+
+window.addEventListener('popstate', () => {
+  const onKello = document.getElementById('panel-kello').classList.contains('active');
+  if (!onKello) {
+    showTab('kello', document.querySelector('.tab[data-tab="kello"]'));
+    armBackTrap();
+    return;
+  }
+  if (Date.now() - exitArmedAt < EXIT_CONFIRM_WINDOW_MS) {
+    exitArmedAt = 0; // second press in time — let this one actually exit
+    return;
+  }
+  exitArmedAt = Date.now();
+  toast(t('pressBackAgainExit'));
+  armBackTrap();
+});
+
+armBackTrap();
+
 // ── CLOCK BG ──
 export function updateClockBg() {
   const bg = document.getElementById('clock-bg');
