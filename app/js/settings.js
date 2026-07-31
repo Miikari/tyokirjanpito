@@ -4,9 +4,9 @@ import {
   fmtEur, esc, isValidCompanyName, isValidAddress, isValidPhone,
   isValidEmailField, isValidYtunnus, isValidIban,
 } from './utils.js';
-import { toast } from './ui.js';
+import { toast, showConfirm } from './ui.js';
 import { saveConfig } from './storage.js';
-import { renderCustChips, renderAllSelects, customerName } from './customers.js';
+import { customerName } from './customers.js';
 import { renderOrgSettings } from './org.js';
 import { updateUserNameDisplay } from './auth.js';
 import { initClockRate } from './clock.js';
@@ -22,10 +22,14 @@ function saveMinRounding() {
 }
 
 // Pure UI toggle — the 0%-reason row only makes sense once 0% is picked,
-// but nothing is saved until saveAllSettings() runs (Tallenna muutokset).
+// but nothing is saved until saveAllSettings() runs (top save banner).
 function onVatSelectChange() {
   const val = document.getElementById('set-vat').value;
   document.getElementById('set-vat-zero-reason-row').style.display = val === '0' ? '' : 'none';
+}
+
+function markSettingsDirty() {
+  document.getElementById('settings-save-banner').classList.add('show');
 }
 
 export function renderSettings() {
@@ -52,7 +56,7 @@ export function renderSettings() {
     btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
     btn.style.fontWeight = active ? '700' : '600';
   });
-  renderRecList(); renderServices(); renderServiceSelects(); renderCustChips(); renderAllSelects(); renderOrgSettings();
+  renderServices(); renderServiceSelects(); renderOrgSettings();
 }
 
 function saveAllSettings() {
@@ -88,7 +92,9 @@ function saveAllSettings() {
   state.cfg.kmRate = kmRate;
   state.cfg.vat = vat;
   state.cfg.vatZeroReason = vat === 0 ? vatZeroReason : null;
-  saveConfig(); updateUserNameDisplay(); toast(t('saved'));
+  saveConfig(); updateUserNameDisplay();
+  document.getElementById('settings-save-banner').classList.remove('show');
+  toast(t('saved'), 'success');
 }
 
 // ── PALVELUT ──
@@ -105,9 +111,11 @@ function addService() {
 
 function removeService(id) {
   if (state.cfg.services.length <= 1) { toast(t('minOneService')); return; }
-  state.cfg.services = state.cfg.services.filter(s => s.id !== id);
-  state.cfg.hourly = state.cfg.services[0].rate;
-  saveConfig(); renderServices(); renderServiceSelects(); toast(t('serviceRemoved'));
+  showConfirm(t('deleteService'), t('deleteServiceConfirm'), () => {
+    state.cfg.services = state.cfg.services.filter(s => s.id !== id);
+    state.cfg.hourly = state.cfg.services[0].rate;
+    saveConfig(); renderServices(); renderServiceSelects(); toast(t('serviceRemoved'));
+  });
 }
 
 function updateServiceName(id, name) {
@@ -180,6 +188,19 @@ function downloadBackup() {
   toast(t('backupDownloaded'));
 }
 
+function openAddRecurringModal() {
+  document.getElementById('rec-name').value = '';
+  document.getElementById('rec-amount').value = '';
+  const custSel = document.getElementById('rec-customer');
+  custSel.value = '—';
+  custSel.dataset.prevValue = '—';
+  document.getElementById('modal-recurring').classList.add('open');
+}
+
+function closeRecurringModal() {
+  document.getElementById('modal-recurring').classList.remove('open');
+}
+
 function addRecurring() {
   const n = document.getElementById('rec-name').value.trim();
   const a = parseFloat(document.getElementById('rec-amount').value);
@@ -187,14 +208,15 @@ function addRecurring() {
   if (!n || isNaN(a) || a <= 0) { toast(t('fillDesc')); return; }
   if (!c || c === '—') { toast(t('selectCustomer')); return; }
   state.cfg.recurring.push({ id: Date.now(), name: n, amount: a, customerId: parseInt(c, 10) });
-  document.getElementById('rec-name').value = '';
-  document.getElementById('rec-amount').value = '';
-  saveConfig(); renderRecList(); toast(t('added'));
+  closeRecurringModal();
+  saveConfig(); renderRecList(); toast(t('added'), 'success');
 }
 
 function removeRecurring(id) {
-  state.cfg.recurring = state.cfg.recurring.filter(r => r.id !== id);
-  saveConfig(); renderRecList();
+  showConfirm(t('deleteRecurring'), t('deleteRecurringConfirm'), () => {
+    state.cfg.recurring = state.cfg.recurring.filter(r => r.id !== id);
+    saveConfig(); renderRecList();
+  });
 }
 
 let editingRecurringId = null;
@@ -215,13 +237,15 @@ function updateRecurringAmount(id, value) {
   renderRecList();
 }
 
-function renderRecList() {
+export function renderRecList() {
   const el = document.getElementById('rec-list');
+  const badge = document.getElementById('rec-count-badge');
+  if (badge) badge.textContent = state.cfg.recurring.length;
   if (!state.cfg.recurring.length) {
     el.innerHTML = `<div style="font-size:14px;color:var(--text2);padding:4px 0">${t('noRecurring')}</div>`;
     return;
   }
-  el.innerHTML = state.cfg.recurring.map(r => {
+  el.innerHTML = '<div class="rec-scroll-list">' + state.cfg.recurring.map(r => {
     const isEditing = editingRecurringId === r.id;
     const amountHtml = isEditing
       ? `<input type="number" min="0" step="0.5" value="${r.amount}"
@@ -245,7 +269,7 @@ function renderRecList() {
         </span>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
   if (editingRecurringId !== null) {
     const input = el.querySelector('input[type="number"]');
     if (input) { input.focus(); input.select(); }
@@ -256,9 +280,12 @@ window.saveAllSettings = saveAllSettings;
 window.saveRounding = saveRounding;
 window.saveMinRounding = saveMinRounding;
 window.onVatSelectChange = onVatSelectChange;
+window.markSettingsDirty = markSettingsDirty;
 window.saveInvoiceSettings = saveInvoiceSettings;
 window.downloadBackup = downloadBackup;
 window.addRecurring = addRecurring;
+window.openAddRecurringModal = openAddRecurringModal;
+window.closeRecurringModal = closeRecurringModal;
 window.removeRecurring = removeRecurring;
 window.startEditRecurring = startEditRecurring;
 window.updateRecurringAmount = updateRecurringAmount;

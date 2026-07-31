@@ -137,6 +137,7 @@ export async function loadFromFirestore() {
 
   renderServiceSelects();
   document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('exp-date').value = new Date().toISOString().slice(0, 10);
   renderAllSelects(); renderCustChips(); renderPills(); renderEntries();
   window.updateInvoiceBadge?.();
 

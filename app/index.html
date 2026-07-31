@@ -99,7 +99,7 @@
     <button class="tab active" data-tab="kello" onclick="showTab('kello',this)">Työnäkymä</button>
     <button class="tab" data-tab="kirjanpito" onclick="showTab('kirjanpito',this)">Kirjaukset</button>
     <button class="tab" data-tab="arkisto" onclick="showTab('arkisto',this)"><span class="tab-label">Laskut</span><span class="tab-badge" id="inv-badge" style="display:none"></span></button>
-    <button class="tab" data-tab="raportointi" onclick="showTab('raportointi',this)">Raportit</button>
+    <button class="tab" data-tab="asiakkaat" onclick="showTab('asiakkaat',this)">Asiakkaat</button>
     <div class="user-menu" id="user-menu">
       <button class="user-menu-trigger" onclick="toggleUserMenu(event)">
         <img class="user-avatar" id="user-avatar" src="" alt="">
@@ -128,17 +128,28 @@
  </div>
 </div>
 
+<div class="settings-save-banner" id="settings-save-banner">
+  <span data-i18n="unsavedChanges">Tallentamattomia muutoksia</span>
+  <button onclick="saveAllSettings()" data-i18n="saveChanges">Tallenna muutokset</button>
+</div>
+
 <div class="scroll">
 
 <!-- ── KELLO ── -->
   <div class="panel active" id="panel-kello">
+    <div class="kello-subnav">
+      <button class="kello-subnav-btn active" data-sub="kirjaa" onclick="showKelloSub('kirjaa',this)" data-i18n="logTab">Kirjaa</button>
+      <button class="kello-subnav-btn" data-sub="raportit" onclick="showKelloSub('raportit',this)" data-i18n="raportointi">Raportit</button>
+    </div>
+
+    <div class="subpanel active" id="subpanel-kirjaa">
     <div class="clock-card">
       <div id="clock-bg" style="position:absolute;inset:0;border-radius:var(--r);transition:opacity 0.5s;opacity:0.9;pointer-events:none;z-index:0;"></div>
       <div class="timer" id="timer">00:00:00</div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge" data-i18n="idle">Ei käynnissä</span>
       <div class="clock-cust-wrap">
-        <select class="clock-cust-select" id="cust-select" onchange="selCust(this.value)"></select>
+        <select class="clock-cust-select" id="cust-select" onchange="if(!handleCustomerSelectChange(this))selCust(this.value)"></select>
         <span class="clock-cust-label" id="cust-select-label"></span>
       </div>
       <div class="clock-cust-wrap" style="margin-top:8px;">
@@ -152,9 +163,9 @@
             <span style="font-size:12px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:2px 7px;">✎</span>
           </div>
           <div id="clock-rate-edit" style="display:none;align-items:center;gap:6px;">
-            <input type="number" id="clock-rate-input" min="0" step="0.5" style="width:72px;padding:6px 8px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;" onkeydown="if(event.key==='Enter')confirmClockRateEdit()" autocomplete="off">
+            <input type="number" id="clock-rate-input" min="0" step="0.5" style="width:72px;padding:6px 8px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:15px;font-weight:700;text-align:center;outline:none;" onkeydown="if(event.key==='Enter')confirmClockRateEdit()" oninput="markClockRateChanged()" autocomplete="off">
             <span style="color:rgba(255,255,255,0.7);font-size:13px;">€/h</span>
-            <button onclick="confirmClockRateEdit()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;cursor:pointer;font-size:14px;padding:6px 10px;border-radius:8px;">✓</button>
+            <button id="clock-rate-confirm-btn" onclick="confirmClockRateEdit()" style="background:rgba(255,255,255,0.2);border:none;color:#00d312;cursor:pointer;font-size:14px;padding:6px 10px;border-radius:8px;transition:background-color .15s,color .15s;">✓</button>
           </div>
         </div>
         <button type="button" id="hide-rate-btn" onclick="toggleHideRate()" title="Piilota tuntihinta" style="background:none;border:none;color:rgba(255,255,255,0.55);cursor:pointer;padding:4px;display:flex;align-items:center;">
@@ -182,7 +193,7 @@
       <div class="form-cols">
         <div class="form-col">
           <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off"></div>
-          <div class="fg"><label data-i18n="customer">Asiakas</label><select id="m-customer"></select></div>
+          <div class="fg"><label data-i18n="customer">Asiakas</label><select id="m-customer" onchange="handleCustomerSelectChange(this)"></select></div>
           <div class="row2" style="margin-bottom:0;">
             <div class="fg" style="margin-bottom:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off"></div>
             <div class="fg" style="margin-bottom:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off"></div>
@@ -193,18 +204,75 @@
           <div class="fg" style="margin-bottom:0;"><label data-i18n="service">Palvelu</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><select id="m-service" onchange="selManualService(this.value)" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;font-weight:600;"></select><input type="number" id="m-rate" min="0" step="0.5" style="width:80px;" autocomplete="off"><span style="font-size:14px;font-weight:600;color:var(--text2);">€/h</span></div></div>
         </div>
       </div>
-      <button class="btn-add" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
+      <button class="btn-add" id="manual-add-btn" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
     </div>
 
     <div class="card card-form">
       <div class="card-label" data-i18n="expenses">Kulukorvaukset</div>
-      <div class="fg"><label data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." autocomplete="off"></div>
-      <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;"></select></div>
+      <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="exp-date" autocomplete="off"></div>
+      <div style="display:flex;gap:10px;">
+        <div class="fg" style="flex:1;min-width:0;"><label data-i18n="expenseType">Kulun tyyppi</label>
+          <select id="exp-kind" onchange="onExpenseKindChange()" style="width:100%;">
+            <option value="general" data-i18n="expenseTypeGeneral">Yleinen kulu</option>
+            <option value="km" data-i18n="kmReimbursement">Kilometrikorvaus</option>
+            <option value="perdiem" data-i18n="expenseTypePerdiem">Päivärahakorvaus</option>
+          </select>
+        </div>
+        <div class="fg" style="flex:1;min-width:0;"><label id="exp-desc-label" data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." style="width:100%;" autocomplete="off"></div>
       </div>
-      <button class="btn-add" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label id="exp-amount-label" data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;" onchange="handleCustomerSelectChange(this)"></select></div>
+      </div>
+      <button class="btn-add" id="exp-add-btn" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
     </div>
+    </div><!-- /subpanel-kirjaa -->
+
+    <div class="subpanel" id="subpanel-raportit">
+    <div class="card">
+      <div class="card-label" data-i18n="downloadReport">Lataa raportti</div>
+      <div class="rep-download-grid">
+        <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></select>
+        <select id="rep-year-sel" onchange="setReportYear(this.value)" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></select>
+        <button class="rep-download-title" onclick="downloadMonthReport()" data-i18n="monthReport">Kuukausiraportti</button>
+        <button class="rep-download-title" id="rep-year-title-btn" onclick="viewYearReport()">Vuosiraportti</button>
+        <div class="rep-btn-row">
+          <button id="btn-dl-month" class="btn-dl-report" onclick="downloadMonthReport()" data-i18n="downloadPdf">Lataa PDF</button>
+          <button class="btn-dl-report-alt" onclick="downloadMonthReportCsv()" data-i18n="downloadCsv">Lataa CSV</button>
+        </div>
+        <div class="rep-btn-row">
+          <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()" data-i18n="downloadPdf">Lataa PDF</button>
+          <button class="btn-dl-report-alt" onclick="downloadYearReportCsv()" data-i18n="downloadCsv">Lataa CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label-row">
+        <div class="card-label" style="margin-bottom:0;" data-i18n="customerSummary">Asiakaskohtainen yhteenveto</div>
+        <button id="btn-toggle-vat" class="vat-toggle-btn" onclick="toggleReportVat('customers')">Näytä ALV</button>
+      </div>
+      <div id="report-customers"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label" data-i18n="hourDistribution">Asiakas tuntijakauma</div>
+      <div id="chart-pie-wrap" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <canvas id="chart-pie"></canvas>
+        <div id="chart-pie-legend" style="width:100%;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label-row">
+        <div class="card-label" style="margin-bottom:0;" data-i18n="monthlyComparison">Kuukausimyynnit</div>
+        <button id="btn-toggle-vat-2" class="vat-toggle-btn" onclick="toggleReportVat('monthly')">Näytä ALV</button>
+      </div>
+      <div id="chart-bars-wrap">
+        <canvas id="chart-bars"></canvas>
+      </div>
+    </div>
+    </div><!-- /subpanel-raportit -->
   </div><!-- /panel-kello -->
 
   <!-- ── KIRJANPITO ── -->
@@ -216,12 +284,12 @@
       <div class="sum-card"><div class="sum-label" data-i18n="value">Laskutukseen tuleva summa</div><div class="sum-val" id="s-val">0€</div></div>
     </div>
     <div id="filter-pills-wrap" style="display:none;margin-bottom:12px;">
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="filterByCustomer">Suodata asiakkaan mukaan</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="filterByCustomer">Valitse asiakkaan mukaan</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;" id="filter-pills"></div>
     </div>
     <div class="action-bar">
       <button class="btn-outline" onclick="selectAll()" data-i18n="selectAll">Valitse kaikki</button>
-      <button class="btn-invoice" onclick="startInvoice()" data-i18n="buildInvoice">Kokoa lasku ↗</button>
+      <button class="btn-invoice" id="build-invoice-btn" onclick="startInvoice()" data-i18n="buildInvoice">Kokoa lasku ↗</button>
     </div>
     <div id="entries-list"></div>
     <div id="kirjanpito-expenses"></div>
@@ -250,46 +318,22 @@
     <div id="archive-list"><div class="empty" data-i18n="noInvoices">Ei arkistoituja laskuja vielä.</div></div>
   </div>
 
-  <!-- ── RAPORTOINTI ── -->
-  <div class="panel" id="panel-raportointi">
-    <div class="rep-year-bar">
-      <button class="rep-year-btn" onclick="reportPrevYear()">‹</button>
-      <span id="report-year" class="rep-year-label"></span>
-      <button class="rep-year-btn" onclick="reportNextYear()">›</button>
-    </div>
-
-    <div class="card">
-      <div class="card-label" data-i18n="downloadReport">Lataa raportti</div>
-      <div style="display:flex;gap:10px;align-items:flex-start;">
-        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-          <select id="rep-month-sel" onchange="this.dataset.userChanged='1'" style="padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;"></select>
-          <button id="btn-dl-month" class="btn-dl-report" onclick="downloadMonthReport()">↓ Kuukausiraportti (pdf)</button>
-          <button class="btn-dl-report-alt" onclick="downloadMonthReportCsv()">↓ CSV</button>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-          <button id="btn-dl-year" class="btn-dl-report" onclick="downloadYearReport()">↓ Vuosiraportti (pdf)</button>
-          <button class="btn-dl-report-alt" onclick="downloadYearReportCsv()">↓ CSV</button>
-        </div>
+  <!-- ── ASIAKKAAT ── -->
+  <div class="panel" id="panel-asiakkaat">
+    <div class="settings-grid">
+      <div class="card">
+        <div class="card-label" data-i18n="customersLabel">Asiakkaat</div>
+        <div id="cust-chips" style="margin-bottom:12px;"></div>
+        <button class="btn-add" onclick="openAddCustomerModal()" data-i18n="addCustomer">+ Lisää asiakas</button>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-label" data-i18n="customerSummary">Asiakaskohtainen yhteenveto</div>
-      <div id="report-customers"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-label" data-i18n="hourDistribution">Asiakas tuntijakauma</div>
-      <div id="chart-pie-wrap" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
-        <canvas id="chart-pie"></canvas>
-        <div id="chart-pie-legend" style="width:100%;"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label" data-i18n="monthlyComparison">Kuukausimyynnit</div>
-      <div id="chart-bars-wrap">
-        <canvas id="chart-bars"></canvas>
+      <div class="card">
+        <div class="card-label-row">
+          <div class="card-label" data-i18n="recurring" style="margin-bottom:0;">Kuukausiveloitukset</div>
+          <span class="rec-count-badge" id="rec-count-badge">0</span>
+        </div>
+        <div id="rec-list"></div>
+        <button class="btn-add" onclick="openAddRecurringModal()" data-i18n="addRecurring">+ Lisää kuukausiveloitus</button>
       </div>
     </div>
   </div>
@@ -313,13 +357,12 @@
           <button onclick="setTheme('dark')" id="btn-theme-dark" class="btn-add" style="margin:0;flex:1;" data-i18n="themeDark">🌙 Tumma</button>
         </div>
       </div>
-      <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy" autocomplete="off"></div>
-      <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki" autocomplete="off"></div>
-      <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567" autocomplete="off"></div>
-      <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi" autocomplete="off"></div>
-      <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
-      <div class="fg"><label data-i18n="bankAccount">Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" autocomplete="off"></div>
-      <button class="btn-add settings-save-mobile" onclick="saveAllSettings()" data-i18n="saveChanges">Tallenna muutokset</button>
+      <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy" oninput="markSettingsDirty()" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki" oninput="markSettingsDirty()" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567" oninput="markSettingsDirty()" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="companyEmail">Sähköposti</label><input type="text" id="set-email" placeholder="nimi@yritys.fi" oninput="markSettingsDirty()" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="set-ytunnus" placeholder="1234567-8" oninput="markSettingsDirty()" autocomplete="off"></div>
+      <div class="fg"><label data-i18n="bankAccount">Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" oninput="markSettingsDirty()" autocomplete="off"></div>
     </div>
 
     <div class="card">
@@ -327,10 +370,10 @@
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="services">Palvelut</div>
         <div id="services-list"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <div style="display:flex;gap:8px;margin-top:8px;">
           <input type="text" id="svc-name" placeholder="esim. Editointi" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
           <input type="number" id="svc-rate" min="0" step="0.5" placeholder="€/h" style="width:60px;padding:9px 8px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
-          <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="addService()" data-i18n="addService">+ Lisää palvelu</button>
+          <button class="btn-add" style="width:auto;flex-shrink:0;margin:0;padding:9px 16px;white-space:nowrap;" onclick="addService()" data-i18n="addService">+</button>
         </div>
       </div>
       <div class="set-row">
@@ -359,7 +402,7 @@
       <div class="set-row">
         <div><div class="set-label" data-i18n="vatLabel">ALV</div><div class="set-sub" data-i18n="vatHint">Lisätään laskun loppusummaan</div></div>
         <div class="set-input-wrap">
-          <select id="set-vat" onchange="onVatSelectChange()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+          <select id="set-vat" onchange="onVatSelectChange();markSettingsDirty()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
             <option value="" data-i18n="vatChoose">Valitse ALV-kanta</option>
             <option value="0">0%</option>
             <option value="10">10%</option>
@@ -371,7 +414,7 @@
       <div class="set-row" id="set-vat-zero-reason-row" style="display:none;">
         <div><div class="set-label" data-i18n="vatZeroReasonLabel">ALV 0% syy</div></div>
         <div class="set-input-wrap">
-          <select id="set-vat-zero-reason" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+          <select id="set-vat-zero-reason" onchange="markSettingsDirty()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
             <option value="" data-i18n="vatZeroReasonChoose">Valitse syy</option>
             <option value="reverse" data-i18n="vatReverseCharge">Käänteinen ALV (8 §)</option>
             <option value="exempt" data-i18n="vatExempt">Ei arvonlisäverovelvollinen (3 §)</option>
@@ -381,34 +424,10 @@
       <div class="set-row" style="margin-top:10px;">
         <div><div class="set-label" data-i18n="kmReimbursement">Kilometrikorvaus</div><div class="set-sub" data-i18n="kmRateHint">Kilometrihinta laskuun</div></div>
         <div class="set-input-wrap">
-          <input type="number" id="set-kmrate" min="0" step="0.01" autocomplete="off">
+          <input type="number" id="set-kmrate" min="0" step="0.01" oninput="markSettingsDirty()" autocomplete="off">
           <span style="font-size:15px;font-weight:600;color:var(--text2);">€/km</span>
         </div>
       </div>
-      <button class="btn-add settings-save-mobile" onclick="saveAllSettings()" data-i18n="saveChanges">Tallenna muutokset</button>
-    </div>
-  </div>
-
-  <button class="btn-add settings-save-desktop" onclick="saveAllSettings()" style="margin-bottom:14px;" data-i18n="saveChanges">Tallenna muutokset</button>
-
-  <div class="settings-grid">
-    <div class="card">
-      <div class="card-label" data-i18n="recurring">Kuukausiveloitukset</div>
-      <div id="rec-list"></div>
-      <div style="margin-top:12px;">
-        <div class="fg"><label data-i18n="description">Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu" autocomplete="off"></div>
-        <div style="display:flex;gap:10px;margin-bottom:10px;">
-          <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="amount">Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
-          <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="customer">Asiakas</label><select id="rec-customer" style="width:100%;"></select></div>
-        </div>
-        <button class="btn-add" onclick="addRecurring()" data-i18n="addRecurring">+ Lisää kuukausiveloitus</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label" data-i18n="customersLabel">Asiakkaat</div>
-      <div id="cust-chips" style="margin-bottom:12px;"></div>
-      <button class="btn-add" onclick="openAddCustomerModal()" data-i18n="addCustomer">+ Lisää asiakas</button>
     </div>
   </div>
 
@@ -487,7 +506,7 @@
     <div class="modal-handle"></div>
     <h2 data-i18n="editEntry">Muokkaa kirjausta</h2>
     <div class="fg"><label data-i18n="date">Päivämäärä</label><input type="date" id="edit-date" autocomplete="off"></div>
-    <div class="fg"><label data-i18n="customer">Asiakas</label><select id="edit-customer"></select></div>
+    <div class="fg"><label data-i18n="customer">Asiakas</label><select id="edit-customer" onchange="handleCustomerSelectChange(this)"></select></div>
     <div style="display:flex;gap:10px;margin-bottom:10px;">
       <div class="fg" style="flex:1;margin:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="edit-h" min="0" max="24" autocomplete="off"></div>
       <div class="fg" style="flex:1;margin:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="edit-m" min="0" max="59" autocomplete="off"></div>
@@ -509,6 +528,15 @@
     <div id="edit-inv-entries"></div>
     <button class="modal-opt primary" onclick="saveEditInvoice()" data-i18n="saveChanges">Tallenna muutokset</button>
     <button class="modal-opt modal-cancel" onclick="closeEditInvModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<!-- ── INVOICE VIEW MODAL (shown right after composing an invoice, in place of navigating away) ── -->
+<div class="modal-wrap" id="modal-invoice-view">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="invoice-popup-body"></div>
+    <button class="modal-opt modal-cancel" onclick="closeInvoicePopup()" data-i18n="close">Sulje</button>
   </div>
 </div>
 
@@ -540,8 +568,21 @@
         </label>
       </div>
     </div>
-    <button class="modal-opt primary" onclick="saveCustomerModal()" data-i18n="save">Tallenna</button>
+    <button class="modal-opt primary" id="cust-save-btn" onclick="saveCustomerModal()" data-i18n="save">Tallenna</button>
     <button class="modal-opt modal-cancel" onclick="closeCustomerModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
+<!-- ── RECURRING MODAL ── -->
+<div class="modal-wrap" id="modal-recurring">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="addRecurringTitle">Lisää kuukausiveloitus</h2>
+    <div class="fg"><label data-i18n="description">Kuvaus</label><input type="text" id="rec-name" placeholder="esim. Ylläpitomaksu" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="amount">Summa (€)</label><input type="number" id="rec-amount" min="0" step="0.01" placeholder="0,00" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="customer">Asiakas</label><select id="rec-customer" onchange="handleCustomerSelectChange(this)"></select></div>
+    <button class="modal-opt primary" onclick="addRecurring()" data-i18n="save">Tallenna</button>
+    <button class="modal-opt modal-cancel" onclick="closeRecurringModal()" data-i18n="cancel">Peruuta</button>
   </div>
 </div>
 
@@ -556,11 +597,26 @@
   </div>
 </div>
 
+<!-- ── 24H WARNING MODAL ── -->
+<div class="modal-wrap" id="modal-24h-warning">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 data-i18n="confirm24hTitle">Yli 24 tunnin kirjaus</h2>
+    <p data-i18n="confirm24hText">Haluatko varmasti kirjata yli 24 tunnin merkinnän vuorokaudelle? (ei suositeltu)</p>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);margin-bottom:16px;cursor:pointer;">
+      <input type="checkbox" id="confirm24h-dont-show">
+      <span data-i18n="dontShowAgain">Älä näytä tätä enää</span>
+    </label>
+    <button class="modal-opt primary" onclick="confirm24hProceed()" data-i18n="yes">Kyllä</button>
+    <button class="modal-opt modal-cancel" onclick="closeConfirm24h()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
 <div class="modal-wrap" id="modal-upgrade">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 data-i18n="upgradeModalTitle">Ilmaisen tason raja täynnä</h2>
-    <p data-i18n="upgradeModalBody">Päivitä Prohon (14,90 €/kk) poistaaksesi rajan kokonaan.</p>
+    <p data-i18n="upgradeModalBody">Päivitä Prohon (14,90 €/kk, early adopter -hinta) poistaaksesi rajan kokonaan.</p>
     <button class="modal-opt primary" onclick="startCheckout()" data-i18n="upgradeCta">Päivitä Prohon – 14,90 €/kk</button>
     <button class="modal-opt modal-cancel" onclick="closeUpgradeModal()" data-i18n="cancel">Peruuta</button>
   </div>
@@ -578,6 +634,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/vendor/jspdf.plugin.autotable.min.js"></script>
 <script src="js/firebase.js"></script>
 <script type="module" src="js/state.js"></script>
 <script type="module" src="js/i18n.js"></script>

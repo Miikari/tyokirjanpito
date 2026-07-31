@@ -100,6 +100,17 @@ body {
 /* ── PANELS ── */
 .panel { display: none; }
 .panel.active { display: block; }
+.subpanel { display: none; }
+.subpanel.active { display: block; }
+
+/* Sub-nav inside Työnäkymä: Kirjaa / Raportit */
+.kello-subnav { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+.kello-subnav-btn {
+  padding: 8px 20px; border-radius: 99px; font-size: 14px; font-weight: 600;
+  border: 1.5px solid var(--border2); color: var(--text2);
+  background: var(--surface); cursor: pointer; transition: all 0.15s;
+}
+.kello-subnav-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
 
 /* ── CLOCK CARD ── */
 .clock-card {
@@ -354,6 +365,7 @@ body {
 .set-input-wrap input { width: 90px; padding: 9px 12px; border: 1.5px solid var(--border2); border-radius: var(--r-sm); font-size: 18px; font-weight: 700; text-align: right; background: var(--bg); color: var(--text); }
 .set-input-wrap input:focus { outline: none; border-color: var(--blue); background: var(--surface); }
 .cust-list { display: flex; flex-direction: column; max-height: 230px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.rec-scroll-list { display: flex; flex-direction: column; max-height: 230px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .cust-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 12px 4px; border-bottom: 1px solid var(--border); border-radius: var(--r-sm);
@@ -389,13 +401,16 @@ body {
   gap: 14px;
 }
 .settings-grid .card { margin-bottom: 0; min-width: 0; }
-.settings-save-mobile { display: none; margin-top: 12px; }
+/* Asiakkaat tab: both cards stretch to equal height (grid default), and the
+   add-button always sits pinned to the bottom of its own card regardless of
+   how many rows are above it. */
+#panel-asiakkaat .card { display: flex; flex-direction: column; }
+#panel-asiakkaat .card > .btn-add { margin-top: auto; }
+#panel-asiakkaat #rec-list { margin-bottom: 12px; }
 @media (max-width: 600px) {
   .settings-grid { grid-template-columns: minmax(0, 1fr); }
   .set-row { flex-wrap: wrap; row-gap: 8px; }
   .form-cols { grid-template-columns: 1fr; }
-  .settings-save-mobile { display: block; }
-  .settings-save-desktop { display: none; }
   .user-name, .user-menu-chevron { display: none; }
   .user-menu-trigger { padding: 6px; }
   .user-menu-dropdown { min-width: 160px; }
@@ -455,6 +470,7 @@ body {
 .modal-opt:active { background: var(--bg); }
 .modal-opt.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
 .modal-opt.primary:active { opacity: 0.85; }
+.modal-opt:disabled, .btn-add:disabled, .btn-invoice:disabled { opacity: 0.6; cursor: not-allowed; }
 .modal-cancel { color: var(--text2); border-color: transparent; background: transparent; font-weight: 500; }
 
 /* ── TOAST ── */
@@ -462,13 +478,34 @@ body {
   position: fixed; bottom: calc(28px + var(--safe-bottom));
   left: 50%; transform: translateX(-50%);
   background: #1a1a1a; color: #fff;
-  padding: 11px 22px; border-radius: 99px;
-  font-size: 14px; font-weight: 500;
+  padding: 14px 28px; border-radius: 99px;
+  font-size: 16px; font-weight: 500;
   opacity: 0; transition: opacity 0.2s;
   pointer-events: none; white-space: nowrap; z-index: 200;
   box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 .toast.show { opacity: 1; }
+.toast.toast-success { background: var(--green); }
+html[data-theme="dark"] .toast { background: #f2f2f2; color: #14181d; }
+html[data-theme="dark"] .toast.toast-success { background: var(--green); color: #14181d; }
+
+/* ── SETTINGS SAVE BANNER ── */
+.settings-save-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+  background: var(--navy); color: #fff;
+  font-size: 14px; font-weight: 600;
+  transform: translateY(-100%); transition: transform 0.25s ease;
+}
+.settings-save-banner.show { transform: translateY(0); }
+.settings-save-banner button {
+  background: var(--mint); color: var(--navy-dk); border: none; border-radius: 999px;
+  padding: 7px 18px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.settings-save-banner .discard-btn {
+  background: transparent; color: rgba(255,255,255,0.8); border: 1.5px solid rgba(255,255,255,0.35);
+}
 
 /* ── LOGIN SCREEN ── */
 .login-screen {
@@ -678,15 +715,8 @@ body {
 }
 
 /* ── REPORTS ── */
-.rep-year-bar { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
-.rep-year-btn {
-  background:var(--surface); border:1.5px solid var(--border2); border-radius:var(--r-sm);
-  width:36px; height:36px; font-size:20px; cursor:pointer; color:var(--text2);
-  display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow);
-}
-.rep-year-label { font-size:20px; font-weight:700; min-width:60px; text-align:center; }
+.rep-row:nth-last-child(2) { border-bottom:none; }
 .rep-row { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
-.rep-row:last-of-type { border-bottom:none; }
 .rep-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 .rep-info { flex:1; min-width:0; }
 .rep-name { font-size:14px; font-weight:600; }
@@ -709,5 +739,11 @@ body {
 .pie-leg-val { font-size:13px; font-weight:700; color:var(--text2); flex-shrink:0; }
 
 #join-modal { display:none !important; }
-.btn-dl-report { width:100%; padding:10px 16px; background:var(--blue); color:#fff; border:none; border-radius:var(--r-sm); font-size:14px; font-weight:600; cursor:pointer; text-align:center; }
-.btn-dl-report-alt { width:100%; padding:8px 16px; background:transparent; color:var(--blue); border:1.5px solid var(--border2); border-radius:var(--r-sm); font-size:13px; font-weight:600; cursor:pointer; text-align:center; }
+.btn-dl-report { flex:1; padding:10px 16px; background:var(--blue); color:#fff; border:none; border-radius:var(--r-sm); font-size:14px; font-weight:600; cursor:pointer; text-align:center; }
+.btn-dl-report-alt { flex:1; padding:8px 16px; background:transparent; color:var(--blue); border:1.5px solid var(--border2); border-radius:var(--r-sm); font-size:13px; font-weight:600; cursor:pointer; text-align:center; }
+.rep-download-grid { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto auto auto; gap:8px 10px; align-items:center; }
+.rep-download-title { width:100%; border:none; background:var(--blue); color:#fff; font-weight:700; font-size:15px; font-family:inherit; text-align:center; padding:12px 14px; border-radius:var(--r-sm); cursor:pointer; }
+.rep-download-title:active { opacity:0.85; }
+.rep-btn-row { display:flex; gap:6px; }
+#clock-rate-confirm-btn.rate-changed { background:var(--green); color:#fff; }
+.rec-count-badge { font-size:12px; font-weight:700; color:var(--text3); background:var(--surface2); padding:2px 10px; border-radius:999px; flex-shrink:0; }

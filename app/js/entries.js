@@ -4,7 +4,7 @@ import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration } from './utils.j
 import { toast, showConfirm } from './ui.js';
 import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
-import { customerName } from './customers.js';
+import { customerName, ADD_NEW_VALUE } from './customers.js';
 
 
 // Returns true if the entry was added, false if blocked by the free-tier
@@ -31,6 +31,8 @@ function selManualService(id) {
 }
 
 async function addManual() {
+  const btn = document.getElementById('manual-add-btn');
+  if (btn.disabled) return; // guards the double-click race — see saveCustomerModal() for the same issue
   const custVal = document.getElementById('m-customer').value;
   if (!custVal || custVal === '—') { toast(t('selectCustomer')); return; }
   const customerId = parseInt(custVal, 10);
@@ -45,12 +47,25 @@ async function addManual() {
   const rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   const svc = state.cfg.services.find(s => s.id === parseInt(document.getElementById('m-service').value, 10));
   if (total < 1) { toast(t('enterTime')); return; }
-  const ok = await addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, customerId, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
-  if (!ok) return;
-  document.getElementById('m-h').value = '';
-  document.getElementById('m-m').value = '';
-  document.getElementById('m-notes').value = '';
-  renderEntries(); toast(t('entryAdded'));
+
+  const doSave = () => saveManualEntry(btn, d, total, customerId, notes, rate, svc);
+  if (total >= 86400 && should24hWarn()) { show24hWarning(doSave); return; }
+  await doSave();
+}
+
+async function saveManualEntry(btn, d, total, customerId, notes, rate, svc) {
+  const origLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = t('saving');
+  try {
+    const ok = await addEntry(d ? new Date(d + 'T12:00:00') : new Date(), total, customerId, 'manuaalinen', notes, rate, 0, svc ? svc.name : null);
+    if (!ok) return;
+    document.getElementById('m-h').value = '';
+    document.getElementById('m-m').value = '';
+    document.getElementById('m-notes').value = '';
+    renderEntries(); toast(t('entryAdded'), 'success');
+  } finally {
+    btn.disabled = false; btn.textContent = origLabel;
+  }
 }
 
 function toggleEntry(id) {
@@ -73,16 +88,35 @@ function selectAll() {
   renderEntries();
 }
 
+// Customer filter is exclusive, not multi-select: picking a customer always
+// clears every current selection first — not just selections tied to a
+// customer that was itself an active filter, but also any stray manual
+// checkbox tick made outside the filter entirely — so nothing can silently
+// carry over into whatever gets invoiced next (see project memory on this bug).
+function clearFilterSelection() {
+  state.entries.forEach(e => { if (!e.invoiced) e.selected = false; });
+  state.expenses.forEach(e => { if (!e.invoiced) e.selected = false; });
+  state.filterCustomers.clear();
+}
+
+function applyFilterSelection(id) {
+  state.filterCustomers.add(id);
+  state.entries.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = true);
+  state.expenses.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = true);
+}
+
+// Pill click: toggling the already-active pill clears the filter.
 function setFilter(id) {
-  if (state.filterCustomers.has(id)) {
-    state.filterCustomers.delete(id);
-    state.entries.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = false);
-    state.expenses.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = false);
-  } else {
-    state.filterCustomers.add(id);
-    state.entries.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = true);
-    state.expenses.filter(e => !e.invoiced && e.customerId === id).forEach(e => e.selected = true);
-  }
+  const wasSoleFilter = state.filterCustomers.size === 1 && state.filterCustomers.has(id);
+  clearFilterSelection();
+  if (!wasSoleFilter) applyFilterSelection(id);
+  renderEntries();
+}
+
+// Dropdown change (5+ customers): value is explicit, '' means "no filter".
+function setFilterFromSelect(value) {
+  clearFilterSelection();
+  if (value) applyFilterSelection(parseInt(value, 10));
   renderEntries();
 }
 
@@ -94,6 +128,19 @@ function renderFilterPills() {
   if (wrap) wrap.style.display = customerIds.length ? 'block' : 'none';
 
   if (!customerIds.length) { el.innerHTML = ''; return; }
+
+  // Too many pills to scan comfortably — a dropdown is faster to use once
+  // there are several customers.
+  if (customerIds.length >= 5) {
+    const activeId = state.filterCustomers.size === 1 ? [...state.filterCustomers][0] : null;
+    const sorted = [...customerIds].sort((a, b) => (customerName(a) || '').localeCompare(customerName(b) || '', 'fi', { sensitivity: 'base' }));
+    el.innerHTML = `<select onchange="setFilterFromSelect(this.value)" style="width:100%;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;">
+      <option value="">${t('allCustomers')}</option>
+      ${sorted.map(id => `<option value="${id}"${activeId === id ? ' selected' : ''}>${esc(customerName(id) || '—')}</option>`).join('')}
+    </select>`;
+    return;
+  }
+
   el.innerHTML = customerIds.map(id => {
     const isActive = state.filterCustomers.has(id);
     return `<div class="pill ${isActive ? 'active' : ''}"
@@ -151,8 +198,10 @@ function openEditEntry(id) {
   document.getElementById('edit-notes').value = e.notes || '';
   document.getElementById('edit-rate').value = e.rate ?? state.cfg.hourly;
   const opts = [`<option value="—">— ${t('noCustomer')} —</option>`,
-    ...state.customers.map(c => `<option value="${c.id}" ${e.customerId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`)].join('');
+    ...state.customers.map(c => `<option value="${c.id}" ${e.customerId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`),
+    `<option value="${ADD_NEW_VALUE}">${t('addCustomer')}</option>`].join('');
   document.getElementById('edit-customer').innerHTML = opts;
+  document.getElementById('edit-customer').dataset.prevValue = e.customerId ?? '—';
   const svcOpts = [`<option value="—">— ${t('noService')} —</option>`,
     ...state.cfg.services.map(s => `<option value="${s.id}" ${e.service === s.name ? 'selected' : ''}>${esc(s.name)}</option>`)].join('');
   document.getElementById('edit-service').innerHTML = svcOpts;
@@ -174,14 +223,21 @@ async function saveEditEntry() {
   const notes = document.getElementById('edit-notes').value.trim();
   const total = h * 3600 + m * 60;
   if (total < 1) { toast(t('enterTime')); return; }
+  const svcId = document.getElementById('edit-service').value;
+  const svc = state.cfg.services.find(s => s.id === parseInt(svcId, 10));
+  const rateVal = parseFloat(document.getElementById('edit-rate').value);
+
+  const doSave = () => finishSaveEditEntry(e, d, total, custVal, notes, svc, rateVal);
+  if (total >= 86400 && should24hWarn()) { show24hWarning(doSave); return; }
+  await doSave();
+}
+
+async function finishSaveEditEntry(e, d, total, custVal, notes, svc, rateVal) {
   e.date = d ? new Date(d + 'T12:00:00').toISOString() : e.date;
   e.secs = total;
   e.customerId = custVal === '—' ? null : parseInt(custVal, 10);
   e.notes = notes;
-  const svcId = document.getElementById('edit-service').value;
-  const svc = state.cfg.services.find(s => s.id === parseInt(svcId, 10));
   e.service = svc ? svc.name : null;
-  const rateVal = parseFloat(document.getElementById('edit-rate').value);
   e.rate = (!isNaN(rateVal) && rateVal >= 0) ? rateVal : state.cfg.hourly;
   closeEditModal();
   await updateEntry(e.id, { date: e.date, secs: e.secs, customerId: e.customerId, notes: e.notes, service: e.service, rate: e.rate });
@@ -208,30 +264,86 @@ function closeEditModal() {
 }
 
 // ── EXPENSES ──
+// #exp-desc doubles as either the free-text description or the km count,
+// depending on the selected kind — same slot the field occupied before, just
+// now next to the type select instead of on its own row. For kind==='km',
+// #exp-amount switches meaning too: it's the €/km rate (prefilled from
+// settings, editable), not the total — the total is km × rate, computed in
+// addExpense() and written into the description as a breakdown.
+function onExpenseKindChange() {
+  const kind = document.getElementById('exp-kind').value;
+  const descInput = document.getElementById('exp-desc');
+  const descLabel = document.getElementById('exp-desc-label');
+  const amountInput = document.getElementById('exp-amount');
+  descInput.value = '';
+  if (kind === 'km') {
+    descLabel.textContent = t('kmCount');
+    descInput.type = 'number';
+    descInput.min = '0'; descInput.step = '1';
+    descInput.placeholder = '0';
+    document.getElementById('exp-amount-label').textContent = t('kmReimbursementRate');
+    amountInput.value = (state.cfg.kmRate ?? 0.57).toFixed(2);
+  } else {
+    descLabel.textContent = t('expenseDesc');
+    descInput.type = 'text';
+    descInput.removeAttribute('min'); descInput.removeAttribute('step');
+    descInput.placeholder = 'esim. Matkakulut, materiaali...';
+    document.getElementById('exp-amount-label').textContent = t('expenseAmount');
+    amountInput.value = '';
+  }
+}
+
 export async function addExpense() {
-  const desc = document.getElementById('exp-desc').value.trim();
-  const amount = parseFloat(document.getElementById('exp-amount').value);
-  const vat = parseFloat(document.getElementById('exp-vat').value) || 0;
+  const btn = document.getElementById('exp-add-btn');
+  if (btn.disabled) return; // guards the double-click race — see saveCustomerModal() for the same issue
+  const kind = document.getElementById('exp-kind').value;
+  const descVal = document.getElementById('exp-desc').value.trim();
+  const amountFieldVal = parseFloat(document.getElementById('exp-amount').value);
   const custVal = document.getElementById('exp-customer').value;
-  if (!desc) { toast(t('expenseDescRequired')); return; }
-  if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
-  const id = await nextId('expense');
-  const expense = {
-    id,
-    date: new Date().toISOString(),
-    description: desc,
-    amount,
-    vat,
-    vatAmount: amount * vat / 100,
-    customerId: custVal === '—' ? null : parseInt(custVal, 10),
-    selected: false,
-    invoiced: false,
-  };
-  state.expenses.unshift(expense);
-  await createExpense(expense);
-  document.getElementById('exp-desc').value = '';
-  document.getElementById('exp-amount').value = '';
-  renderExpenses(); toast(t('expenseAdded'));
+  const dateVal = document.getElementById('exp-date').value;
+  if (!custVal || custVal === '—') { toast(t('selectCustomer')); return; }
+  let desc, amount, km = 0, kmRate = null;
+  if (kind === 'km') {
+    km = parseFloat(descVal) || 0;
+    if (km <= 0) { toast(t('enterKm')); return; }
+    if (isNaN(amountFieldVal) || amountFieldVal <= 0) { toast(t('invalidPrice')); return; }
+    kmRate = amountFieldVal;
+    amount = km * kmRate;
+    desc = `${t('kmReimbursement')}: ${km} km × ${kmRate.toFixed(2).replace('.', ',')} € = ${amount.toFixed(2).replace('.', ',')} €`;
+  } else {
+    desc = descVal;
+    if (!desc) { toast(t('expenseDescRequired')); return; }
+    amount = amountFieldVal;
+    if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
+  }
+  const vat = state.cfg.vat ?? 0;
+  const origLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = t('saving');
+  try {
+    const id = await nextId('expense');
+    const expense = {
+      id,
+      date: dateVal ? new Date(dateVal + 'T12:00:00').toISOString() : new Date().toISOString(),
+      description: desc,
+      amount,
+      vat,
+      vatAmount: amount * vat / 100,
+      customerId: custVal === '—' ? null : parseInt(custVal, 10),
+      kind,
+      km,
+      kmRate,
+      selected: false,
+      invoiced: false,
+    };
+    state.expenses.unshift(expense);
+    await createExpense(expense);
+    document.getElementById('exp-amount').value = '';
+    document.getElementById('exp-kind').value = 'general';
+    onExpenseKindChange();
+    renderExpenses(); toast(t('expenseAdded'));
+  } finally {
+    btn.disabled = false; btn.textContent = origLabel;
+  }
 }
 
 export function toggleExpense(id) {
@@ -246,11 +358,6 @@ async function deleteExpense(id) {
 }
 
 export function renderExpenses() {
-  const vatSel = document.getElementById('exp-vat');
-  if (vatSel && !vatSel.dataset.defaulted) {
-    vatSel.value = state.cfg.vat ?? '0';
-    vatSel.dataset.defaulted = '1';
-  }
   const kirjEl = document.getElementById('kirjanpito-expenses');
   if (!kirjEl) return;
   const uninv = state.expenses.filter(e => !e.invoiced);
@@ -262,6 +369,7 @@ export function renderExpenses() {
         <div class="entry-info">
           <div class="entry-meta">${fmtDate(e.date)}</div>
           <div class="entry-dur" style="font-size:15px;">${esc(e.description)}</div>
+          ${e.km ? `<div style="font-size:12px;color:var(--text2);margin-top:2px;">🚗 ${e.km} km</div>` : ''}
         </div>
         <div class="entry-right">
           ${e.customerId != null ? `<span class="tag tag-cust">${esc(customerName(e.customerId) || '—')}</span>` : ''}
@@ -274,10 +382,42 @@ export function renderExpenses() {
       </div>`).join('');
 }
 
+// ── 24H WARNING (manual entry + edit) ──
+const SKIP_24H_WARNING_KEY = 'skip24hWarning';
+let pending24hSave = null;
+
+function should24hWarn() {
+  return localStorage.getItem(SKIP_24H_WARNING_KEY) !== '1';
+}
+
+function show24hWarning(onConfirm) {
+  pending24hSave = onConfirm;
+  document.getElementById('modal-24h-warning').classList.add('open');
+}
+
+function closeConfirm24h() {
+  document.getElementById('modal-24h-warning').classList.remove('open');
+  pending24hSave = null;
+}
+
+function confirm24hProceed() {
+  if (document.getElementById('confirm24h-dont-show').checked) {
+    localStorage.setItem(SKIP_24H_WARNING_KEY, '1');
+  }
+  const fn = pending24hSave;
+  document.getElementById('modal-24h-warning').classList.remove('open');
+  pending24hSave = null;
+  if (fn) fn();
+}
+
+window.closeConfirm24h = closeConfirm24h;
+window.confirm24hProceed = confirm24hProceed;
+
 window.addManual = addManual;
 window.selManualService = selManualService;
 window.selectAll = selectAll;
 window.setFilter = setFilter;
+window.setFilterFromSelect = setFilterFromSelect;
 window.openEditEntry = openEditEntry;
 window.saveEditEntry = saveEditEntry;
 window.selEditService = selEditService;
@@ -285,5 +425,6 @@ window.deleteEntry = deleteEntry;
 window.closeEditModal = closeEditModal;
 window.toggleEntry = toggleEntry;
 window.addExpense = addExpense;
+window.onExpenseKindChange = onExpenseKindChange;
 window.toggleExpense = toggleExpense;
 window.deleteExpense = deleteExpense;

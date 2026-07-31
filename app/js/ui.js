@@ -4,8 +4,25 @@ import { renderMainBtns, renderPills } from './clock.js';
 import { renderEntries } from './entries.js';
 import { renderArchive } from './invoices.js';
 import { renderReports } from './reports.js';
-import { renderSettings } from './settings.js';
+import { renderSettings, renderRecList } from './settings.js';
 import { renderBillingSettings } from './billing.js';
+import { renderCustChips, renderAllSelects } from './customers.js';
+
+// ── ASIAKKAAT TAB ──
+function renderAsiakkaatTab() {
+  renderCustChips();
+  renderAllSelects();
+  renderRecList();
+}
+
+// ── KELLO SUB-NAV (Kirjaa / Raportit) ──
+function showKelloSub(which, btn) {
+  document.querySelectorAll('#panel-kello .subpanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.kello-subnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('subpanel-' + which).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (which === 'raportit') renderReports();
+}
 
 // ── LANG ──
 function setLang(l) {
@@ -59,7 +76,7 @@ export function applyLang() {
   document.querySelectorAll('.tab')[0].textContent = t('kello');
   document.querySelectorAll('.tab')[1].textContent = t('kirjanpito');
   document.querySelectorAll('.tab')[2].querySelector('.tab-label').textContent = t('arkisto');
-  document.querySelectorAll('.tab')[3].textContent = t('raportointi');
+  document.querySelectorAll('.tab')[3].textContent = t('customersLabel');
 
   document.querySelector('.card-label').textContent = t('manualEntry');
   document.querySelector('#notes-toggle-icon').nextSibling.textContent = ' ' + t('addNotes');
@@ -93,15 +110,17 @@ export function applyLang() {
   });
 
   renderMainBtns(); renderPills(); renderEntries(); renderArchive(); renderBillingSettings();
-  if (document.getElementById('panel-raportointi').classList.contains('active')) renderReports();
+  if (document.getElementById('subpanel-raportit').classList.contains('active')) renderReports();
   if (document.getElementById('panel-asetukset').classList.contains('active')) renderSettings();
+  if (document.getElementById('panel-asiakkaat').classList.contains('active')) renderAsiakkaatTab();
 }
 
 // ── TOAST ──
-export function toast(msg) {
+export function toast(msg, type = null) {
   const el = document.getElementById('toast');
   clearTimeout(toast._t);
   el.textContent = msg; el.classList.add('show');
+  el.classList.toggle('toast-success', type === 'success');
   toast._t = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
@@ -113,8 +132,10 @@ function showTab(tab, btn) {
   if (btn) btn.classList.add('active');
   if (tab === 'kirjanpito')  renderEntries();
   if (tab === 'arkisto')     renderArchive();
-  if (tab === 'raportointi') renderReports();
+  if (tab === 'asiakkaat')   renderAsiakkaatTab();
   if (tab === 'asetukset')   renderSettings();
+  // Työnäkymä may be showing its Raportit sub-view — keep it fresh on return.
+  if (tab === 'kello' && document.getElementById('subpanel-raportit').classList.contains('active')) renderReports();
 }
 
 export function goTab(tab) {
@@ -187,6 +208,7 @@ function closeConfirm() {
 }
 
 window.showTab = showTab;
+window.showKelloSub = showKelloSub;
 window.setLang = setLang;
 window.setTheme = setTheme;
 window.toggleNotes = toggleNotes;

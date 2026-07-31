@@ -4,7 +4,7 @@ import { fmtDur, fmtDate, esc, roundDuration } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
 import { addEntry } from './entries.js';
 import { saveConfig } from './storage.js';
-import { customerName } from './customers.js';
+import { customerName, ADD_NEW_VALUE } from './customers.js';
 
 export function tick() {
   const total = Math.floor((state.elapsedMs + (Date.now() - state.startTime)) / 1000);
@@ -76,7 +76,16 @@ function enableClockRateEdit() {
   document.getElementById('clock-rate-display').style.display = 'none';
   document.getElementById('clock-rate-edit').style.display = 'flex';
   const inp = document.getElementById('clock-rate-input');
+  inp.dataset.orig = inp.value;
+  markClockRateChanged();
   inp.focus(); inp.select();
+}
+
+function markClockRateChanged() {
+  const inp = document.getElementById('clock-rate-input');
+  const btn = document.getElementById('clock-rate-confirm-btn');
+  if (!inp || !btn) return;
+  btn.classList.toggle('rate-changed', inp.value !== inp.dataset.orig);
 }
 
 function confirmClockRateEdit() {
@@ -85,6 +94,7 @@ function confirmClockRateEdit() {
     document.getElementById('clock-rate-val').textContent = val.toFixed(2).replace('.', ',') + ' €/h';
     document.getElementById('clock-rate-input').value = val;
   }
+  document.getElementById('clock-rate-confirm-btn').classList.remove('rate-changed');
   document.getElementById('clock-rate-display').style.display = 'flex';
   document.getElementById('clock-rate-edit').style.display = 'none';
 }
@@ -184,8 +194,10 @@ export function renderPills() {
   }
   const sorted = [...state.customers].sort((a, b) => a.name.localeCompare(b.name, 'fi', { sensitivity: 'base' }));
   el.innerHTML = [`<option value=""${state.activeCustomerId ? '' : ' selected'}>— ${t('noCustomer')} —</option>`,
-    ...sorted.map(c => `<option value="${c.id}"${state.activeCustomerId === c.id ? ' selected' : ''}>${esc(c.name)}</option>`)
+    ...sorted.map(c => `<option value="${c.id}"${state.activeCustomerId === c.id ? ' selected' : ''}>${esc(c.name)}</option>`),
+    `<option value="${ADD_NEW_VALUE}">${t('addCustomer')}</option>`
   ].join('');
+  el.dataset.prevValue = state.activeCustomerId ?? '';
   el.disabled = isLocked;
   syncSelectLabel('cust-select', 'cust-select-label');
 }
@@ -202,4 +214,5 @@ window.selCust = selCust;
 window.selService = selService;
 window.toggleHideRate = toggleHideRate;
 window.enableClockRateEdit = enableClockRateEdit;
+window.markClockRateChanged = markClockRateChanged;
 window.confirmClockRateEdit = confirmClockRateEdit;

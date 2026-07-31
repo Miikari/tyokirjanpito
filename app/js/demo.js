@@ -4,13 +4,16 @@ function d(dateStr) {
   return new Date(dateStr + 'T12:00:00').toISOString();
 }
 
-function calcInvoice(id, dateStr, entries, maksuehto, paid = true) {
+function calcInvoice(id, dateStr, entries, maksuehto, paid = true, expenses = []) {
   const totalSecs = entries.reduce((a, e) => a + e.secs, 0);
   const hourly = entries.reduce((a, e) => a + (e.secs / 3600) * e.rate, 0);
+  const expenseTotal = expenses.reduce((a, e) => a + e.amount, 0);
+  const subtotal = hourly + expenseTotal;
   return {
     id, date: d(dateStr), entries: entries.map(e => ({ ...e })),
-    totalSecs, hourly, monthly: 0, subtotal: hourly,
-    vatAmount: 0, vat: 0, total: hourly, recurring: [], maksuehto, paid,
+    totalSecs, hourly, monthly: 0,
+    expenses: expenses.map(e => ({ ...e })), expenseTotal,
+    subtotal, vatAmount: 0, vat: 0, total: subtotal, recurring: [], maksuehto, paid,
   };
 }
 
@@ -35,6 +38,7 @@ function loadDemoDataFi() {
     tilinumero: 'FI21 1234 5600 0007 85',
     rounding: 15,
     vat: 0,
+    kmRate: 0.57,
     showTilinumero: true,
     showErapaiva: true,
     showViitenumero: false,
@@ -110,10 +114,25 @@ function loadDemoDataFi() {
     { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Käyttöönottotuki',             rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
   ];
 
+  // ── Kulukorvaukset (yleinen + kilometrikorvaus) ──
+
+  const inv4Expenses = [
+    { id: 2, date: d('2026-04-20'), description: 'Kilometrikorvaus: 38 km × 0,57 € = 21,66 €', amount: 21.66, vat: 0, vatAmount: 0, customer: 'Esimerkki Oy', customerId: 1, kind: 'km', km: 38, kmRate: 0.57, selected: false, invoiced: true },
+  ];
+  const inv5Expenses = [
+    { id: 1, date: d('2026-05-12'), description: 'Matkakulut asiakastapaamiseen', amount: 35, vat: 0, vatAmount: 0, customer: 'Demo Solutions Oy', customerId: 2, kind: 'general', km: 0, kmRate: null, selected: false, invoiced: true },
+  ];
+
+  // Avoimet kulukorvaukset
+  const openExpenses = [
+    { id: 3, date: d('2026-06-14'), description: 'Toimistotarvikkeet',                                       amount: 45,    vat: 0, vatAmount: 0, customerId: 1, kind: 'general', km: 0,  kmRate: null, selected: false, invoiced: false },
+    { id: 4, date: d('2026-06-20'), description: 'Kilometrikorvaus: 42 km × 0,57 € = 23,94 €',                amount: 23.94, vat: 0, vatAmount: 0, customerId: 2, kind: 'km',      km: 42, kmRate: 0.57, selected: false, invoiced: false },
+  ];
+
   state.invoices = [
     calcInvoice(6, '2026-06-01', inv6Entries, 14, false), // erääntynyt, maksamatta
-    calcInvoice(5, '2026-05-30', inv5Entries, 10, true),
-    calcInvoice(4, '2026-04-30', inv4Entries, 14, true),
+    calcInvoice(5, '2026-05-30', inv5Entries, 10, true, inv5Expenses),
+    calcInvoice(4, '2026-04-30', inv4Entries, 14, true, inv4Expenses),
     calcInvoice(3, '2026-03-31', inv3Entries, 10, true),
     calcInvoice(2, '2026-02-28', inv2Entries, 14, true),
     calcInvoice(1, '2026-01-31', inv1Entries, 10, true),
@@ -124,9 +143,11 @@ function loadDemoDataFi() {
     ...inv6Entries, ...inv5Entries, ...inv4Entries,
     ...inv3Entries, ...inv2Entries, ...inv1Entries,
   ];
+  state.expenses = [...openExpenses, ...inv5Expenses, ...inv4Expenses];
   state.eId = 18;
   state.iId = 6;
   state.cId = 2;
+  state.eExpId = 4;
 }
 
 function loadDemoDataEn() {
@@ -140,6 +161,7 @@ function loadDemoDataEn() {
     tilinumero: 'FI21 1234 5600 0007 85',
     rounding: 15,
     vat: 0,
+    kmRate: 0.57,
     showTilinumero: true,
     showErapaiva: true,
     showViitenumero: false,
@@ -215,10 +237,25 @@ function loadDemoDataEn() {
     { id: 18, date: d('2026-06-19'), secs: 3600,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Onboarding support',          rate: 90, service: 'Consulting', selected: false, invoiced: false },
   ];
 
+  // ── Expenses (general + mileage reimbursement) ──
+
+  const inv4Expenses = [
+    { id: 2, date: d('2026-04-20'), description: 'Mileage reimbursement: 38 km × €0.57 = €21.66', amount: 21.66, vat: 0, vatAmount: 0, customer: 'Example Ltd', customerId: 1, kind: 'km', km: 38, kmRate: 0.57, selected: false, invoiced: true },
+  ];
+  const inv5Expenses = [
+    { id: 1, date: d('2026-05-12'), description: 'Travel costs for client meeting', amount: 35, vat: 0, vatAmount: 0, customer: 'Demo Solutions Ltd', customerId: 2, kind: 'general', km: 0, kmRate: null, selected: false, invoiced: true },
+  ];
+
+  // Open (uninvoiced) expenses
+  const openExpenses = [
+    { id: 3, date: d('2026-06-14'), description: 'Office supplies',                                     amount: 45,    vat: 0, vatAmount: 0, customerId: 1, kind: 'general', km: 0,  kmRate: null, selected: false, invoiced: false },
+    { id: 4, date: d('2026-06-20'), description: 'Mileage reimbursement: 42 km × €0.57 = €23.94',        amount: 23.94, vat: 0, vatAmount: 0, customerId: 2, kind: 'km',      km: 42, kmRate: 0.57, selected: false, invoiced: false },
+  ];
+
   state.invoices = [
     calcInvoice(6, '2026-06-01', inv6Entries, 14, false), // overdue, unpaid
-    calcInvoice(5, '2026-05-30', inv5Entries, 10, true),
-    calcInvoice(4, '2026-04-30', inv4Entries, 14, true),
+    calcInvoice(5, '2026-05-30', inv5Entries, 10, true, inv5Expenses),
+    calcInvoice(4, '2026-04-30', inv4Entries, 14, true, inv4Expenses),
     calcInvoice(3, '2026-03-31', inv3Entries, 10, true),
     calcInvoice(2, '2026-02-28', inv2Entries, 14, true),
     calcInvoice(1, '2026-01-31', inv1Entries, 10, true),
@@ -229,7 +266,9 @@ function loadDemoDataEn() {
     ...inv6Entries, ...inv5Entries, ...inv4Entries,
     ...inv3Entries, ...inv2Entries, ...inv1Entries,
   ];
+  state.expenses = [...openExpenses, ...inv5Expenses, ...inv4Expenses];
   state.eId = 18;
   state.iId = 6;
   state.cId = 2;
+  state.eExpId = 4;
 }

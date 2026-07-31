@@ -13,10 +13,14 @@ const months = () => t('monthNamesShort');
 const monthNames = () => t('monthNames');
 
 let reportYear = new Date().getFullYear();
-let showVat = false;
+// Independent per section — toggling VAT in one card must not affect the
+// other, they just happened to share one flag before.
+let showVatCustomers = false;
+let showVatMonthly = false;
 
-function toggleReportVat() {
-  showVat = !showVat;
+function toggleReportVat(which) {
+  if (which === 'monthly') showVatMonthly = !showVatMonthly;
+  else showVatCustomers = !showVatCustomers;
   renderReports();
 }
 
@@ -41,19 +45,37 @@ function sizeCanvas(id, w, h) {
   return { ctx, W: w, H: h };
 }
 
+function reportYearOptions() {
+  const years = new Set([reportYear, new Date().getFullYear()]);
+  state.invoices.forEach(inv => years.add(new Date(inv.date).getFullYear()));
+  state.entries.forEach(e => years.add(new Date(e.date).getFullYear()));
+  return [...years].sort((a, b) => b - a);
+}
+
+function setReportYear(y) {
+  reportYear = parseInt(y, 10);
+  renderReports();
+}
+
 export function renderReports() {
-  document.getElementById('report-year').textContent = reportYear;
-  document.getElementById('btn-dl-year').textContent = `↓ ${t('yearReport')} ${reportYear}`;
-  document.getElementById('btn-dl-month').textContent = `↓ ${t('monthReport')}`;
-  ['btn-toggle-vat', 'btn-toggle-vat-2'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.textContent = showVat ? t('hideVat') : t('showVat');
-  });
+  const yearSel = document.getElementById('rep-year-sel');
+  if (yearSel) {
+    yearSel.innerHTML = reportYearOptions().map(y => `<option value="${y}"${y === reportYear ? ' selected' : ''}>${y}</option>`).join('');
+  }
+  document.getElementById('rep-year-title-btn').textContent = `${t('yearReport')} ${reportYear}`;
+  const btnVatCust = document.getElementById('btn-toggle-vat');
+  if (btnVatCust) btnVatCust.textContent = showVatCustomers ? t('hideVat') : t('showVat');
+  const btnVatMonth = document.getElementById('btn-toggle-vat-2');
+  if (btnVatMonth) btnVatMonth.textContent = showVatMonthly ? t('hideVat') : t('showVat');
   const sel = document.getElementById('rep-month-sel');
   if (sel) {
-    const prev = sel.dataset.userChanged ? parseInt(sel.value) : (reportYear === new Date().getFullYear() ? new Date().getMonth() : 0);
-    sel.innerHTML = monthNames().map((n, i) => `<option value="${i}"${i === prev ? ' selected' : ''}>${n}</option>`).join('');
-    if (sel.dataset.userChanged) sel.value = prev;
+    // Future months of the current year have no data yet, so they're not
+    // offered — the list only goes up to the current month.
+    const now = new Date();
+    const maxMonth = reportYear === now.getFullYear() ? now.getMonth() : 11;
+    const prev = sel.dataset.userChanged ? parseInt(sel.value) : (reportYear === now.getFullYear() ? now.getMonth() : 0);
+    sel.innerHTML = monthNames().slice(0, maxMonth + 1).map((n, i) => `<option value="${i}"${i === prev ? ' selected' : ''}>${n}</option>`).join('');
+    if (sel.dataset.userChanged) sel.value = Math.min(prev, maxMonth);
   }
   const invs = yearInvoices();
   renderCustomerSummary(invs);
@@ -80,7 +102,7 @@ function renderCustomerSummary(invs) {
   const grandNet = entries.reduce((a, [, v]) => a + v.net, 0);
   const grandVat = entries.reduce((a, [, v]) => a + v.vat, 0);
 
-  const vatNote = (v) => showVat && v.net > 0
+  const vatNote = (v) => showVatCustomers && v.net > 0
     ? `<div class="rep-vat-note">${t('vatIncl')} ${fmtEur(v.vat)}</div>` : '';
 
   el.innerHTML = entries.map(([name, v], i) => `
@@ -91,7 +113,7 @@ function renderCustomerSummary(invs) {
         <div class="rep-sub">${v.count} ${v.count !== 1 ? t('invoiceSuffix') : t('invoiceSuffix1')} · ${fmtShort(v.secs)} h</div>
       </div>
       <div class="rep-val-wrap">
-        <div class="rep-val">${fmtEur(showVat ? v.net + v.vat : v.net)}</div>
+        <div class="rep-val">${fmtEur(showVatCustomers ? v.net + v.vat : v.net)}</div>
         ${vatNote(v)}
       </div>
     </div>
@@ -99,7 +121,7 @@ function renderCustomerSummary(invs) {
     <div class="rep-grand">
       <span>${t('totalRow')} ${reportYear}</span>
       <div class="rep-val-wrap">
-        <span>${fmtEur(showVat ? grandNet + grandVat : grandNet)}</span>
+        <span>${fmtEur(showVatCustomers ? grandNet + grandVat : grandNet)}</span>
         ${vatNote({ net: grandNet, vat: grandVat })}
       </div>
     </div>
@@ -168,14 +190,35 @@ function drawPie(invs) {
   `).join('');
 }
 
-function chartValLabel(val) {
+// Axis gridline labels stay compact (k€ shorthand); the labels drawn inside
+// each bar segment show the precise sum instead.
+function chartAxisLabel(val) {
   return (val >= 1000 ? (val / 1000).toFixed(val >= 10000 ? 0 : 1) + 'k' : Math.round(val).toString()) + '€';
+}
+function chartValLabel(val) {
+  return Math.round(val).toLocaleString('fi-FI') + ' €';
+}
+
+// Y-axis gridline spacing — "nice" round numbers rather than an arbitrary
+// 1/4-of-max split, so the axis reads the way you'd sketch it by hand.
+function niceStep(maxVal) {
+  const table = [
+    [2000, 500], [4000, 1000], [6000, 1500], [8000, 2000],
+    [10000, 2500], [20000, 5000], [40000, 10000],
+  ];
+  for (const [limit, step] of table) {
+    if (maxVal <= limit) return step;
+  }
+  // Beyond the table, keep doubling both the limit and its step.
+  let limit = 40000, step = 10000;
+  while (maxVal > limit) { limit *= 2; step *= 2; }
+  return step;
 }
 
 function drawBars(invs) {
   const wrap = document.getElementById('chart-bars-wrap');
   const W = wrap.clientWidth;
-  const H = 180;
+  const H = 280;
   const { ctx } = sizeCanvas('chart-bars', W, H);
 
   const monthlyNet = Array(12).fill(0);
@@ -185,29 +228,33 @@ function drawBars(invs) {
     monthlyNet[m] += inv.subtotal ?? inv.total;
     monthlyVat[m] += inv.vatAmount ?? 0;
   }
-  const monthlyTotals = monthlyNet.map((net, i) => showVat ? net + monthlyVat[i] : net);
+  const monthlyTotals = monthlyNet.map((net, i) => showVatMonthly ? net + monthlyVat[i] : net);
+  const maxVal = Math.max(...monthlyTotals, 100);
+  const step = niceStep(maxVal);
+  const axisTop = Math.ceil(maxVal / step) * step;
+  const numSteps = axisTop / step;
 
-  const pt = 14, pb = 30, pl = 48, pr = 8;
+  ctx.font = '11px -apple-system, sans-serif';
+  const axisLabelWidth = ctx.measureText(chartAxisLabel(axisTop)).width;
+
+  const pt = 24, pb = 44, pl = Math.ceil(axisLabelWidth) + 14, pr = 8;
   const cW = W - pl - pr;
   const cH = H - pt - pb;
-  const maxVal = Math.max(...monthlyTotals, 100);
   const slot = cW / 12;
   const bW = Math.max(slot * 0.6, 4);
 
   const dark = document.documentElement.dataset.theme === 'dark';
 
-  ctx.font = '10px -apple-system, sans-serif';
-  const steps = 4;
-  for (let i = 0; i <= steps; i++) {
-    const y = pt + cH - (i / steps) * cH;
-    const val = (i / steps) * maxVal;
+  for (let i = 0; i <= numSteps; i++) {
+    const val = i * step;
+    const y = pt + cH - (val / axisTop) * cH;
     ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pl, y); ctx.lineTo(W - pr, y); ctx.stroke();
     ctx.fillStyle = dark ? '#f2f2f2' : '#070707';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(chartValLabel(val), pl - 4, y);
+    ctx.fillText(chartAxisLabel(val), pl - 4, y);
   }
 
   const now = new Date();
@@ -217,49 +264,90 @@ function drawBars(invs) {
     const x = pl + i * slot + (slot - bW) / 2;
     const isCurrent = reportYear === now.getFullYear() && i === now.getMonth();
 
-    const bH = val > 0 ? Math.max((val / maxVal) * cH, 3) : 3;
-    const netH = val > 0 && showVat ? (net / maxVal) * cH : bH;
-    const vatH = val > 0 && showVat ? Math.max(bH - netH, 0) : 0;
+    const bH = val > 0 ? Math.max((val / axisTop) * cH, 3) : 3;
+    const netH = val > 0 && showVatMonthly ? (net / axisTop) * cH : bH;
+    const vatH = val > 0 && showVatMonthly ? Math.max(bH - netH, 0) : 0;
     const y = pt + cH - bH;
 
     ctx.fillStyle = val > 0 ? (isCurrent ? '#1565C0' : '#1976D2') : (dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8');
     ctx.fillRect(x, y + vatH, bW, netH);
 
-    if (showVat && vatH > 0) {
+    if (showVatMonthly && vatH > 0) {
       ctx.fillStyle = isCurrent ? '#4a9d82' : '#6ab89c';
       ctx.fillRect(x, y, bW, vatH);
+
+      // VAT is often too thin a segment to fit a label inside it, so its
+      // amount is shown just above the bar instead.
+      ctx.fillStyle = dark ? '#8fd6ba' : '#3d8b5f';
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(chartValLabel(vat), x + bW / 2, y - 2);
     }
 
-    // Rotated value labels drawn inside each segment, skipped when the
-    // segment is too short to fit readable text without overflowing it.
-    const drawSegLabel = (segY, segH, text) => {
-      if (segH < 24) return;
-      ctx.save();
-      ctx.translate(x + bW / 2, segY + segH / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillStyle = '#fff';
-      ctx.font = '8px -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, 0, 0);
-      ctx.restore();
-    };
-    if (val > 0) drawSegLabel(y + vatH, netH, chartValLabel(net));
-    if (showVat && vatH > 0) drawSegLabel(y, vatH, chartValLabel(vat));
-
+    // Month name + that month's sum, stacked below the x-axis.
     ctx.fillStyle = isCurrent ? '#1565C0' : '#505050';
-    ctx.font = isCurrent ? 'bold 9px -apple-system, sans-serif' : '9px -apple-system, sans-serif';
+    ctx.font = isCurrent ? 'bold 9px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(months()[i], x + bW / 2, H - pb + 4);
+    if (val > 0) {
+      ctx.fillStyle = dark ? '#c8ccd2' : '#707070';
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.fillText(chartValLabel(val), x + bW / 2, H - pb + 16);
+    }
   });
 }
 
-function reportPrevYear() { reportYear--; renderReports(); }
-function reportNextYear() { reportYear = Math.min(reportYear + 1, new Date().getFullYear()); renderReports(); }
-
 // ── RAPORTTIEN LATAUS ──
 
+// ── PDF (jsPDF + autoTable, self-hosted in js/vendor/ — see app/index.html) ──
+// Reports save a real PDF file straight to disk; no print dialog, no extra
+// browser tab. Table styling mirrors the app's mint/navy palette.
+const PDF_HEAD_COLOR = [74, 157, 130];
+const PDF_MARGIN = 14;
+
+function pdfHeader(doc, title) {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text(title, PDF_MARGIN, 18);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text(`${t('createdOn')} ${fmtDate(new Date())}`, PDF_MARGIN, 25);
+
+  if (state.cfg.company) {
+    doc.setTextColor(20);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(state.cfg.company, 196, 15, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    let ly = 20;
+    if (state.cfg.ytunnus) { doc.text(`Y-tunnus: ${state.cfg.ytunnus}`, 196, ly, { align: 'right' }); ly += 5; }
+    if (state.cfg.email) doc.text(state.cfg.email, 196, ly, { align: 'right' });
+  }
+  doc.setTextColor(0);
+  return 34; // y position content starts from
+}
+
+function pdfTable(doc, y, head, body) {
+  doc.autoTable({
+    startY: y,
+    head: [head],
+    body,
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: PDF_HEAD_COLOR, textColor: 255 },
+    margin: { left: PDF_MARGIN, right: PDF_MARGIN },
+  });
+  return doc.lastAutoTable.finalY + 10;
+}
+
+// ── Browser-tab preview (the big "Vuosiraportti"/"Kuukausiraportti" buttons
+// open this — an HTML page the user can read, print, or manually save as
+// PDF, as opposed to the direct-download PDF from the "Lataa PDF" button) ──
 function reportStyles(nonce) {
   return `<style nonce="${nonce}">
     body{font-family:-apple-system,Arial,sans-serif;padding:32px 40px;color:#111;max-width:920px;margin:0 auto;font-size:14px;}
@@ -297,7 +385,7 @@ function companyHeader() {
   </div>`;
 }
 
-function openReport(html, title) {
+function openReport(html) {
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const win = window.open(url, '_blank');
@@ -309,8 +397,8 @@ function nonce() {
   return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
 }
 
-// Shared by the HTML report and the CSV export, so both always describe
-// exactly the same set of invoices/entries/expenses for a given year.
+// Shared by the PDF and CSV exports, so both always describe exactly the
+// same set of invoices/entries/expenses for a given year.
 function getYearReportData(year) {
   const invs = state.invoices.filter(inv => new Date(inv.date).getFullYear() === year);
   const allEntries = state.entries.filter(e => new Date(e.date).getFullYear() === year);
@@ -352,7 +440,65 @@ function getYearReportData(year) {
 
 function downloadYearReport() {
   const {
-    year, invs, allEntries, allExpenses, monthlyData, totalInvoiced, totalSecs,
+    year, invs, allExpenses, monthlyData, totalInvoiced, totalSecs,
+    totalExpenses, custMap, openEntries,
+  } = getYearReportData(reportYear);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = pdfHeader(doc, `${t('yearReport')} ${year}`);
+
+  doc.setFontSize(10);
+  doc.setTextColor(40);
+  const summaryText = `${t('invoicedLabel')}: ${fmtEur(totalInvoiced)}  ·  ${t('hours')}: ${fmtShort(totalSecs)} h` +
+    (totalExpenses > 0 ? `  ·  ${t('expenses')}: ${fmtEur(totalExpenses)}` : '');
+  doc.text(summaryText, PDF_MARGIN, y);
+  doc.setTextColor(0);
+  y += 8;
+
+  const monthRows = monthlyData
+    .map((d, i) => (d.invoiced > 0 || d.secs > 0)
+      ? [monthNames()[i], d.count || '—', d.secs > 0 ? fmtShort(d.secs) + ' h' : '—', d.invoiced > 0 ? fmtEur(d.invoiced) : '—']
+      : null)
+    .filter(Boolean);
+  monthRows.push([`${t('totalRow')} ${year}`, invs.length, fmtShort(totalSecs) + ' h', fmtEur(totalInvoiced)]);
+  y = pdfTable(doc, y, [t('date'), t('invoiceSuffix'), t('hours'), t('invoicedLabel')], monthRows);
+
+  if (Object.keys(custMap).length) {
+    const custRows = Object.entries(custMap).sort((a, b) => b[1].total - a[1].total)
+      .map(([name, v]) => [name, v.count, fmtShort(v.secs) + ' h', fmtEur(v.total)]);
+    y = pdfTable(doc, y, [t('customer'), t('invoiceSuffix'), t('hours'), t('invoicedLabel')], custRows);
+  }
+
+  if (invs.length) {
+    const invRows = invs.map(inv => {
+      const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+      return [t('invoicePrefix') + String(inv.id).padStart(3, '0'), fmtDate(inv.date), custs.join(', ') || '—',
+        fmtShort(inv.totalSecs) + ' h', fmtEur(inv.total), fmtEur(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid')];
+    });
+    y = pdfTable(doc, y, [t('numberLabel'), t('date'), t('customer'), t('hours'), t('amount'), t('vatLabel'), t('statusLabel')], invRows);
+  }
+
+  if (openEntries.length) {
+    const openRows = openEntries.map(e => [fmtDate(e.date), customerName(e.customerId) || '—', fmtHours(e.secs),
+      fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly)), e.service || '—', e.notes || '']);
+    y = pdfTable(doc, y, [t('date'), t('customer'), t('hours'), t('valueLabel'), t('service'), t('notes')], openRows);
+  }
+
+  if (allExpenses.length) {
+    const expRows = allExpenses.map(e => [fmtDate(e.date), e.description, customerName(e.customerId) || '—',
+      fmtEur(e.amount), e.vat != null ? fmtEur(e.vatAmount ?? (e.amount * e.vat / 100)) : '—', e.invoiced ? t('invoicedLabel') : t('open')]);
+    y = pdfTable(doc, y, [t('date'), t('description'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')], expRows);
+  }
+
+  doc.save(`${t('yearReport')} ${year}.pdf`);
+}
+
+// Opens the same report as a browser tab instead of downloading a PDF —
+// wired to the big "Vuosiraportti" button.
+function viewYearReport() {
+  const {
+    year, invs, allExpenses, monthlyData, totalInvoiced, totalSecs,
     openSecs, totalExpenses, paidTotal, unpaidTotal, custMap, openEntries,
   } = getYearReportData(reportYear);
 
@@ -393,6 +539,7 @@ function downloadYearReport() {
       <td>${esc(customerName(e.customerId) || '—')}</td>
       <td class="num">${fmtHours(e.secs)}</td>
       <td class="num">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
+      <td style="font-size:12px;color:#666;">${esc(e.service || '')}</td>
       <td style="font-size:12px;color:#666;">${esc(e.notes || '')}</td>
     </tr>`).join('');
 
@@ -468,7 +615,7 @@ function downloadYearReport() {
     ${openEntries.length > 0 ? `
     <h2>${t('uninvoicedEntries')}</h2>
     <table>
-      <thead><tr><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('valueLabel')}</th><th>${t('notes')}</th></tr></thead>
+      <thead><tr><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('hours')}</th><th class="num">${t('valueLabel')}</th><th>${t('service')}</th><th>${t('notes')}</th></tr></thead>
       <tbody>${openRows}</tbody>
     </table>` : ''}
 
@@ -483,11 +630,10 @@ function downloadYearReport() {
     <script nonce="${nc}">document.getElementById('pbtn').addEventListener('click',()=>window.print())</script>
   </body></html>`;
 
-  openReport(html, `${t('yearReport')} ${year}`);
+  openReport(html);
 }
 
-// Shared by the HTML report and the CSV export, same reasoning as
-// getYearReportData above.
+// Shared by the PDF and CSV exports, same reasoning as getYearReportData above.
 function getMonthReportData(year, month) {
   const monthName = monthNames()[month];
 
@@ -520,86 +666,42 @@ function downloadMonthReport() {
     totalInvoiced, totalExpenses, openSecs,
   } = getMonthReportData(reportYear, parseInt(sel.value));
 
-  const nc = nonce();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = pdfHeader(doc, `${monthName} ${year}`);
 
-  const invRows = invs.map(inv => {
-    const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
-    return `<tr>
-      <td>${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</td>
-      <td>${fmtDate(inv.date)}</td>
-      <td>${custs.map(esc).join(', ') || '—'}</td>
-      <td class="num">${fmtEur(inv.total)}</td>
-      <td class="num">${fmtEur(inv.vatAmount ?? 0)}</td>
-      <td><span class="tag ${inv.paid ? 'tag-paid' : 'tag-unpaid'}">${inv.paid ? t('paid') : t('unpaid')}</span></td>
-    </tr>`;
-  }).join('');
+  doc.setFontSize(10);
+  doc.setTextColor(40);
+  const summaryText = `${t('hours')}: ${fmtShort(totalSecs)} h  ·  ${t('invoicedLabel')}: ${fmtEur(totalInvoiced)}` +
+    (openSecs > 0 ? `  ·  ${t('uninvoiced')}: ${fmtShort(openSecs)} h` : '') +
+    (totalExpenses > 0 ? `  ·  ${t('expenses')}: ${fmtEur(totalExpenses)}` : '');
+  doc.text(summaryText, PDF_MARGIN, y);
+  doc.setTextColor(0);
+  y += 8;
 
-  const expRows = allExpenses.map(e => `
-    <tr>
-      <td>${fmtDate(e.date)}</td>
-      <td>${esc(e.description)}</td>
-      <td>${esc(customerName(e.customerId) || '—')}</td>
-      <td class="num">${fmtEur(e.amount)}</td>
-      <td class="num">${e.vat != null ? fmtEur(e.vatAmount ?? (e.amount * e.vat / 100)) : '—'}</td>
-      <td><span class="tag ${e.invoiced ? 'tag-inv' : 'tag-open'}">${e.invoiced ? t('invoicedLabel') : t('open')}</span></td>
-    </tr>`).join('');
+  if (!allEntries.length) {
+    doc.setTextColor(150);
+    doc.text(`${t('noEntriesMonth')} ${monthName} ${year}.`, PDF_MARGIN, y);
+    doc.setTextColor(0);
+    y += 8;
+  }
 
-  const html = `<!DOCTYPE html><html lang="${state.lang}"><head><meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nc}'; script-src 'nonce-${nc}';">
-    <title>${monthName} ${year}</title>
-    ${reportStyles(nc)}
-  </head><body>
-    <div class="rep-header">
-      <div>
-        <h1>${monthName} ${year}</h1>
-        <div class="meta">${t('createdOn')} ${fmtDate(new Date())}</div>
-      </div>
-      ${companyHeader()}
-    </div>
+  if (invs.length) {
+    const invRows = invs.map(inv => {
+      const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+      return [t('invoicePrefix') + String(inv.id).padStart(3, '0'), fmtDate(inv.date), custs.join(', ') || '—',
+        fmtEur(inv.total), fmtEur(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid')];
+    });
+    y = pdfTable(doc, y, [t('numberLabel'), t('date'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')], invRows);
+  }
 
-    <div class="summary">
-      <div class="sum-item">
-        <div class="sum-label">${t('hours')}</div>
-        <div class="sum-val">${fmtShort(totalSecs)} h</div>
-        <div class="sum-sub">${openSecs > 0 ? t('uninvoiced') + ': ' + fmtShort(openSecs) + ' h' : t('valueLabel') + ': ' + fmtEur(totalVal)}</div>
-      </div>
-      <div class="sum-item">
-        <div class="sum-label">${t('invoicedLabel')}</div>
-        <div class="sum-val">${fmtEur(totalInvoiced)}</div>
-        <div class="sum-sub">${invs.length} ${t('invoiceSuffix')}</div>
-      </div>
-      ${totalExpenses > 0 ? `<div class="sum-item">
-        <div class="sum-label">${t('expenses')}</div>
-        <div class="sum-val">${fmtEur(totalExpenses)}</div>
-      </div>` : ''}
-    </div>
+  if (allExpenses.length) {
+    const expRows = allExpenses.map(e => [fmtDate(e.date), e.description, customerName(e.customerId) || '—',
+      fmtEur(e.amount), e.vat != null ? fmtEur(e.vatAmount ?? (e.amount * e.vat / 100)) : '—', e.invoiced ? t('invoicedLabel') : t('open')]);
+    y = pdfTable(doc, y, [t('date'), t('description'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')], expRows);
+  }
 
-    ${allEntries.length > 0 ? `
-    <h2>${t('kirjanpito')}</h2>
-    <table>
-      <thead><tr><th class="num">${t('hours')}</th><th class="num">${t('amount')}</th></tr></thead>
-      <tbody><tr><td class="num">${fmtShort(totalSecs)} h</td><td class="num">${fmtEur(totalVal)}</td></tr></tbody>
-    </table>` : `<p style="color:#999;margin:16px 0;">${t('noEntriesMonth')} ${monthName} ${year}.</p>`}
-
-    ${invs.length > 0 ? `
-    <h2>${t('invoice')}</h2>
-    <table>
-      <thead><tr><th>${t('numberLabel')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th class="num">${t('vatLabel')}</th><th>${t('statusLabel')}</th></tr></thead>
-      <tbody>${invRows}</tbody>
-    </table>` : ''}
-
-    ${allExpenses.length > 0 ? `
-    <h2>${t('expenses')}</h2>
-    <table>
-      <thead><tr><th>${t('date')}</th><th>${t('description')}</th><th>${t('customer')}</th><th class="num">${t('amount')}</th><th class="num">${t('vatLabel')}</th><th>${t('statusLabel')}</th></tr></thead>
-      <tbody>${expRows}</tbody>
-    </table>` : ''}
-
-    <button class="print-btn" id="pbtn">${t('printSavePdf')}</button>
-    <script nonce="${nc}">document.getElementById('pbtn').addEventListener('click',()=>window.print())</script>
-  </body></html>`;
-
-  openReport(html, `${monthName} ${year}`);
+  doc.save(`${monthName} ${year}.pdf`);
 }
 
 // ── CSV-VIENTI ──
@@ -649,10 +751,10 @@ function downloadYearReportCsv() {
     ])) : '';
 
   const openSection = openEntries.length ? csvSection(t('uninvoicedEntries'),
-    [t('date'), t('customer'), t('hours'), t('valueLabel'), t('notes')],
+    [t('date'), t('customer'), t('hours'), t('valueLabel'), t('service'), t('notes')],
     openEntries.map(e => [
       fmtDate(e.date), customerName(e.customerId) || '—', csvHours(e.secs),
-      csvNum((e.secs / 3600) * (e.rate ?? state.cfg.hourly)), e.notes || '',
+      csvNum((e.secs / 3600) * (e.rate ?? state.cfg.hourly)), e.service || '', e.notes || '',
     ])) : '';
 
   const expSection = allExpenses.length ? csvSection(t('expenses'),
@@ -671,11 +773,11 @@ function downloadMonthReportCsv() {
   const { year, monthName, invs, allEntries, allExpenses } = getMonthReportData(reportYear, parseInt(sel.value));
 
   const entrySection = allEntries.length ? csvSection(t('kirjanpito'),
-    [t('date'), t('customer'), t('hours'), t('rateLabel'), t('amount'), t('statusLabel'), t('notes')],
+    [t('date'), t('customer'), t('hours'), t('rateLabel'), t('amount'), t('statusLabel'), t('service'), t('notes')],
     allEntries.map(e => [
       fmtDate(e.date), customerName(e.customerId) || '—', csvHours(e.secs),
       csvNum(e.rate ?? state.cfg.hourly), csvNum((e.secs / 3600) * (e.rate ?? state.cfg.hourly)),
-      e.invoiced ? t('invoicedLabel') : t('open'), e.notes || '',
+      e.invoiced ? t('invoicedLabel') : t('open'), e.service || '', e.notes || '',
     ])) : '';
 
   const invSection = invs.length ? csvSection(t('invoice'),
@@ -697,10 +799,10 @@ function downloadMonthReportCsv() {
   downloadCsv(`${monthName}-${year}.csv`, [entrySection, invSection, expSection]);
 }
 
-window.reportPrevYear = reportPrevYear;
-window.reportNextYear = reportNextYear;
+window.setReportYear = setReportYear;
 window.toggleReportVat = toggleReportVat;
 window.downloadYearReport = downloadYearReport;
+window.viewYearReport = viewYearReport;
 window.downloadMonthReport = downloadMonthReport;
 window.downloadYearReportCsv = downloadYearReportCsv;
 window.downloadMonthReportCsv = downloadMonthReportCsv;

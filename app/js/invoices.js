@@ -7,7 +7,14 @@ import { renderEntries, renderExpenses } from './entries.js';
 import { isPro, showUpgradeModal, incrementInvoiceCount } from './billing.js';
 import { customerById, customerName } from './customers.js';
 
+// Guards the double-click race across all 3 entry points into finishInvoice()
+// (direct, and the two recurring-charges modal buttons) — without it, a fast
+// double-click can create two duplicate invoices from the same entries,
+// since the entries aren't marked invoiced until the first save round-trips.
+let composingInvoice = false;
+
 function startInvoice() {
+  if (composingInvoice) return;
   if (state.cfg.vat === null || state.cfg.vat === undefined) {
     toast(t('invalidVat'));
     goTab('asetukset');
@@ -34,61 +41,71 @@ function startInvoice() {
 function closeModal() { document.getElementById('modal').classList.remove('open'); state.pending = null; }
 
 async function finishInvoice(mode) {
+  if (composingInvoice) return;
+  composingInvoice = true;
   document.getElementById('modal').classList.remove('open');
-  if (!isPro() && state.orgLifetimeInvoiceCount >= 5) {
-    // Leave state.pending / selected entries untouched — nothing is lost,
-    // the user can just try again after upgrading.
-    toast(t('freeLimitInvoices'));
-    showUpgradeModal();
-    return;
-  }
-  const sel = state.pending; if (!sel) return; state.pending = null;
-  const recurring = state.pendingRecurring || state.cfg.recurring;
-  state.pendingRecurring = null;
-  let rec = [];
-  if (mode === true) rec = [...recurring];
-  else if (mode === 'customer') {
-    const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
-    rec = recurring.filter(r => r.customerId != null && custs.includes(r.customerId));
-  }
-  // Freeze a customer-name snapshot here too, same as entries/expenses.
-  rec = rec.map(r => ({ ...r, customer: customerName(r.customerId) }));
-  const totalSecs = sel.reduce((a, e) => a + e.secs, 0);
-  const hourly = sel.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
-  const monthly = rec.reduce((a, r) => a + r.amount, 0);
-  const selExpenses = state.expenses.filter(e => e.selected && !e.invoiced);
-  const expenseTotal = selExpenses.reduce((a, e) => a + e.amount, 0);
-  const totalKm = sel.reduce((a, e) => a + (e.km || 0), 0);
-  const kmRate = state.cfg.kmRate ?? 0.57;
-  const kmAmount = totalKm * kmRate;
-  const subtotal = hourly + monthly + kmAmount + expenseTotal;
-  const vatAmount = subtotal * (state.cfg.vat || 0) / 100;
-  const invoiceCustomerIds = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
-  const primaryCust = invoiceCustomerIds.length === 1 ? customerById(invoiceCustomerIds[0]) : null;
-  const maksuehto = primaryCust?.maksuehto ?? 10;
+  const buildBtn = document.getElementById('build-invoice-btn');
+  const origLabel = buildBtn ? buildBtn.textContent : null;
+  if (buildBtn) { buildBtn.disabled = true; buildBtn.textContent = t('saving'); }
+  try {
+    if (!isPro() && state.orgLifetimeInvoiceCount >= 5) {
+      // Leave state.pending / selected entries untouched — nothing is lost,
+      // the user can just try again after upgrading.
+      toast(t('freeLimitInvoices'));
+      showUpgradeModal();
+      return;
+    }
+    const sel = state.pending; if (!sel) return; state.pending = null;
+    const recurring = state.pendingRecurring || state.cfg.recurring;
+    state.pendingRecurring = null;
+    let rec = [];
+    if (mode === true) rec = [...recurring];
+    else if (mode === 'customer') {
+      const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+      rec = recurring.filter(r => r.customerId != null && custs.includes(r.customerId));
+    }
+    // Freeze a customer-name snapshot here too, same as entries/expenses.
+    rec = rec.map(r => ({ ...r, customer: customerName(r.customerId) }));
+    const totalSecs = sel.reduce((a, e) => a + e.secs, 0);
+    const hourly = sel.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
+    const monthly = rec.reduce((a, r) => a + r.amount, 0);
+    const selExpenses = state.expenses.filter(e => e.selected && !e.invoiced);
+    const expenseTotal = selExpenses.reduce((a, e) => a + e.amount, 0);
+    const totalKm = sel.reduce((a, e) => a + (e.km || 0), 0);
+    const kmRate = state.cfg.kmRate ?? 0.57;
+    const kmAmount = totalKm * kmRate;
+    const subtotal = hourly + monthly + kmAmount + expenseTotal;
+    const vatAmount = subtotal * (state.cfg.vat || 0) / 100;
+    const invoiceCustomerIds = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+    const primaryCust = invoiceCustomerIds.length === 1 ? customerById(invoiceCustomerIds[0]) : null;
+    const maksuehto = primaryCust?.maksuehto ?? 10;
 
-  const id = await nextId('invoice');
-  // Freeze a customer-name snapshot into each entry/expense copy — invoice
-  // history must never change retroactively just because a customer is
-  // renamed (or deleted) afterwards.
-  const freeze = e => ({ ...e, customer: customerName(e.customerId) });
-  const invoice = {
-    id, date: new Date().toISOString(),
-    entries: sel.map(freeze), totalSecs, hourly, monthly,
-    km: totalKm, kmRate, kmAmount,
-    expenses: selExpenses.map(freeze), expenseTotal,
-    subtotal, vatAmount, vat: state.cfg.vat || 0,
-    total: subtotal + vatAmount, recurring: rec, maksuehto,
-  };
-  state.invoices.unshift(invoice);
-  sel.forEach(e => { e.invoiced = true; e.selected = false; });
-  selExpenses.forEach(e => { e.invoiced = true; e.selected = false; });
-  state.filterCustomers.clear();
-  incrementInvoiceCount();
-  await finalizeInvoiceBatch(invoice, sel.map(e => e.id), selExpenses.map(e => e.id));
-  renderEntries(); renderExpenses();
-  toast(t('invoicePrefix') + String(id).padStart(3, '0') + ' arkistoitu');
-  goTab('arkisto'); setTimeout(() => renderArchive(id), 80);
+    const id = await nextId('invoice');
+    // Freeze a customer-name snapshot into each entry/expense copy — invoice
+    // history must never change retroactively just because a customer is
+    // renamed (or deleted) afterwards.
+    const freeze = e => ({ ...e, customer: customerName(e.customerId) });
+    const invoice = {
+      id, date: new Date().toISOString(),
+      entries: sel.map(freeze), totalSecs, hourly, monthly,
+      km: totalKm, kmRate, kmAmount,
+      expenses: selExpenses.map(freeze), expenseTotal,
+      subtotal, vatAmount, vat: state.cfg.vat || 0,
+      total: subtotal + vatAmount, recurring: rec, maksuehto,
+    };
+    state.invoices.unshift(invoice);
+    sel.forEach(e => { e.invoiced = true; e.selected = false; });
+    selExpenses.forEach(e => { e.invoiced = true; e.selected = false; });
+    state.filterCustomers.clear();
+    incrementInvoiceCount();
+    await finalizeInvoiceBatch(invoice, sel.map(e => e.id), selExpenses.map(e => e.id));
+    renderEntries(); renderExpenses(); renderArchive();
+    toast(t('invoicePrefix') + String(id).padStart(3, '0') + ' arkistoitu', 'success');
+    showInvoicePopup(id);
+  } finally {
+    composingInvoice = false;
+    if (buildBtn) { buildBtn.disabled = false; buildBtn.textContent = origLabel; }
+  }
 }
 
 function isOverdue(inv) {
@@ -263,20 +280,13 @@ function searchArchive() {
   renderArchive();
 }
 
-export function renderArchive(highlightId) {
-  const el = document.getElementById('archive-list');
-  updateInvoiceBadge();
-  if (!state.invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
-  const filtered = filterInvoices();
-  if (!filtered.length) { el.innerHTML = `<div class="empty">${t('noSearchResults')}</div>`; return; }
-  el.innerHTML = filtered.map(inv => {
-    const isOpen = highlightId === inv.id;
+function renderInvoiceCard(inv, isOpen) {
     const overdue = isOverdue(inv);
     const rows = inv.entries.map(e => `
       <div class="inv-row-line">
         <div class="inv-row-left">
           <div class="inv-row-title">${fmtDur(e.secs)}</div>
-          <div class="inv-row-sub">${fmtDate(e.date)}${e.customer ? ' · ' + esc(e.customer) : ''}</div>
+          <div class="inv-row-sub">${fmtDate(e.date)}${e.customer ? ' · ' + esc(e.customer) : ''}${e.service ? ' · ' + esc(e.service) : ''}</div>
         </div>
         <div class="inv-row-val">${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</div>
       </div>`).join('');
@@ -358,7 +368,26 @@ export function renderArchive(highlightId) {
           </div>
         </div>
       </div>`;
-  }).join('');
+}
+
+export function renderArchive(highlightId) {
+  const el = document.getElementById('archive-list');
+  updateInvoiceBadge();
+  if (!state.invoices.length) { el.innerHTML = `<div class="empty">${t('noInvoices')}</div>`; return; }
+  const filtered = filterInvoices();
+  if (!filtered.length) { el.innerHTML = `<div class="empty">${t('noSearchResults')}</div>`; return; }
+  el.innerHTML = filtered.map(inv => renderInvoiceCard(inv, highlightId === inv.id)).join('');
+}
+
+function showInvoicePopup(id) {
+  const inv = state.invoices.find(x => x.id === id);
+  if (!inv) return;
+  document.getElementById('invoice-popup-body').innerHTML = renderInvoiceCard(inv, true);
+  document.getElementById('modal-invoice-view').classList.add('open');
+}
+
+function closeInvoicePopup() {
+  document.getElementById('modal-invoice-view').classList.remove('open');
 }
 
 function getInvoiceLang(inv) {
@@ -378,12 +407,14 @@ function printInvoice(id, asAttachment) {
       <td>${fmtDate(e.date)}</td>
       <td>${fmtEur(e.rate ?? state.cfg.hourly)}</td>
       <td>${fmtHours(e.secs)}</td>
+      <td>${esc(e.service || '—')}</td>
       <td>${esc(e.notes || '—')}</td>
       <td>${fmtEur((e.secs / 3600) * (e.rate ?? state.cfg.hourly))}</td>
     </tr>`).join('');
   const recRows = inv.recurring.map(r => `
     <tr>
       <td>${esc(r.name)}</td>
+      <td></td>
       <td></td>
       <td></td>
       <td></td>
@@ -395,12 +426,14 @@ function printInvoice(id, asAttachment) {
       <td>${String(inv.kmRate ?? 0.57).replace('.', ',')} €/km</td>
       <td>${inv.km} km</td>
       <td></td>
+      <td></td>
       <td>${fmtEur(inv.kmAmount || 0)}</td>
     </tr>` : '';
   const expPrintRows = (inv.expenses || []).map(e => `
     <tr>
       <td>${esc(e.description)}</td>
       <td>${t('expenseReimbursement', lang)}</td>
+      <td></td>
       <td></td>
       <td></td>
       <td>${fmtEur(e.amount)}</td>
@@ -505,6 +538,7 @@ function printInvoice(id, asAttachment) {
         <th>${t('date', lang)}</th>
         <th>${t('hourlyRate', lang)}</th>
         <th>${t('total', lang)}</th>
+        <th>${t('service', lang)}</th>
         <th>${t('notes', lang)}</th>
         <th>${t('amount', lang)}</th>
       </tr></thead>
@@ -593,3 +627,4 @@ window.updateInvoiceBadge = updateInvoiceBadge;
 window.clearArchiveFilters = clearArchiveFilters;
 window.searchArchive = searchArchive;
 window.renderArchive = renderArchive;
+window.closeInvoicePopup = closeInvoicePopup;

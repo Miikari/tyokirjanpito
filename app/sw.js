@@ -1,9 +1,11 @@
-const CACHE = 'tyotunnit-v88';
+const CACHE = 'tyotunnit-v91';
 const FILES = [
   'manifest.json',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'css/style.css',
+  'js/vendor/jspdf.umd.min.js',
+  'js/vendor/jspdf.plugin.autotable.min.js',
   'js/firebase.js',
   'js/state.js',
   'js/i18n.js',
