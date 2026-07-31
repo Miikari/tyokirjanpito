@@ -4,16 +4,19 @@ function d(dateStr) {
   return new Date(dateStr + 'T12:00:00').toISOString();
 }
 
-function calcInvoice(id, dateStr, entries, maksuehto, paid = true, expenses = []) {
+const DEMO_VAT = 25.5;
+
+function calcInvoice(id, dateStr, entries, maksuehto, paid = true, expenses = [], vat = DEMO_VAT) {
   const totalSecs = entries.reduce((a, e) => a + e.secs, 0);
   const hourly = entries.reduce((a, e) => a + (e.secs / 3600) * e.rate, 0);
   const expenseTotal = expenses.reduce((a, e) => a + e.amount, 0);
   const subtotal = hourly + expenseTotal;
+  const vatAmount = subtotal * vat / 100;
   return {
     id, date: d(dateStr), entries: entries.map(e => ({ ...e })),
     totalSecs, hourly, monthly: 0,
     expenses: expenses.map(e => ({ ...e })), expenseTotal,
-    subtotal, vatAmount: 0, vat: 0, total: subtotal, recurring: [], maksuehto, paid,
+    subtotal, vatAmount, vat, total: subtotal + vatAmount, recurring: [], maksuehto, paid,
   };
 }
 
@@ -37,7 +40,7 @@ function loadDemoDataFi() {
     email: 'laskutus@vierailijaoy.fi',
     tilinumero: 'FI21 1234 5600 0007 85',
     rounding: 15,
-    vat: 0,
+    vat: DEMO_VAT,
     kmRate: 0.57,
     showTilinumero: true,
     showErapaiva: true,
@@ -160,7 +163,7 @@ function loadDemoDataEn() {
     email: 'billing@guestltd.com',
     tilinumero: 'FI21 1234 5600 0007 85',
     rounding: 15,
-    vat: 0,
+    vat: DEMO_VAT,
     kmRate: 0.57,
     showTilinumero: true,
     showErapaiva: true,
