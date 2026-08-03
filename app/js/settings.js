@@ -10,6 +10,7 @@ import { customerName } from './customers.js';
 import { renderOrgSettings } from './org.js';
 import { updateUserNameDisplay } from './auth.js';
 import { initClockRate } from './clock.js';
+import { renderIdeas } from './ideas.js';
 
 function saveRounding() {
   state.cfg.rounding = parseInt(document.getElementById('set-rounding').value);
@@ -56,7 +57,7 @@ export function renderSettings() {
     btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
     btn.style.fontWeight = active ? '700' : '600';
   });
-  renderServices(); renderServiceSelects(); renderOrgSettings();
+  renderServices(); renderServiceSelects(); renderOrgSettings(); renderIdeas();
 }
 
 function saveAllSettings() {

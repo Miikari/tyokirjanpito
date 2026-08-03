@@ -100,6 +100,8 @@ export function applyLang() {
   document.getElementById('arch-search').placeholder = t('archSearchPlaceholder');
   const orgJoinInput = document.getElementById('org-join-input');
   if (orgJoinInput) orgJoinInput.placeholder = t('orgJoinPlaceholder');
+  const ideaInput = document.getElementById('idea-input');
+  if (ideaInput) ideaInput.placeholder = t('ideasPlaceholder');
   ['fi', 'en'].forEach(l => {
     const btn = document.getElementById('btn-' + l);
     const active = state.lang === l;

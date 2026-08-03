@@ -178,7 +178,7 @@ const i18n = {
     orgJoinPlaceholder: 'Kutsukoodi', orgJoinModal: 'Liity organisaatioon',
     orgJoinText: 'Sinut on kutsuttu organisaatioon', orgJoinConfirm: 'Haluatko liittyä?',
     // Tilin poisto
-    dangerZoneTitle: 'Vaarallinen alue',
+    dangerZoneTitle: 'Poista tilisi ja tietosi',
     dangerZoneHint: 'Tilin poistaminen poistaa pysyvästi kaikki tietosi: kirjaukset, laskut, asiakkaat ja asetukset.',
     deleteAccountBtn: 'Poista tili ja kaikki data',
     deleteAccountConfirmTitle: 'Poista tili?',
@@ -189,6 +189,14 @@ const i18n = {
     deletionCancelled: 'Tilin poisto peruttu.',
     ownerOnlyDeleteHint: 'Vain organisaation omistaja voi poistaa tilin.',
     actionFailed: 'Toiminto epäonnistui. Yritä uudelleen.',
+    // Kehitysideat
+    ideasSectionTitle: '💡 Kehitysideat',
+    ideasHint: 'Ehdota uusi ominaisuus tai äänestä muiden ehdotuksia ylös.',
+    ideasPlaceholder: 'Esim. Verkkolaskutus', ideasSubmit: 'Lähetä',
+    ideasEmpty: 'Ei vielä kehitysideoita. Ole ensimmäinen!',
+    ideasEmptyInput: 'Kirjoita idea ensin.', ideasTooLong: 'Idea on liian pitkä (maks. 300 merkkiä).',
+    ideaSubmitted: 'Kiitos ideasta!', ideasSaveError: 'Tallennus epäonnistui. Yritä uudelleen.',
+    ideasLoadError: 'Kehitysideoiden lataus epäonnistui.',
   },
   en: {
     // App
@@ -378,6 +386,14 @@ const i18n = {
     deletionCancelled: 'Account deletion cancelled.',
     ownerOnlyDeleteHint: 'Only the organization owner can delete the account.',
     actionFailed: 'Action failed. Please try again.',
+    // Feature ideas
+    ideasSectionTitle: '💡 Feature ideas',
+    ideasHint: 'Suggest a new feature or vote up other ideas.',
+    ideasPlaceholder: 'e.g. E-invoicing', ideasSubmit: 'Submit',
+    ideasEmpty: 'No feature ideas yet. Be the first!',
+    ideasEmptyInput: 'Write an idea first.', ideasTooLong: 'Idea is too long (max 300 characters).',
+    ideaSubmitted: 'Thanks for the idea!', ideasSaveError: 'Could not save. Please try again.',
+    ideasLoadError: 'Could not load feature ideas.',
   }
 };
 

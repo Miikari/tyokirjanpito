@@ -500,7 +500,7 @@
   </div>
 
   <div class="card" style="margin-top:14px;border-color:var(--red);" id="danger-zone-card">
-    <div class="card-label" style="color:var(--red);" data-i18n="dangerZoneTitle">Vaarallinen alue</div>
+    <div class="card-label" style="color:var(--red);" data-i18n="dangerZoneTitle">Poista tilisi ja tietosi</div>
     <div id="danger-zone-default">
       <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="dangerZoneHint">Tilin poistaminen poistaa pysyvästi kaikki tietosi: kirjaukset, laskut, asiakkaat ja asetukset.</div>
       <button class="btn-add" id="delete-account-btn" style="background:transparent;color:var(--red);border:1.5px solid var(--red);" onclick="deleteAccountUI()" data-i18n="deleteAccountBtn">Poista tili ja kaikki data</button>
@@ -513,6 +513,16 @@
       </div>
       <button class="btn-add" onclick="cancelAccountDeletionUI()" data-i18n="cancelDeletionBtn">Peru poisto</button>
     </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;" id="ideas-card">
+    <div class="card-label" data-i18n="ideasSectionTitle">💡 Kehitysideat</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="ideasHint">Ehdota uusi ominaisuus tai äänestä muiden ehdotuksia ylös.</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input type="text" id="idea-input" maxlength="300" placeholder="Esim. Verkkolaskutus" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
+      <button type="button" class="btn-add" id="idea-submit-btn" style="width:auto;flex-shrink:0;margin:0;white-space:nowrap;" onclick="addIdea()" data-i18n="ideasSubmit">Lähetä</button>
+    </div>
+    <div id="ideas-list"></div>
   </div>
 
   </div><!-- /panel-asetukset -->

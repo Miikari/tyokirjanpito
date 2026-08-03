@@ -140,5 +140,29 @@ service cloud.firestore {
         allow read, write: if isOrgMember();
       }
     }
+
+    // ── Feature idea board ──────────────────────────────────────────────────
+    // Deliberately top-level, not nested under an org — this is shared
+    // product feedback across every org, not per-business bookkeeping data.
+    match /featureIdeas/{ideaId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 300
+        && (!request.resource.data.keys().hasAny(['voters']) || request.resource.data.voters.size() == 0);
+
+      // Voting only: anyone may toggle their own key in the voters map, and
+      // nothing else about the idea (text, author, other people's votes) —
+      // mirrors the org self-join rule's "diff affectedKeys hasOnly(own uid)"
+      // pattern above. get('voters', {}) defaults to an empty map for an
+      // idea's very first vote, when the field doesn't exist yet on
+      // resource.data — a bare resource.data.voters would error out then.
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['voters'])
+        && request.resource.data.voters.diff(resource.data.get('voters', {})).affectedKeys().hasOnly([request.auth.uid]);
+    }
   }
 }
