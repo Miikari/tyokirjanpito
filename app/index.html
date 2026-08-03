@@ -580,15 +580,14 @@
 <div class="modal-wrap" id="modal-invoice-view">
   <div class="modal" style="position:relative;">
     <button class="modal-close-x" onclick="closeInvoicePopup()" aria-label="Sulje">&times;</button>
-    <div class="modal-handle"></div>
     <div id="invoice-popup-body"></div>
   </div>
 </div>
 
 <!-- ── CUSTOMER MODAL ── -->
 <div class="modal-wrap" id="modal-customer">
-  <div class="modal">
-    <div class="modal-handle"></div>
+  <div class="modal" style="position:relative;">
+    <button class="modal-close-x" onclick="closeCustomerModal()" aria-label="Sulje">&times;</button>
     <h2 id="modal-cust-title">Lisää asiakas</h2>
     <div class="fg"><label data-i18n="custName">Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy" autocomplete="off"></div>
     <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8" autocomplete="off"></div>

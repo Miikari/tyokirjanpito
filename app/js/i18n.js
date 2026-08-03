@@ -11,7 +11,7 @@ const i18n = {
     clockIn: 'Kirjaudu sisään', clockOut: 'Kirjaudu ulos', pause: '⏸ Tauko', resume: '▶ Jatka',
     idle: 'Ei käynnissä', working: '● Töissä', onBreak: '⏸ Tauolla', taukoAlkaa: 'Tauko käynnistetty',
     jatko: 'Jatketaan', selectCustomer: 'Valitse ensin asiakas', noTime: 'Ei aikaa kirjattavana',
-    addNotes: 'Lisää merkintöjä', notesPlaceholder: 'Merkintöjä tähän kirjaukseen...', kirjattu: 'Kirjattu ',
+    addNotes: 'Lisää merkintöjä/ajoja', notesPlaceholder: 'Merkintöjä tähän kirjaukseen...', kirjattu: 'Kirjattu ',
     clockedIn: 'Kirjauduttu sisään', cannotSwitch: 'Vaihda asiakas ensin kirjautumalla ulos',
     kmDriven: 'ajetut kilometrit',
     // Kirjaukset (manuaalinen)
