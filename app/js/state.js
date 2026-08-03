@@ -32,6 +32,7 @@ export const state = {
   theme: detectTheme(),
   orgPlan: 'free', orgSubStatus: 'none', orgPeriodEnd: null,
   orgLifetimeEntryCount: 0, orgLifetimeInvoiceCount: 0,
+  orgOwnerId: null, orgScheduledDeletionAt: null,
 };
 export const STILL_IMG = 'images/background2.jpg';
 export const ANIM_GIF  = 'images/background3.gif';

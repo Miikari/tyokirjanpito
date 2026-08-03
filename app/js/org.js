@@ -1,5 +1,7 @@
 import { state, defaultCfg } from './state.js';
-import { toast } from './ui.js';
+import { t } from './i18n.js';
+import { fmtDateTime } from './utils.js';
+import { toast, showConfirm } from './ui.js';
 import { renderBillingSettings } from './billing.js';
 
 function genCode() {
@@ -64,8 +66,10 @@ export async function initOrg(user) {
   const orgId = db.collection('orgs').doc().id;
   state.orgId = orgId;
 
-  const referralCode = localStorage.getItem('referralCode');
-  if (referralCode) localStorage.removeItem('referralCode');
+  // The code (if any) of whoever referred THIS new org — captured from a
+  // ?v= link into localStorage by the landing page, one-time use.
+  const referredByCode = localStorage.getItem('referralCode');
+  if (referredByCode) localStorage.removeItem('referralCode');
 
   await db.collection('orgs').doc(orgId).set({
     name: user.displayName || user.email || 'Oma organisaatio',
@@ -79,7 +83,7 @@ export async function initOrg(user) {
     },
     inviteCode: genCode(),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    ...(referralCode ? { referredBy: referralCode } : {}),
+    ...(referredByCode ? { referredBy: referredByCode } : {}),
   });
 
   // Migrate existing pre-org user data (very old accounts only) straight
@@ -206,7 +210,12 @@ export async function renderOrgSettings() {
   state.orgPeriodEnd = org.currentPeriodEnd || null;
   state.orgLifetimeEntryCount = org.lifetimeEntryCount || 0;
   state.orgLifetimeInvoiceCount = org.lifetimeInvoiceCount || 0;
+  state.orgOwnerId = org.ownerId || null;
+  state.orgScheduledDeletionAt = org.scheduledDeletionAt
+    ? (org.scheduledDeletionAt.toMillis ? org.scheduledDeletionAt.toMillis() : org.scheduledDeletionAt)
+    : null;
   renderBillingSettings();
+  renderDangerZone();
 
   document.getElementById('org-name-display').textContent = org.name;
 
@@ -227,6 +236,28 @@ export async function renderOrgSettings() {
 
   const inviteUrl = `${location.origin}${location.pathname}?join=${org.inviteCode}`;
   document.getElementById('org-invite-url').value = inviteUrl;
+
+  // Guests run on a throwaway anonymous org (deleted after 30 days, see
+  // cleanupAnonymousUsers) — sharing a referral link tied to it that can
+  // never actually collect a reward would just be confusing, and there's no
+  // point spending a code-generation call on an org that won't last.
+  const referralCard = document.getElementById('referral-card');
+  if (referralCard) referralCard.style.display = state.isDemo ? 'none' : '';
+  if (!state.isDemo) {
+    // referralCode is a Cloud-Functions-only field (firestore.rules) — a
+    // client free to set its own could copy another org's code and hijack
+    // the reward meant for it — so both brand-new orgs and ones created
+    // before this feature shipped get theirs lazily from ensureReferralCode
+    // here, which checks for collisions before writing.
+    let referralCode = org.referralCode;
+    if (!referralCode) {
+      const fn = firebase.functions().httpsCallable('ensureReferralCode');
+      const { data } = await fn({ orgId: state.orgId });
+      referralCode = data.referralCode;
+    }
+    const referralInput = document.getElementById('referral-url');
+    if (referralInput) referralInput.value = `${location.origin}/?v=${referralCode}`;
+  }
 }
 
 function esc(s) {
@@ -237,6 +268,25 @@ export async function copyInviteLink() {
   const val = document.getElementById('org-invite-url').value;
   await navigator.clipboard.writeText(val);
   toast('Kutsulink­ki kopioitu!');
+}
+
+// Prefers the native share sheet (mobile) so "Jaa" can hand the link
+// straight to WhatsApp/Messages/etc.; falls back to clipboard copy on
+// desktop or wherever navigator.share isn't available.
+export async function shareReferralLink() {
+  const url = document.getElementById('referral-url').value;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Hoyla', url });
+      return;
+    } catch (e) {
+      // AbortError = user cancelled the share sheet — not an error worth
+      // falling back to a clipboard copy for.
+      if (e.name === 'AbortError') return;
+    }
+  }
+  await navigator.clipboard.writeText(url);
+  toast(t('referralLinkCopied'));
 }
 
 export async function refreshInviteCode() {
@@ -253,9 +303,61 @@ export async function removeMemberUI(uid) {
   toast('Jäsen poistettu.');
 }
 
+function renderDangerZone() {
+  const isOwner = state.orgOwnerId === state.uid;
+  const deleteBtn = document.getElementById('delete-account-btn');
+  const ownerHint = document.getElementById('delete-account-owner-hint');
+  if (deleteBtn) deleteBtn.style.display = isOwner ? '' : 'none';
+  if (ownerHint) ownerHint.style.display = isOwner ? 'none' : '';
+
+  const def = document.getElementById('danger-zone-default');
+  const pending = document.getElementById('danger-zone-pending');
+  if (!def || !pending) return;
+
+  if (state.orgScheduledDeletionAt) {
+    def.style.display = 'none';
+    pending.style.display = '';
+    document.getElementById('deletion-scheduled-date').textContent = fmtDateTime(state.orgScheduledDeletionAt);
+    const cancelBtn = pending.querySelector('button');
+    if (cancelBtn) cancelBtn.style.display = isOwner ? '' : 'none';
+  } else {
+    def.style.display = '';
+    pending.style.display = 'none';
+  }
+}
+
+export function deleteAccountUI() {
+  showConfirm(t('deleteAccountConfirmTitle'), t('deleteAccountConfirmText'), async () => {
+    try {
+      const fn = firebase.functions().httpsCallable('requestAccountDeletion');
+      const { data } = await fn({ orgId: state.orgId });
+      state.orgScheduledDeletionAt = data.scheduledDeletionAt;
+      renderDangerZone();
+      toast(`${t('deletionScheduledToast')} ${fmtDateTime(data.scheduledDeletionAt)}.`, 'success');
+    } catch (e) {
+      toast(e.message || t('actionFailed'));
+    }
+  });
+}
+
+export async function cancelAccountDeletionUI() {
+  try {
+    const fn = firebase.functions().httpsCallable('cancelAccountDeletion');
+    await fn({ orgId: state.orgId });
+    state.orgScheduledDeletionAt = null;
+    renderDangerZone();
+    toast(t('deletionCancelled'), 'success');
+  } catch (e) {
+    toast(e.message || t('actionFailed'));
+  }
+}
+
 window.copyInviteLink = copyInviteLink;
 window.refreshInviteCode = refreshInviteCode;
 window.removeMemberUI = removeMemberUI;
 window.confirmJoin = confirmJoin;
 window.closeJoinModal = closeJoinModal;
 window.joinWithCodeUI = joinWithCodeUI;
+window.deleteAccountUI = deleteAccountUI;
+window.cancelAccountDeletionUI = cancelAccountDeletionUI;
+window.shareReferralLink = shareReferralLink;

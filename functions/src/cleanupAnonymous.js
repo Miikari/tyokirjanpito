@@ -2,6 +2,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { logger } = require('firebase-functions');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { isAtLeast } = require('./tiers.js');
 
 // Deleted this many days after account CREATION, not after last activity —
 // an anonymous account is a throwaway guest trial, not a free permanent way
@@ -35,7 +36,7 @@ async function cleanupOrgForUser(db, uid) {
     if (orgSnap.exists) {
       const org = orgSnap.data();
       const memberIds = Object.keys(org.members || {});
-      const hasBilling = org.plan === 'pro' || !!org.stripeCustomerId;
+      const hasBilling = isAtLeast(org.plan, 'pro') || !!org.stripeCustomerId;
       if (!hasBilling && org.ownerId === uid && memberIds.length <= 1) {
         await db.recursiveDelete(orgRef);
       } else if (org.members && org.members[uid]) {

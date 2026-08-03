@@ -15,15 +15,17 @@ let composingInvoice = false;
 
 function startInvoice() {
   if (composingInvoice) return;
-  if (state.cfg.vat === null || state.cfg.vat === undefined) {
-    toast(t('invalidVat'));
-    goTab('asetukset');
-    return;
-  }
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
   if (!sel.length) { toast(t('selectEntries')); return; }
   const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
   if (custs.length !== 1) { toast(t('selectOneCustomer')); return; }
+  const cust = customerById(custs[0]);
+  const effectiveVat = cust?.useCustomVat ? cust.vat : state.cfg.vat;
+  if (effectiveVat === null || effectiveVat === undefined) {
+    toast(t('invalidVat'));
+    goTab('asetukset');
+    return;
+  }
   state.pending = sel;
   if (!state.cfg.recurring.length) { finishInvoice(false); return; }
 
@@ -75,10 +77,11 @@ async function finishInvoice(mode) {
     const kmRate = state.cfg.kmRate ?? 0.57;
     const kmAmount = totalKm * kmRate;
     const subtotal = hourly + monthly + kmAmount + expenseTotal;
-    const vatAmount = subtotal * (state.cfg.vat || 0) / 100;
     const invoiceCustomerIds = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
     const primaryCust = invoiceCustomerIds.length === 1 ? customerById(invoiceCustomerIds[0]) : null;
     const maksuehto = primaryCust?.maksuehto ?? 10;
+    const vat = primaryCust?.useCustomVat ? (primaryCust.vat ?? 0) : (state.cfg.vat || 0);
+    const vatAmount = subtotal * vat / 100;
 
     const id = await nextId('invoice');
     // Freeze a customer-name snapshot into each entry/expense copy — invoice
@@ -90,7 +93,7 @@ async function finishInvoice(mode) {
       entries: sel.map(freeze), totalSecs, hourly, monthly,
       km: totalKm, kmRate, kmAmount,
       expenses: selExpenses.map(freeze), expenseTotal,
-      subtotal, vatAmount, vat: state.cfg.vat || 0,
+      subtotal, vatAmount, vat,
       total: subtotal + vatAmount, recurring: rec, maksuehto,
     };
     state.invoices.unshift(invoice);

@@ -9,6 +9,10 @@ export function fmtShort(s) { return pad(Math.floor(s / 3600)) + ':' + pad(Math.
 
 export function fmtDate(d) { return new Date(d).toLocaleDateString('fi-FI', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
 
+export function fmtDateTime(d) {
+  return new Date(d).toLocaleString('fi-FI', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export function fmtEur(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
 
 export function fmtHours(secs) { return (secs / 3600).toFixed(2).replace('.', ',') + ' h'; }

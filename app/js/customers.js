@@ -51,6 +51,11 @@ function openAddCustomerModal() {
   document.getElementById('cust-maksuehto').value = 10;
   document.getElementById('cust-maksuehto-sopimus').checked = false;
   document.getElementById('cust-maksuehto').disabled = false;
+  document.getElementById('cust-use-custom-vat').checked = false;
+  document.getElementById('cust-vat').value = '';
+  document.getElementById('cust-vat-zero-reason').value = '';
+  document.getElementById('cust-vat-row').style.display = 'none';
+  document.getElementById('cust-vat-zero-reason-row').style.display = 'none';
   document.getElementById('modal-customer').classList.add('open');
 }
 
@@ -71,7 +76,24 @@ function openEditCustomerModal(id) {
   document.getElementById('cust-maksuehto-sopimus').checked = isSopimus;
   document.getElementById('cust-maksuehto').value = isSopimus ? '' : (c.maksuehto ?? 10);
   document.getElementById('cust-maksuehto').disabled = isSopimus;
+  document.getElementById('cust-use-custom-vat').checked = !!c.useCustomVat;
+  document.getElementById('cust-vat').value = c.vat === null || c.vat === undefined ? '' : c.vat;
+  document.getElementById('cust-vat-zero-reason').value = c.vatZeroReason || '';
+  document.getElementById('cust-vat-row').style.display = c.useCustomVat ? '' : 'none';
+  document.getElementById('cust-vat-zero-reason-row').style.display = c.useCustomVat && c.vat === 0 ? '' : 'none';
   document.getElementById('modal-customer').classList.add('open');
+}
+
+function toggleCustomVat() {
+  const checked = document.getElementById('cust-use-custom-vat').checked;
+  document.getElementById('cust-vat-row').style.display = checked ? '' : 'none';
+  if (!checked) document.getElementById('cust-vat-zero-reason-row').style.display = 'none';
+  else onCustVatSelectChange();
+}
+
+function onCustVatSelectChange() {
+  const val = document.getElementById('cust-vat').value;
+  document.getElementById('cust-vat-zero-reason-row').style.display = val === '0' ? '' : 'none';
 }
 
 async function saveCustomerModal() {
@@ -86,6 +108,18 @@ async function saveCustomerModal() {
 
   const isSopimus = document.getElementById('cust-maksuehto-sopimus').checked;
   const maksuehto = isSopimus ? 'sopimus' : (parseInt(document.getElementById('cust-maksuehto').value) || 10);
+
+  const useCustomVat = document.getElementById('cust-use-custom-vat').checked;
+  let vat = null, vatZeroReason = null;
+  if (useCustomVat) {
+    const vatRaw = document.getElementById('cust-vat').value;
+    if (vatRaw === '') { toast(t('invalidVat')); return; }
+    vat = parseFloat(vatRaw);
+    vatZeroReason = document.getElementById('cust-vat-zero-reason').value;
+    if (vat === 0 && !vatZeroReason) { toast(t('invalidVatZeroReason')); return; }
+    if (vat !== 0) vatZeroReason = null;
+  }
+
   const data = {
     name,
     ytunnus:           document.getElementById('cust-ytunnus').value.trim(),
@@ -96,6 +130,9 @@ async function saveCustomerModal() {
     puhelin:           document.getElementById('cust-puhelin').value.trim(),
     lang:              document.getElementById('cust-lang').value,
     maksuehto,
+    useCustomVat,
+    vat,
+    vatZeroReason,
   };
 
   const sameName = (a, b) => a.localeCompare(b, 'fi', { sensitivity: 'base' }) === 0;
@@ -232,3 +269,5 @@ window.saveCustomerModal = saveCustomerModal;
 window.closeCustomerModal = closeCustomerModal;
 window.removeCustomer = removeCustomer;
 window.toggleMaksuehtoSopimus = toggleMaksuehtoSopimus;
+window.toggleCustomVat = toggleCustomVat;
+window.onCustVatSelectChange = onCustVatSelectChange;

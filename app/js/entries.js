@@ -4,7 +4,7 @@ import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration } from './utils.j
 import { toast, showConfirm } from './ui.js';
 import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
-import { customerName, ADD_NEW_VALUE } from './customers.js';
+import { customerName, customerById, ADD_NEW_VALUE } from './customers.js';
 
 
 // Returns true if the entry was added, false if blocked by the free-tier
@@ -316,7 +316,9 @@ export async function addExpense() {
     amount = amountFieldVal;
     if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
   }
-  const vat = state.cfg.vat ?? 0;
+  const customerId = custVal === '—' ? null : parseInt(custVal, 10);
+  const cust = customerById(customerId);
+  const vat = cust?.useCustomVat ? (cust.vat ?? 0) : (state.cfg.vat ?? 0);
   const origLabel = btn.textContent;
   btn.disabled = true; btn.textContent = t('saving');
   try {
@@ -328,7 +330,7 @@ export async function addExpense() {
       amount,
       vat,
       vatAmount: amount * vat / 100,
-      customerId: custVal === '—' ? null : parseInt(custVal, 10),
+      customerId,
       kind,
       km,
       kmRate,

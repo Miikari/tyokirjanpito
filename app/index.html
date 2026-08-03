@@ -455,12 +455,27 @@
 
   <div class="card" style="margin-top:14px;" id="billing-card">
     <div class="card-label" data-i18n="billingSection">Tilaus</div>
+    <div class="set-row" id="billing-interval-row" style="display:none;">
+      <div style="display:flex;gap:8px;width:100%;">
+        <button type="button" id="billing-interval-month" class="btn-add" style="margin:0;flex:1;" onclick="setBillingInterval('month')" data-i18n="billingIntervalMonth">Kuukausi – 14,90 €/kk</button>
+        <button type="button" id="billing-interval-year" class="btn-add" style="margin:0;flex:1;" onclick="setBillingInterval('year')" data-i18n="billingIntervalYear">Vuosi – 149,90 €/v</button>
+      </div>
+    </div>
     <div class="set-row">
       <div>
         <div class="set-label" id="billing-plan-label" data-i18n="planFree">Ilmainen</div>
         <div class="set-sub" id="billing-plan-sub"></div>
       </div>
       <button class="btn-upgrade" id="billing-cta" style="width:auto;margin:0;" data-i18n="upgradeToProBtn">Päivitä Prohon</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;" id="referral-card">
+    <div class="card-label" data-i18n="referralSection">Suosittele Hoylaa</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="referralHint">Jaa linkkisi. Kun suosittelemasi yrittäjä ottaa Pro-jäsenyyden, saat itse kuukauden ilmaiseksi.</div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="referral-url" readonly style="flex:1;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text2);" autocomplete="off">
+      <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="shareReferralLink()" data-i18n="referralShare">Jaa</button>
     </div>
   </div>
 
@@ -481,6 +496,22 @@
         <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="joinWithCodeUI()" data-i18n="orgJoinBtn">Liity</button>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-top:4px;" data-i18n="orgJoinNote">Nykyiset tietosi eivät siirry uuteen organisaatioon.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;border-color:var(--red);" id="danger-zone-card">
+    <div class="card-label" style="color:var(--red);" data-i18n="dangerZoneTitle">Vaarallinen alue</div>
+    <div id="danger-zone-default">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="dangerZoneHint">Tilin poistaminen poistaa pysyvästi kaikki tietosi: kirjaukset, laskut, asiakkaat ja asetukset.</div>
+      <button class="btn-add" id="delete-account-btn" style="background:transparent;color:var(--red);border:1.5px solid var(--red);" onclick="deleteAccountUI()" data-i18n="deleteAccountBtn">Poista tili ja kaikki data</button>
+      <div style="font-size:12px;color:var(--text3);margin-top:8px;display:none;" id="delete-account-owner-hint" data-i18n="ownerOnlyDeleteHint">Vain organisaation omistaja voi poistaa tilin.</div>
+    </div>
+    <div id="danger-zone-pending" style="display:none;">
+      <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:10px;">
+        <span data-i18n="deletionScheduledPrefix">Tilisi ja kaikki tietosi poistetaan pysyvästi</span>
+        <span id="deletion-scheduled-date"></span>.
+      </div>
+      <button class="btn-add" onclick="cancelAccountDeletionUI()" data-i18n="cancelDeletionBtn">Peru poisto</button>
     </div>
   </div>
 
@@ -548,7 +579,7 @@
     <div class="fg"><label data-i18n="custName">Yrityksen nimi *</label><input type="text" id="cust-name" placeholder="Yritys Oy" autocomplete="off"></div>
     <div class="fg"><label data-i18n="ytunnus">Y-tunnus</label><input type="text" id="cust-ytunnus" placeholder="1234567-8" autocomplete="off"></div>
     <div class="fg"><label data-i18n="custAddress">Katuosoite</label><input type="text" id="cust-katuosoite" placeholder="Esimerkkitie 1" autocomplete="off"></div>
-    <div class="row2">
+    <div class="row2" id="cust-postal-row">
       <div class="fg"><label data-i18n="custPostalCode">Postinumero</label><input type="text" id="cust-postinumero" placeholder="00100" autocomplete="off"></div>
       <div class="fg"><label data-i18n="custCity">Postitoimipaikka</label><input type="text" id="cust-postitoimipaikka" placeholder="Helsinki" autocomplete="off"></div>
     </div>
@@ -567,6 +598,30 @@
           <span data-i18n="paymentTermsContract">Erillisen sopimuksen mukaan</span>
         </label>
       </div>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="cust-use-custom-vat" onchange="toggleCustomVat()">
+        <span data-i18n="custUseCustomVat">Käytän erillistä ALV-kantaa tälle asiakkaalle</span>
+      </label>
+    </div>
+    <div class="fg" id="cust-vat-row" style="display:none;">
+      <label data-i18n="vatLabel">ALV</label>
+      <select id="cust-vat" onchange="onCustVatSelectChange()">
+        <option value="" data-i18n="vatChoose">Valitse ALV-kanta</option>
+        <option value="0">0%</option>
+        <option value="10">10%</option>
+        <option value="14">14%</option>
+        <option value="25.5">25,5%</option>
+      </select>
+    </div>
+    <div class="fg" id="cust-vat-zero-reason-row" style="display:none;">
+      <label data-i18n="vatZeroReasonLabel">ALV 0% syy</label>
+      <select id="cust-vat-zero-reason">
+        <option value="" data-i18n="vatZeroReasonChoose">Valitse syy</option>
+        <option value="reverse" data-i18n="vatReverseCharge">Käänteinen ALV (8 §)</option>
+        <option value="exempt" data-i18n="vatExempt">Ei arvonlisäverovelvollinen (3 §)</option>
+      </select>
     </div>
     <button class="modal-opt primary" id="cust-save-btn" onclick="saveCustomerModal()" data-i18n="save">Tallenna</button>
     <button class="modal-opt modal-cancel" onclick="closeCustomerModal()" data-i18n="cancel">Peruuta</button>
@@ -617,7 +672,8 @@
     <div class="modal-handle"></div>
     <h2 data-i18n="upgradeModalTitle">Ilmaisen tason raja täynnä</h2>
     <p data-i18n="upgradeModalBody">Päivitä Prohon (14,90 €/kk, early adopter -hinta) poistaaksesi rajan kokonaan.</p>
-    <button class="modal-opt primary" onclick="startCheckout()" data-i18n="upgradeCta">Päivitä Prohon – 14,90 €/kk</button>
+    <button class="modal-opt primary" onclick="startCheckout('month')" data-i18n="upgradeCta">Päivitä Prohon – 14,90 €/kk</button>
+    <button class="modal-opt" onclick="startCheckout('year')" data-i18n="upgradeCtaYearly">Tai vuosihintaan – 149,90 €/v</button>
     <button class="modal-opt modal-cancel" onclick="closeUpgradeModal()" data-i18n="cancel">Peruuta</button>
   </div>
 </div>

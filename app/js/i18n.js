@@ -140,6 +140,7 @@ const i18n = {
     custPostalCode: 'Postinumero', custCity: 'Postitoimipaikka',
     custEmail: 'Sähköposti', custPhone: 'Puhelinnumero',
     paymentTerms: 'Maksuehto', paymentTermsDays: 'pv', paymentTermsContract: 'Erillisen sopimuksen mukaan',
+    custUseCustomVat: 'Käytän erillistä ALV-kantaa tälle asiakkaalle',
     // Asetukset – lisäkentät
     bankAccount: 'Tilinumero', bankAccountHint: 'Asetuksissa määritetty tilinumero',
     invoiceSettings: 'Laskuasetukset',
@@ -157,6 +158,8 @@ const i18n = {
     upgradeModalTitle: 'Ilmaisen tason raja täynnä',
     upgradeModalBody: 'Päivitä Prohon (14,90 €/kk, early adopter -hinta) poistaaksesi rajan kokonaan.',
     upgradeCta: 'Päivitä Prohon – 14,90 €/kk',
+    upgradeCtaYearly: 'Tai vuosihintaan – 149,90 €/v',
+    billingIntervalMonth: 'Kuukausi – 14,90 €/kk', billingIntervalYear: 'Vuosi – 149,90 €/v',
     checkoutError: 'Maksun aloitus epäonnistui. Yritä uudelleen.',
     demoNoCheckout: 'Luo oma tili tilausta varten. Vierastilillä ei voi tilata.',
     billedHoursTotal: 'Laskutettu yhteensä {hours} h',
@@ -164,12 +167,28 @@ const i18n = {
     backupSection: 'Varmuuskopiointi',
     backupHint: 'Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.',
     downloadBackup: '↓ Lataa varmuuskopio', backupDownloaded: 'Varmuuskopio ladattu',
+    // Suosittelu
+    referralSection: 'Suosittele Hoylaa',
+    referralHint: 'Jaa linkkisi. Kun suosittelemasi yrittäjä ottaa Pro-jäsenyyden, saat itse kuukauden ilmaiseksi.',
+    referralShare: 'Jaa', referralLinkCopied: 'Suosittelulinkki kopioitu!',
     // Organisaatio
     orgSection: 'Organisaatio', orgInviteLink: 'Kutsu­linkki', orgCopy: 'Kopioi',
     orgNewCode: 'Luo uusi koodi', orgJoinTitle: 'Liity toiseen organisaatioon',
     orgJoinBtn: 'Liity', orgJoinNote: 'Nykyiset tietosi eivät siirry uuteen organisaatioon.',
     orgJoinPlaceholder: 'Kutsukoodi', orgJoinModal: 'Liity organisaatioon',
     orgJoinText: 'Sinut on kutsuttu organisaatioon', orgJoinConfirm: 'Haluatko liittyä?',
+    // Tilin poisto
+    dangerZoneTitle: 'Vaarallinen alue',
+    dangerZoneHint: 'Tilin poistaminen poistaa pysyvästi kaikki tietosi: kirjaukset, laskut, asiakkaat ja asetukset.',
+    deleteAccountBtn: 'Poista tili ja kaikki data',
+    deleteAccountConfirmTitle: 'Poista tili?',
+    deleteAccountConfirmText: 'Kaikki tietosi poistetaan pysyvästi 7 päivän kuluttua. Mahdollinen tilaus perutaan välittömästi. Voit perua poiston milloin tahansa ennen määräaikaa.',
+    deletionScheduledPrefix: 'Tilisi ja kaikki tietosi poistetaan pysyvästi',
+    deletionScheduledToast: 'Tili ja kaikki data poistetaan',
+    cancelDeletionBtn: 'Peru poisto',
+    deletionCancelled: 'Tilin poisto peruttu.',
+    ownerOnlyDeleteHint: 'Vain organisaation omistaja voi poistaa tilin.',
+    actionFailed: 'Toiminto epäonnistui. Yritä uudelleen.',
   },
   en: {
     // App
@@ -310,6 +329,7 @@ const i18n = {
     custPostalCode: 'Postal code', custCity: 'City',
     custEmail: 'Email', custPhone: 'Phone number',
     paymentTerms: 'Payment terms', paymentTermsDays: 'days', paymentTermsContract: 'Per separate agreement',
+    custUseCustomVat: 'I use a separate VAT rate for this customer',
     // Settings – extra fields
     bankAccount: 'Bank account', bankAccountHint: 'Bank account from settings',
     invoiceSettings: 'Invoice settings',
@@ -327,6 +347,8 @@ const i18n = {
     upgradeModalTitle: 'Free tier limit reached',
     upgradeModalBody: 'Upgrade to Pro (€14.90/mo, early adopter price) to remove the limit entirely.',
     upgradeCta: 'Upgrade to Pro – €14.90/mo',
+    upgradeCtaYearly: 'Or pay yearly – €149.90/yr',
+    billingIntervalMonth: 'Monthly – €14.90/mo', billingIntervalYear: 'Yearly – €149.90/yr',
     checkoutError: 'Could not start checkout. Please try again.',
     demoNoCheckout: 'Create your own account to subscribe. Guest accounts cannot subscribe.',
     billedHoursTotal: 'Billed {hours} h total',
@@ -334,12 +356,28 @@ const i18n = {
     backupSection: 'Backup',
     backupHint: 'Download all your data (entries, invoices, customers, settings) as a single file to keep on your own device.',
     downloadBackup: '↓ Download backup', backupDownloaded: 'Backup downloaded',
+    // Referral
+    referralSection: 'Refer Hoyla',
+    referralHint: "Share your link. When someone you referred takes a Pro membership, you get a month free.",
+    referralShare: 'Share', referralLinkCopied: 'Referral link copied!',
     // Organization
     orgSection: 'Organization', orgInviteLink: 'Invite link', orgCopy: 'Copy',
     orgNewCode: 'Generate new code', orgJoinTitle: 'Join another organization',
     orgJoinBtn: 'Join', orgJoinNote: 'Your current data will not be transferred to the new organization.',
     orgJoinPlaceholder: 'Invite code', orgJoinModal: 'Join organization',
     orgJoinText: 'You have been invited to join', orgJoinConfirm: 'Do you want to join?',
+    // Account deletion
+    dangerZoneTitle: 'Danger zone',
+    dangerZoneHint: 'Deleting your account permanently removes all your data: entries, invoices, customers and settings.',
+    deleteAccountBtn: 'Delete account and all data',
+    deleteAccountConfirmTitle: 'Delete account?',
+    deleteAccountConfirmText: 'All your data will be permanently deleted in 7 days. Any active subscription is cancelled immediately. You can cancel the deletion any time before then.',
+    deletionScheduledPrefix: 'Your account and all your data will be permanently deleted on',
+    deletionScheduledToast: 'Account and all data will be deleted on',
+    cancelDeletionBtn: 'Cancel deletion',
+    deletionCancelled: 'Account deletion cancelled.',
+    ownerOnlyDeleteHint: 'Only the organization owner can delete the account.',
+    actionFailed: 'Action failed. Please try again.',
   }
 };
 

@@ -2,21 +2,37 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { toast } from './ui.js';
 
-export function isPro() {
-  return state.orgPlan === 'pro' && (state.orgSubStatus === 'active' || state.orgSubStatus === 'trialing');
+// Ordinal tier levels for "at least X" checks — mirrors
+// functions/src/tiers.js's TIER_LEVEL. Add a new tier here (in order) when
+// one is introduced; every isAtLeast() call site (isPro() included)
+// upgrades automatically without needing to change, since a higher tier
+// always satisfies a lower one's gate.
+const TIER_LEVEL = { free: 0, pro: 1 };
+
+function activePlan() {
+  const active = state.orgSubStatus === 'active' || state.orgSubStatus === 'trialing';
+  return active ? state.orgPlan : 'free';
 }
 
-export async function startCheckout() {
+export function isAtLeast(tier) {
+  return (TIER_LEVEL[activePlan()] ?? 0) >= (TIER_LEVEL[tier] ?? 0);
+}
+
+export function isPro() {
+  return isAtLeast('pro');
+}
+
+export async function startCheckout(interval = 'month') {
   if (state.isDemo) {
     toast(t('demoNoCheckout'));
     return;
   }
   try {
     const fn = firebase.functions().httpsCallable('createCheckoutSession');
-    const { data } = await fn({ orgId: state.orgId });
+    const { data } = await fn({ orgId: state.orgId, interval });
     window.location.href = data.url;
   } catch (e) {
-    toast(t('checkoutError'));
+    toast(e.message || t('checkoutError'));
   }
 }
 
@@ -26,7 +42,15 @@ export async function openBillingPortal() {
     const { data } = await fn({ orgId: state.orgId });
     window.location.href = data.url;
   } catch (e) {
-    toast(t('checkoutError'));
+    toast(e.message || t('checkoutError'));
+    if (e.code === 'functions/failed-precondition') {
+      // The server already resets a stale/deleted Stripe customer back to
+      // Free before throwing this — reflect that locally right away instead
+      // of leaving a "Manage subscription" button pointed at dead billing.
+      state.orgPlan = 'free';
+      state.orgSubStatus = 'none';
+      renderBillingSettings();
+    }
   }
 }
 
@@ -59,7 +83,29 @@ export function closeUpgradeModal() {
 
 export function handlePlanClick() {
   if (isPro()) openBillingPortal();
-  else startCheckout();
+  else startCheckout(billingInterval);
+}
+
+// Which billing interval the free-plan "Upgrade to Pro" CTA in Settings will
+// check out with — purely local UI state, not persisted, since it's just a
+// choice made right before clicking Upgrade.
+let billingInterval = 'month';
+
+export function setBillingInterval(interval) {
+  billingInterval = interval === 'year' ? 'year' : 'month';
+  renderIntervalToggle();
+}
+
+function renderIntervalToggle() {
+  ['month', 'year'].forEach(iv => {
+    const btn = document.getElementById('billing-interval-' + iv);
+    if (!btn) return;
+    const active = billingInterval === iv;
+    btn.style.background = active ? 'var(--blue)' : 'var(--surface)';
+    btn.style.color = active ? '#fff' : 'var(--blue-txt)';
+    btn.style.outlineColor = active ? 'var(--blue)' : 'var(--blue-txt)';
+    btn.style.fontWeight = active ? '700' : '600';
+  });
 }
 
 function billedHoursTotal() {
@@ -92,6 +138,8 @@ export function renderBillingSettings() {
   if (card) card.style.display = state.isDemo ? 'none' : '';
   if (state.isDemo) return;
 
+  const intervalRow = document.getElementById('billing-interval-row');
+
   if (isPro()) {
     label.textContent = t('planPro');
     const renews = state.orgPeriodEnd ? new Date(state.orgPeriodEnd.seconds ? state.orgPeriodEnd.seconds * 1000 : state.orgPeriodEnd).toLocaleDateString('fi-FI') : '';
@@ -102,6 +150,7 @@ export function renderBillingSettings() {
     cta.style.display = '';
     cta.textContent = t('manageSubscriptionBtn');
     cta.onclick = openBillingPortal;
+    if (intervalRow) intervalRow.style.display = 'none';
   } else {
     label.textContent = t('planFree');
     sub.textContent = t('planFreeHint')
@@ -109,7 +158,9 @@ export function renderBillingSettings() {
       .replace('{invoices}', state.orgLifetimeInvoiceCount);
     cta.style.display = '';
     cta.textContent = t('upgradeToProBtn');
-    cta.onclick = startCheckout;
+    cta.onclick = () => startCheckout(billingInterval);
+    if (intervalRow) intervalRow.style.display = '';
+    renderIntervalToggle();
   }
 }
 
@@ -117,3 +168,4 @@ window.startCheckout = startCheckout;
 window.openBillingPortal = openBillingPortal;
 window.closeUpgradeModal = closeUpgradeModal;
 window.handlePlanClick = handlePlanClick;
+window.setBillingInterval = setBillingInterval;

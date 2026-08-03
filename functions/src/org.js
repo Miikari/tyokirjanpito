@@ -1,5 +1,5 @@
 const { HttpsError } = require('firebase-functions/v2/https');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 
 // Verifies the caller is authenticated and a member of the given org, then
 // returns { orgRef, org } for the caller to use. Never trust a client-supplied
@@ -37,4 +37,17 @@ async function requireOrgOwner(request) {
   return result;
 }
 
-module.exports = { requireOrgMember, requireOrgOwner };
+// Resets an org's billing fields after its Stripe customer turns out to be
+// gone — otherwise a stale plan:'pro'/subscriptionStatus:'active' left over
+// from before the customer vanished would keep wrongly blocking a
+// re-purchase (createCheckoutSession's "already subscribed" guard) even
+// though there's no working billing account behind it anymore.
+async function clearStaleBilling(orgRef) {
+  await orgRef.update({
+    stripeCustomerId: FieldValue.delete(),
+    plan: 'free',
+    subscriptionStatus: FieldValue.delete(),
+  });
+}
+
+module.exports = { requireOrgMember, requireOrgOwner, clearStaleBilling };
