@@ -82,6 +82,14 @@ async function finishInvoice(mode) {
     const maksuehto = primaryCust?.maksuehto ?? 10;
     const vat = primaryCust?.useCustomVat ? (primaryCust.vat ?? 0) : (state.cfg.vat || 0);
     const vatAmount = subtotal * vat / 100;
+    // Freeze the 0%-VAT legal basis too, from whichever side (customer
+    // override or global settings) actually supplied the 0% rate — needed
+    // on the invoice itself since reverse-charge/exemption requires stating
+    // the reason, and this must never change retroactively if settings
+    // change after the invoice was sent.
+    const vatZeroReason = vat === 0
+      ? (primaryCust?.useCustomVat ? primaryCust.vatZeroReason : state.cfg.vatZeroReason) || null
+      : null;
 
     const id = await nextId('invoice');
     // Freeze a customer-name snapshot into each entry/expense copy — invoice
@@ -93,7 +101,7 @@ async function finishInvoice(mode) {
       entries: sel.map(freeze), totalSecs, hourly, monthly,
       km: totalKm, kmRate, kmAmount,
       expenses: selExpenses.map(freeze), expenseTotal,
-      subtotal, vatAmount, vat,
+      subtotal, vatAmount, vat, vatZeroReason,
       total: subtotal + vatAmount, recurring: rec, maksuehto,
     };
     state.invoices.unshift(invoice);
@@ -357,6 +365,7 @@ function renderInvoiceCard(inv, isOpen) {
               <span class="inv-grand-val">${fmtEur(inv.total)}</span>
             </div>
           </div>
+          ${vatZeroReasonText(inv) ? `<div class="inv-vat-zero-note">${esc(vatZeroReasonText(inv))}</div>` : ''}
           <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id})">${t('printPdf')}</button>
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id},true)">${t('printAttachment')}</button>
@@ -398,6 +407,15 @@ function getInvoiceLang(inv) {
   if (custs.length !== 1) return state.lang;
   const cust = state.customers.find(c => c.name === custs[0]);
   return cust?.lang || state.lang;
+}
+
+// The legal basis text for a 0%-VAT invoice — reverse charge / not VAT
+// liable — required on the invoice itself, not just internal bookkeeping.
+function vatZeroReasonText(inv, lang) {
+  if (inv.vat !== 0 || !inv.vatZeroReason) return '';
+  if (inv.vatZeroReason === 'reverse') return t('vatReverseCharge', lang);
+  if (inv.vatZeroReason === 'exempt') return t('vatExempt', lang);
+  return '';
 }
 
 function printInvoice(id, asAttachment) {
@@ -519,15 +537,17 @@ function printInvoice(id, asAttachment) {
       th:nth-child(2), td:nth-child(2) { width: 75px; }
       th:nth-child(3), td:nth-child(3) { width: 85px; }
       th:nth-child(4), td:nth-child(4) { width: auto; }
-      th:nth-child(5), td:nth-child(5) { width: 90px; text-align: right; }
-      .total-section { padding-top: 8px; }
-      .total-line { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color: #666; }
-      .grand { display: flex; justify-content: space-between; padding-top: 8px; margin-top: 8px; border-top: 2px solid #111; }
+      th:nth-child(5), td:nth-child(5) { width: auto; }
+      th:nth-child(6), td:nth-child(6) { width: 90px; text-align: right; }
+      .total-section { padding-top: 8px; margin-left: auto; width: max-content; min-width: 240px; }
+      .total-line { display: flex; justify-content: space-between; gap: 24px; padding: 4px 0; font-size: 14px; color: #666; }
+      .grand { display: flex; justify-content: space-between; gap: 24px; padding-top: 8px; margin-top: 8px; border-top: 2px solid #111; }
       .grand-label { font-size: 18px; font-weight: 700; }
       .grand-val { font-size: 24px; font-weight: 800; }
-      .pay-box { display:flex; gap:32px; flex-wrap:wrap; background:#f5f5f5; border-radius:8px; padding:14px 18px; margin-bottom:24px; }
-      .pay-item-label { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
-      .pay-item-val { font-size:14px; font-weight:600; color:#111; }
+      .vat-zero-note { font-size: 12px; color: #666; text-align: left; margin-top: 8px; }
+      .pay-box { display:flex; align-items:flex-start; gap:32px; flex-wrap:wrap; background:#f5f5f5; border-radius:8px; padding:14px 18px; margin-bottom:24px; }
+      .pay-item-label { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; text-align:left; }
+      .pay-item-val { font-size:14px; font-weight:600; color:#111; text-align:left; }
       @media print { button { display: none; } }
     </style>
   </head><body>
@@ -557,6 +577,7 @@ function printInvoice(id, asAttachment) {
         <span class="grand-val">${fmtEur(inv.total)}</span>
       </div>
     </div>
+    ${vatZeroReasonText(inv, lang) ? `<div class="vat-zero-note">${esc(vatZeroReasonText(inv, lang))}</div>` : ''}
     <br><button id="print-btn" class="print-btn">🖨 ${t('printPdf', lang)}</button>
     <script nonce="${nonce}">document.getElementById('print-btn').addEventListener('click',function(){window.print();})</script>
   </body></html>`;

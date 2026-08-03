@@ -396,7 +396,7 @@
 60 min: 0:10 → 1:00</div></span></div><div class="set-sub" data-i18n="roundingHint">Pyöristää tunnit ylöspäin</div></div>
         <div class="set-input-wrap">
           <select id="set-rounding" onchange="saveRounding()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
-            <option value="1" data-i18n="roundingNone">Ei pyöristystä</option>
+            <option value="1" data-i18n="roundingNone">0 min</option>
             <option value="15">15 min</option>
             <option value="30">30 min</option>
             <option value="60">60 min</option>
@@ -404,10 +404,10 @@
         </div>
       </div>
       <div class="set-row">
-        <div><div class="set-label" data-i18n="minRounding">Vähimmäiskirjaus</div><div class="set-sub" data-i18n="minRoundingHint">Lyhyetkin kirjaukset pyöristetään vähintään tähän.</div></div>
+        <div><div class="set-label" data-i18n="minRounding">Vähimmäiskirjaus</div><div class="set-sub" data-i18n="minRoundingHint">Lyhyetkin kirjaukset vähintään</div></div>
         <div class="set-input-wrap">
           <select id="set-min-rounding" onchange="saveMinRounding()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
-            <option value="0" data-i18n="minRoundingNone">Ei vähimmäistä</option>
+            <option value="0" data-i18n="minRoundingNone">Ei käytetä</option>
             <option value="30">30 min</option>
             <option value="60">60 min</option>
           </select>
@@ -417,7 +417,7 @@
         <div><div class="set-label" data-i18n="vatLabel">ALV</div><div class="set-sub" data-i18n="vatHint">Lisätään laskun loppusummaan</div></div>
         <div class="set-input-wrap">
           <select id="set-vat" onchange="onVatSelectChange();markSettingsDirty()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
-            <option value="" data-i18n="vatChoose">Valitse ALV-kanta</option>
+            <option value="" data-i18n="vatChoose">Valitse ALV</option>
             <option value="0">0%</option>
             <option value="10">10%</option>
             <option value="14">14%</option>
