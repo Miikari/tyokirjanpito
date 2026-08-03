@@ -32,6 +32,15 @@ const i18n = {
     expenseType: 'Kulun tyyppi', expenseTypeGeneral: 'Yleinen kulu', expenseTypePerdiem: 'Päivärahakorvaus',
     kmCount: 'Kilometrit', enterKm: 'Syötä kilometrit', kmReimbursementRate: 'Km-korvaus (€/km)',
     expenseReimbursement: 'Kulukorvaus',
+    expEndDate: 'Loppupäivä', departureTime: 'Lähtöaika', returnTime: 'Paluuaika',
+    markMultipleDays: 'Merkkaa useita kerralla',
+    expenseDescOptional: 'Kuvaus (valinnainen)', invalidDateRange: 'Loppupäivä ei voi olla ennen alkupäivää',
+    perdiemRatesMissing: 'Aseta ensin päivärahojen eurosummat asetuksista (Hinnoittelu)',
+    perdiemNoEligibleDays: 'Yksikään päivä ei täytä päivärahan alarajaa (yli 6h)',
+    perdiemFullDay: 'Kokopäiväraha', perdiemHalfDay: 'Osapäiväraha',
+    confirmMultiDayTitle: 'Vahvista usean päivän lisäys',
+    confirmMultiDayKm: 'Lisätään {count} kulukirjausta, yhteensä {total}. Jatketaanko?',
+    confirmPerdiem: 'Lisätään {full} kokopäivärahaa ja {half} osapäivärahaa, yhteensä {total}. Jatketaanko?',
     // Kirjanpito-paneeli
     entries: 'Kirjauksia', selected: 'Valittuna', total: 'Tunnit', value: 'Laskutukseen tuleva summa',
     selectAll: 'Valitse kaikki', buildInvoice: 'Kokoa lasku ↗',
@@ -62,6 +71,8 @@ const i18n = {
     invalidEmailAddr: 'Sähköpostiosoite näyttää virheelliseltä:',
     // Kilometrikorvaus
     kmReimbursement: 'Kilometrikorvaus', kmRate: 'Kilometrikorvaus', kmRateHint: 'Kilometrihinta laskuun',
+    perdiemFullLabel: 'Kokopäiväraha', perdiemHalfLabel: 'Osapäiväraha',
+    perdiemRateHint: 'Verohallinnon vuosittainen taso — tarkista ajantasainen summa',
     // Kuukausiveloitukset
     recurring: 'Kuukausiveloitukset', noRecurring: 'Ei kuukausiveloituksia vielä.',
     doAddRecurring: 'Lisätäänkö kuukausiveloitukset?',
@@ -243,6 +254,15 @@ const i18n = {
     expenseType: 'Expense type', expenseTypeGeneral: 'General expense', expenseTypePerdiem: 'Per diem allowance',
     kmCount: 'Kilometers', enterKm: 'Enter kilometers', kmReimbursementRate: 'Mileage rate (€/km)',
     expenseReimbursement: 'Expense',
+    expEndDate: 'End date', departureTime: 'Departure time', returnTime: 'Return time',
+    markMultipleDays: 'Mark multiple days at once',
+    expenseDescOptional: 'Description (optional)', invalidDateRange: 'End date cannot be before start date',
+    perdiemRatesMissing: 'Set the per diem euro rates in Settings (Pricing) first',
+    perdiemNoEligibleDays: 'No day meets the per diem minimum (over 6h)',
+    perdiemFullDay: 'Full-day allowance', perdiemHalfDay: 'Half-day allowance',
+    confirmMultiDayTitle: 'Confirm multi-day addition',
+    confirmMultiDayKm: 'Adding {count} expense entries, {total} total. Continue?',
+    confirmPerdiem: 'Adding {full} full-day and {half} half-day allowances, {total} total. Continue?',
     // Entries panel
     entries: 'Entries', selected: 'Selected', total: 'Hours', value: 'Amount to invoice',
     selectAll: 'Select all', buildInvoice: 'Build invoice ↗',
@@ -273,6 +293,8 @@ const i18n = {
     invalidEmailAddr: 'Email address appears invalid:',
     // Mileage
     kmReimbursement: 'Mileage reimbursement', kmRate: 'Mileage rate', kmRateHint: 'Rate per kilometer on invoice',
+    perdiemFullLabel: 'Full-day allowance', perdiemHalfLabel: 'Half-day allowance',
+    perdiemRateHint: "Verohallinto's annual rate — check the current amount",
     // Recurring
     recurring: 'Monthly charges', noRecurring: 'No monthly charges yet.',
     doAddRecurring: 'Do you want to add recurring costs?',

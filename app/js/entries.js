@@ -264,18 +264,28 @@ function closeEditModal() {
 }
 
 // ── EXPENSES ──
-// #exp-desc doubles as either the free-text description or the km count,
-// depending on the selected kind — same slot the field occupied before, just
-// now next to the type select instead of on its own row. For kind==='km',
-// #exp-amount switches meaning too: it's the €/km rate (prefilled from
-// settings, editable), not the total — the total is km × rate, computed in
-// addExpense() and written into the description as a breakdown.
+// #exp-desc doubles as either the free-text description, the km count, or
+// (for perdiem) an optional note — depending on the selected kind. For
+// kind==='km', #exp-amount switches meaning too: it's the €/km rate
+// (prefilled from settings, editable), not the total — the total is
+// km × rate, computed in addExpense() and written into the description as
+// a breakdown. km/perdiem also reveal an end-date field so a whole multi-day
+// trip can be logged in one go instead of one row per day by hand.
 function onExpenseKindChange() {
   const kind = document.getElementById('exp-kind').value;
   const descInput = document.getElementById('exp-desc');
   const descLabel = document.getElementById('exp-desc-label');
   const amountInput = document.getElementById('exp-amount');
+  const amountRow = amountInput.closest('.fg');
+  const multiDayRow = document.getElementById('exp-multi-day-row');
+  const multiDayCheckbox = document.getElementById('exp-multi-day');
+  const perdiemTimeRow = document.getElementById('exp-perdiem-time-row');
   descInput.value = '';
+  multiDayRow.style.display = (kind === 'km' || kind === 'perdiem') ? '' : 'none';
+  multiDayCheckbox.checked = false;
+  perdiemTimeRow.style.display = kind === 'perdiem' ? 'flex' : 'none';
+  amountRow.style.display = kind === 'perdiem' ? 'none' : '';
+  onExpenseMultiDayChange();
   if (kind === 'km') {
     descLabel.textContent = t('kmCount');
     descInput.type = 'number';
@@ -283,6 +293,11 @@ function onExpenseKindChange() {
     descInput.placeholder = '0';
     document.getElementById('exp-amount-label').textContent = t('kmReimbursementRate');
     amountInput.value = (state.cfg.kmRate ?? 0.57).toFixed(2);
+  } else if (kind === 'perdiem') {
+    descLabel.textContent = t('expenseDescOptional');
+    descInput.type = 'text';
+    descInput.removeAttribute('min'); descInput.removeAttribute('step');
+    descInput.placeholder = t('expenseDescPlaceholder');
   } else {
     descLabel.textContent = t('expenseDesc');
     descInput.type = 'text';
@@ -293,6 +308,49 @@ function onExpenseKindChange() {
   }
 }
 
+// The end-date field only makes sense once "mark several at once" is
+// checked — otherwise the form should look exactly like the pre-multi-day
+// single-entry flow (single date, single km/perdiem row).
+function onExpenseMultiDayChange() {
+  const checked = document.getElementById('exp-multi-day').checked;
+  const endDateRow = document.getElementById('exp-end-date-row');
+  endDateRow.style.display = checked ? '' : 'none';
+  if (!checked) document.getElementById('exp-end-date').value = '';
+}
+
+// Every calendar day from start to end inclusive, as 'YYYY-MM-DD' strings.
+function dateRangeDays(startStr, endStr) {
+  const days = [];
+  let d = new Date(startStr + 'T00:00:00');
+  const last = new Date(endStr + 'T00:00:00');
+  while (d <= last) {
+    days.push(d.toISOString().slice(0, 10));
+    d = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+  }
+  return days;
+}
+
+// Simplified against Verohallinto's hour thresholds (over 10h that calendar
+// day = kokopäiväraha, over 6h = osapäiväraha, otherwise no allowance) —
+// applied per calendar day rather than the official rolling 24h-from-
+// departure window, since that would need the exact departure moment as
+// its own anchor for every subsequent period. A full calendar day strictly
+// between the departure and return days always qualifies as kokopäiväraha
+// regardless of clock times; only the first and last day depend on them.
+function classifyPerdiemDays(startStr, departureTime, endStr, returnTime) {
+  const departure = new Date(`${startStr}T${departureTime || '00:00'}:00`);
+  const arrival = new Date(`${endStr}T${returnTime || '23:59'}:59`);
+  return dateRangeDays(startStr, endStr).map(dateStr => {
+    const dayStart = new Date(dateStr + 'T00:00:00');
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    const segStart = Math.max(dayStart.getTime(), departure.getTime());
+    const segEnd = Math.min(dayEnd.getTime(), arrival.getTime());
+    const hours = Math.max(0, (segEnd - segStart) / 3600000);
+    const type = hours > 10 ? 'full' : hours > 6 ? 'half' : 'none';
+    return { date: dateStr, hours, type };
+  });
+}
+
 export async function addExpense() {
   const btn = document.getElementById('exp-add-btn');
   if (btn.disabled) return; // guards the double-click race — see saveCustomerModal() for the same issue
@@ -301,50 +359,103 @@ export async function addExpense() {
   const amountFieldVal = parseFloat(document.getElementById('exp-amount').value);
   const custVal = document.getElementById('exp-customer').value;
   const dateVal = document.getElementById('exp-date').value;
+  const endDateVal = document.getElementById('exp-end-date').value || dateVal;
   if (!custVal || custVal === '—') { toast(t('selectCustomer')); return; }
-  let desc, amount, km = 0, kmRate = null;
-  if (kind === 'km') {
-    km = parseFloat(descVal) || 0;
-    if (km <= 0) { toast(t('enterKm')); return; }
-    if (isNaN(amountFieldVal) || amountFieldVal <= 0) { toast(t('invalidPrice')); return; }
-    kmRate = amountFieldVal;
-    amount = km * kmRate;
-    desc = `${t('kmReimbursement')}: ${km} km × ${kmRate.toFixed(2).replace('.', ',')} € = ${amount.toFixed(2).replace('.', ',')} €`;
-  } else {
-    desc = descVal;
-    if (!desc) { toast(t('expenseDescRequired')); return; }
-    amount = amountFieldVal;
-    if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
-  }
+  if (endDateVal < dateVal) { toast(t('invalidDateRange')); return; }
+
   const customerId = custVal === '—' ? null : parseInt(custVal, 10);
   const cust = customerById(customerId);
   const vat = cust?.useCustomVat ? (cust.vat ?? 0) : (state.cfg.vat ?? 0);
-  const origLabel = btn.textContent;
-  btn.disabled = true; btn.textContent = t('saving');
-  try {
-    const id = await nextId('expense');
-    const expense = {
-      id,
-      date: dateVal ? new Date(dateVal + 'T12:00:00').toISOString() : new Date().toISOString(),
-      description: desc,
-      amount,
-      vat,
-      vatAmount: amount * vat / 100,
-      customerId,
-      kind,
-      km,
-      kmRate,
-      selected: false,
-      invoiced: false,
-    };
-    state.expenses.unshift(expense);
-    await createExpense(expense);
-    document.getElementById('exp-amount').value = '';
-    document.getElementById('exp-kind').value = 'general';
-    onExpenseKindChange();
-    renderExpenses(); toast(t('expenseAdded'));
-  } finally {
-    btn.disabled = false; btn.textContent = origLabel;
+
+  // Rows to create, one expense doc each — same shape as before (km/kmRate
+  // null unless kind==='km'), just possibly more than one when a date range
+  // spans several days.
+  let rows = [];
+  let confirmSummary = '';
+
+  if (kind === 'km') {
+    const km = parseFloat(descVal) || 0;
+    if (km <= 0) { toast(t('enterKm')); return; }
+    if (isNaN(amountFieldVal) || amountFieldVal <= 0) { toast(t('invalidPrice')); return; }
+    const kmRate = amountFieldVal;
+    const amount = km * kmRate;
+    const desc = `${t('kmReimbursement')}: ${km} km × ${kmRate.toFixed(2).replace('.', ',')} € = ${amount.toFixed(2).replace('.', ',')} €`;
+    rows = dateRangeDays(dateVal, endDateVal).map(d => ({ description: desc, amount, km, kmRate, dateStr: d }));
+    if (rows.length > 1) {
+      confirmSummary = t('confirmMultiDayKm')
+        .replace('{count}', rows.length)
+        .replace('{total}', fmtEur(amount * rows.length));
+    }
+  } else if (kind === 'perdiem') {
+    if (state.cfg.perdiemFullRate == null || state.cfg.perdiemHalfRate == null) {
+      toast(t('perdiemRatesMissing'));
+      return;
+    }
+    const departureTime = document.getElementById('exp-departure-time').value || '00:00';
+    const returnTime = document.getElementById('exp-return-time').value || '23:59';
+    const classified = classifyPerdiemDays(dateVal, departureTime, endDateVal, returnTime).filter(d => d.type !== 'none');
+    if (!classified.length) { toast(t('perdiemNoEligibleDays')); return; }
+    rows = classified.map(d => {
+      const isFull = d.type === 'full';
+      const rate = isFull ? state.cfg.perdiemFullRate : state.cfg.perdiemHalfRate;
+      const label = isFull ? t('perdiemFullDay') : t('perdiemHalfDay');
+      return { description: descVal ? `${label} — ${descVal}` : label, amount: rate, km: 0, kmRate: null, dateStr: d.date };
+    });
+    if (rows.length > 1) {
+      const fullCount = classified.filter(d => d.type === 'full').length;
+      const halfCount = classified.filter(d => d.type === 'half').length;
+      const total = rows.reduce((a, r) => a + r.amount, 0);
+      confirmSummary = t('confirmPerdiem')
+        .replace('{full}', fullCount).replace('{half}', halfCount).replace('{total}', fmtEur(total));
+    }
+  } else {
+    const desc = descVal;
+    if (!desc) { toast(t('expenseDescRequired')); return; }
+    const amount = amountFieldVal;
+    if (isNaN(amount) || amount === 0) { toast(t('enterAmount')); return; }
+    rows = [{ description: desc, amount, km: 0, kmRate: null, dateStr: dateVal }];
+  }
+
+  const createRows = async () => {
+    const origLabel = btn.textContent;
+    btn.disabled = true; btn.textContent = t('saving');
+    try {
+      for (const row of rows) {
+        const id = await nextId('expense');
+        const expense = {
+          id,
+          date: row.dateStr ? new Date(row.dateStr + 'T12:00:00').toISOString() : new Date().toISOString(),
+          description: row.description,
+          amount: row.amount,
+          vat,
+          vatAmount: row.amount * vat / 100,
+          customerId,
+          kind,
+          km: row.km,
+          kmRate: row.kmRate,
+          selected: false,
+          invoiced: false,
+        };
+        state.expenses.unshift(expense);
+        await createExpense(expense);
+      }
+      document.getElementById('exp-amount').value = '';
+      document.getElementById('exp-end-date').value = '';
+      document.getElementById('exp-departure-time').value = '';
+      document.getElementById('exp-return-time').value = '';
+      document.getElementById('exp-kind').value = 'general';
+      onExpenseKindChange();
+      renderExpenses();
+      toast(rows.length > 1 ? `${t('expenseAdded')} (${rows.length})` : t('expenseAdded'));
+    } finally {
+      btn.disabled = false; btn.textContent = origLabel;
+    }
+  };
+
+  if (rows.length > 1) {
+    showConfirm(t('confirmMultiDayTitle'), confirmSummary, createRows);
+  } else {
+    await createRows();
   }
 }
 
@@ -428,5 +539,6 @@ window.closeEditModal = closeEditModal;
 window.toggleEntry = toggleEntry;
 window.addExpense = addExpense;
 window.onExpenseKindChange = onExpenseKindChange;
+window.onExpenseMultiDayChange = onExpenseMultiDayChange;
 window.toggleExpense = toggleExpense;
 window.deleteExpense = deleteExpense;

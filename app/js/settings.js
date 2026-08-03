@@ -56,6 +56,8 @@ export function renderSettings() {
   document.getElementById('set-rounding').value = state.cfg.rounding || 15;
   document.getElementById('set-min-rounding').value = state.cfg.minRounding || 0;
   document.getElementById('set-kmrate').value = state.cfg.kmRate ?? 0.57;
+  document.getElementById('set-perdiem-full').value = state.cfg.perdiemFullRate ?? '';
+  document.getElementById('set-perdiem-half').value = state.cfg.perdiemHalfRate ?? '';
   document.getElementById('set-vat').value = state.cfg.vat === null || state.cfg.vat === undefined ? '' : state.cfg.vat;
   document.getElementById('set-vat-zero-reason').value = state.cfg.vatZeroReason || '';
   document.getElementById('set-vat-zero-reason-row').style.display = state.cfg.vat === 0 ? '' : 'none';
@@ -73,6 +75,15 @@ export function renderSettings() {
 function saveAllSettings() {
   const kmRate = parseFloat(document.getElementById('set-kmrate').value);
   if (isNaN(kmRate) || kmRate < 0) { toast(t('invalidPrice')); return; }
+
+  // Optional — per diem reimbursements aren't relevant to every user, so
+  // unlike VAT these may be left blank rather than forced to a value.
+  const perdiemFullRaw = document.getElementById('set-perdiem-full').value;
+  const perdiemHalfRaw = document.getElementById('set-perdiem-half').value;
+  if (perdiemFullRaw !== '' && (isNaN(parseFloat(perdiemFullRaw)) || parseFloat(perdiemFullRaw) < 0)) { toast(t('invalidPrice')); return; }
+  if (perdiemHalfRaw !== '' && (isNaN(parseFloat(perdiemHalfRaw)) || parseFloat(perdiemHalfRaw) < 0)) { toast(t('invalidPrice')); return; }
+  const perdiemFullRate = perdiemFullRaw === '' ? null : parseFloat(perdiemFullRaw);
+  const perdiemHalfRate = perdiemHalfRaw === '' ? null : parseFloat(perdiemHalfRaw);
 
   const vatRaw = document.getElementById('set-vat').value;
   if (vatRaw === '') { toast(t('invalidVat')); return; }
@@ -101,6 +112,8 @@ function saveAllSettings() {
   state.cfg.ytunnus = ytunnus;
   state.cfg.tilinumero = tilinumero;
   state.cfg.kmRate = kmRate;
+  state.cfg.perdiemFullRate = perdiemFullRate;
+  state.cfg.perdiemHalfRate = perdiemHalfRate;
   state.cfg.vat = vat;
   state.cfg.vatZeroReason = vat === 0 ? vatZeroReason : null;
   saveConfig(); updateUserNameDisplay();

@@ -19,7 +19,7 @@ export function defaultCfg() {
     // saved value fall back to this default (see loadFromFirestore()'s
     // Object.assign onto defaultCfg()), so this needs no migration.
     country: 'FI',
-    hourly: 50, kmRate: 0.57, recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, minRounding: 0, vat: null, vatZeroReason: null, showTilinumero: true, showErapaiva: true, showViitenumero: false,
+    hourly: 50, kmRate: 0.57, perdiemFullRate: null, perdiemHalfRate: null, recurring: [], company: '', address: '', phone: '', email: '', ytunnus: '', tilinumero: '', rounding: 15, minRounding: 0, vat: null, vatZeroReason: null, showTilinumero: true, showErapaiva: true, showViitenumero: false,
     services: [{ id: 1, name: DEFAULT_SERVICE_NAME, rate: 50 }], hideRate: false,
   };
 }

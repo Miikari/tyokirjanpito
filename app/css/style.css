@@ -202,7 +202,7 @@ body {
 .fg { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
 .fg label { font-size: 12px; font-weight: 600; color: var(--text2); }
 .fg input, .fg select {
-  padding: 12px 13px; border: 1.5px solid var(--border2);
+  height: 48px; padding: 12px 13px; border: 1.5px solid var(--border2);
   border-radius: var(--r-sm); font-size: 16px;
   background: var(--bg); color: var(--text);
   -webkit-appearance: none; appearance: none;
