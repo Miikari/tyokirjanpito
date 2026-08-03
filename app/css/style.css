@@ -328,16 +328,17 @@ body {
 .inv-meta { font-size: 12px; color: var(--text2); padding: 12px 0 10px; }
 .inv-row-line { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
 .inv-row-line:last-of-type { border-bottom: none; }
-.inv-row-left {}
 .inv-row-title { font-weight: 600; margin-bottom: 2px; }
 .inv-row-sub { font-size: 12px; color: var(--text2); }
 .inv-row-val { font-weight: 700; flex-shrink: 0; margin-left: 12px; }
-.inv-subtotals { padding-top: 10px; margin-left: auto; width: max-content; min-width: 220px; }
-.inv-subtotal-line { display: flex; justify-content: space-between; gap: 20px; font-size: 13px; color: var(--text2); padding: 3px 0; }
-.inv-grand { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding-top: 12px; margin-top: 8px; border-top: 2px solid var(--border2); }
+.inv-subtotals { padding-top: 10px; }
+.inv-subtotal-line { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; font-size: 13px; color: var(--text2); padding: 3px 0; }
+.inv-subtotal-line.inv-subtotal-with-note { justify-content: space-between; }
+.inv-subtotal-figures { display: flex; gap: 8px; }
+.inv-grand { display: flex; justify-content: flex-end; align-items: baseline; gap: 16px; padding-top: 12px; margin-top: 8px; border-top: 2px solid var(--border2); }
 .inv-grand-label { font-size: 15px; font-weight: 700; }
 .inv-grand-val { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
-.inv-vat-zero-note { font-size: 12px; color: var(--text2); text-align: left; margin-top: 8px; }
+.inv-vat-zero-note { font-size: 12px; color: var(--text2); text-align: left; }
 
 /* ── SETTINGS ── */
 .set-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
@@ -519,8 +520,12 @@ html[data-theme="dark"] .toast.toast-success { background: var(--green); color: 
   padding: 7px 18px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
 }
 .settings-save-banner .discard-btn {
-  background: transparent; color: rgba(255,255,255,0.8); border: 1.5px solid rgba(255,255,255,0.35);
+  background: none; border: none; padding: 0; border-radius: 0;
+  color: var(--red); text-decoration: underline; font-weight: 600;
 }
+/* Navy blends into the dark UI too easily to grab attention — a light
+   surface stands out sharply against it instead. */
+html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(--navy-dk); }
 
 /* ── LOGIN SCREEN ── */
 .login-screen {

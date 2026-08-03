@@ -138,7 +138,10 @@
 
 <div class="settings-save-banner" id="settings-save-banner">
   <span data-i18n="unsavedChanges">Tallentamattomia muutoksia</span>
-  <button onclick="saveAllSettings()" data-i18n="saveChanges">Tallenna muutokset</button>
+  <div style="display:flex;gap:8px;">
+    <button onclick="saveAllSettings()" data-i18n="save">Tallenna</button>
+    <button class="discard-btn" onclick="discardSettingsChanges()" data-i18n="discardChanges">Peru</button>
+  </div>
 </div>
 
 <div class="scroll">

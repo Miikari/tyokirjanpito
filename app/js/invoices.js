@@ -358,14 +358,20 @@ function renderInvoiceCard(inv, isOpen) {
           <div class="inv-subtotals">
             ${inv.vat !== undefined && inv.vat !== null ? `
               <div class="inv-subtotal-line"><span>${t('vatExcl')}</span><span>${fmtEur(inv.subtotal)}</span></div>
-              <div class="inv-subtotal-line"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+              ${vatZeroReasonText(inv) ? `
+                <div class="inv-subtotal-line inv-subtotal-with-note">
+                  <span class="inv-vat-zero-note">${esc(vatZeroReasonText(inv))}</span>
+                  <span class="inv-subtotal-figures"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></span>
+                </div>
+              ` : `
+                <div class="inv-subtotal-line"><span>ALV ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+              `}
             ` : ''}
             <div class="inv-grand">
               <span class="inv-grand-label">${t('grandTotal')}</span>
               <span class="inv-grand-val">${fmtEur(inv.total)}</span>
             </div>
           </div>
-          ${vatZeroReasonText(inv) ? `<div class="inv-vat-zero-note">${esc(vatZeroReasonText(inv))}</div>` : ''}
           <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id})">${t('printPdf')}</button>
             <button class="btn-outline" style="flex:1;" onclick="printInvoice(${inv.id},true)">${t('printAttachment')}</button>
@@ -539,13 +545,15 @@ function printInvoice(id, asAttachment) {
       th:nth-child(4), td:nth-child(4) { width: auto; }
       th:nth-child(5), td:nth-child(5) { width: auto; }
       th:nth-child(6), td:nth-child(6) { width: 90px; text-align: right; }
-      .total-section { padding-top: 8px; margin-left: auto; width: max-content; min-width: 240px; }
-      .total-line { display: flex; justify-content: space-between; gap: 24px; padding: 4px 0; font-size: 14px; color: #666; }
-      .grand { display: flex; justify-content: space-between; gap: 24px; padding-top: 8px; margin-top: 8px; border-top: 2px solid #111; }
+      .total-section { padding-top: 8px; }
+      .total-line { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 14px; color: #666; }
+      .total-line.with-note { justify-content: space-between; }
+      .total-line-figures { display: flex; gap: 8px; }
+      .grand { display: flex; justify-content: flex-end; align-items: baseline; gap: 16px; padding-top: 8px; margin-top: 8px; border-top: 2px solid #111; }
       .grand-label { font-size: 18px; font-weight: 700; }
       .grand-val { font-size: 24px; font-weight: 800; }
-      .vat-zero-note { font-size: 12px; color: #666; text-align: left; margin-top: 8px; }
-      .pay-box { display:flex; align-items:flex-start; gap:32px; flex-wrap:wrap; background:#f5f5f5; border-radius:8px; padding:14px 18px; margin-bottom:24px; }
+      .vat-zero-note { font-size: 12px; color: #666; text-align: left; }
+      .pay-box { display:flex; align-items:flex-start; gap:32px; flex-wrap:wrap; background:#f5f5f5; border-radius:8px; padding:14px 18px; margin: 0 -18px 24px; }
       .pay-item-label { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; text-align:left; }
       .pay-item-val { font-size:14px; font-weight:600; color:#111; text-align:left; }
       @media print { button { display: none; } }
@@ -570,14 +578,20 @@ function printInvoice(id, asAttachment) {
     <div class="total-section">
       ${inv.vat !== undefined && inv.vat !== null ? `
         <div class="total-line"><span>${t('vatExcl', lang)}</span><span>${fmtEur(inv.subtotal)}</span></div>
-        <div class="total-line"><span>${t('vatLabel', lang)} ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+        ${vatZeroReasonText(inv, lang) ? `
+          <div class="total-line with-note">
+            <span class="vat-zero-note">${esc(vatZeroReasonText(inv, lang))}</span>
+            <span class="total-line-figures"><span>${t('vatLabel', lang)} ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></span>
+          </div>
+        ` : `
+          <div class="total-line"><span>${t('vatLabel', lang)} ${esc(String(inv.vat))}%</span><span>${fmtEur(inv.vatAmount)}</span></div>
+        `}
       ` : ''}
       <div class="grand">
         <span class="grand-label">${t('grandTotal', lang)}</span>
         <span class="grand-val">${fmtEur(inv.total)}</span>
       </div>
     </div>
-    ${vatZeroReasonText(inv, lang) ? `<div class="vat-zero-note">${esc(vatZeroReasonText(inv, lang))}</div>` : ''}
     <br><button id="print-btn" class="print-btn">🖨 ${t('printPdf', lang)}</button>
     <script nonce="${nonce}">document.getElementById('print-btn').addEventListener('click',function(){window.print();})</script>
   </body></html>`;

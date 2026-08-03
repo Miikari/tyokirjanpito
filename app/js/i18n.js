@@ -118,6 +118,7 @@ const i18n = {
     customerHas: 'Asiakkaalla', has: 'on',
     // Modaalit
     saveChanges: 'Tallenna muutokset', unsavedChanges: 'Muutoksia tehty', cancel: 'Peruuta', close: 'Sulje', confirm: 'Vahvista', yes: 'Kyllä', saving: 'Tallennetaan…',
+    discardChanges: 'Peru', changesDiscarded: 'Muutokset kumottu',
     // Kirjautuminen
     loginFail: 'Kirjautuminen epäonnistui: ', loginFail2: 'Kirjautuminen epäonnistui',
     logout: 'Kirjaudu ulos', loginTitle: 'Työtunnit',
@@ -328,6 +329,7 @@ const i18n = {
     customerHas: 'Customer', has: 'has',
     // Modals
     saveChanges: 'Save changes', unsavedChanges: 'Changes made', cancel: 'Cancel', close: 'Close', confirm: 'Confirm', yes: 'Yes', saving: 'Saving…',
+    discardChanges: 'Discard', changesDiscarded: 'Changes discarded',
     // Auth
     loginFail: 'Login failed: ', loginFail2: 'Login failed',
     logout: 'Sign out', loginTitle: 'Work Hours',

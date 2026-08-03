@@ -33,6 +33,16 @@ function markSettingsDirty() {
   document.getElementById('settings-save-banner').classList.add('show');
 }
 
+// Re-populates every settings field from state.cfg (nothing was persisted
+// yet, since saveAllSettings() hasn't run) and hides the banner — the
+// simplest correct way to "undo" is to just re-render from the last saved
+// state rather than tracking each field's original value separately.
+function discardSettingsChanges() {
+  renderSettings();
+  document.getElementById('settings-save-banner').classList.remove('show');
+  toast(t('changesDiscarded'));
+}
+
 export function renderSettings() {
   document.getElementById('set-company').value = state.cfg.company || '';
   document.getElementById('set-address').value = state.cfg.address || '';
@@ -282,6 +292,7 @@ window.saveRounding = saveRounding;
 window.saveMinRounding = saveMinRounding;
 window.onVatSelectChange = onVatSelectChange;
 window.markSettingsDirty = markSettingsDirty;
+window.discardSettingsChanges = discardSettingsChanges;
 window.saveInvoiceSettings = saveInvoiceSettings;
 window.downloadBackup = downloadBackup;
 window.addRecurring = addRecurring;
