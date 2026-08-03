@@ -43,7 +43,7 @@ export function updateUserNameDisplay() {
 }
 
 function showLoginView(view) {
-  ['main', 'signin', 'signup', 'reset'].forEach(v => {
+  ['main', 'signin', 'signup', 'reset', 'checking'].forEach(v => {
     document.getElementById('login-view-' + v).style.display = v === view ? '' : 'none';
   });
   document.getElementById('login-view-main').style.display = view === 'main' ? 'flex' : 'none';
@@ -64,7 +64,15 @@ function clearLoginErrors() {
   });
 }
 
+// Guards against a fast double-tap firing two concurrent sign-in attempts
+// (e.g. two Google popups, or two signInAnonymously() calls racing to
+// create separate accounts) — checked at the top of every sign-in function
+// below and released once that attempt settles either way.
+let authActionInProgress = false;
+
 function signInWithGoogle() {
+  if (authActionInProgress) return;
+  authActionInProgress = true;
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch(err => {
     if (err.code === 'auth/popup-blocked' ||
@@ -74,21 +82,24 @@ function signInWithGoogle() {
     } else {
       toast(t('loginFail') + err.code);
     }
-  });
+  }).finally(() => { authActionInProgress = false; });
 }
 
 function signInWithEmail() {
+  if (authActionInProgress) return;
   const email = document.getElementById('signin-email').value.trim();
   const password = document.getElementById('signin-password').value;
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
   if (!email || !password) { errEl.textContent = 'Täytä kaikki kentät.'; return; }
+  authActionInProgress = true;
   auth.signInWithEmailAndPassword(email, password).catch(err => {
     errEl.textContent = EMAIL_ERRORS[err.code] || 'Kirjautuminen epäonnistui.';
-  });
+  }).finally(() => { authActionInProgress = false; });
 }
 
 function signUpWithEmail() {
+  if (authActionInProgress) return;
   const email = document.getElementById('signup-email').value.trim();
   const pw1 = document.getElementById('signup-password').value;
   const pw2 = document.getElementById('signup-password2').value;
@@ -96,9 +107,10 @@ function signUpWithEmail() {
   errEl.textContent = '';
   if (!email || !pw1 || !pw2) { errEl.textContent = 'Täytä kaikki kentät.'; return; }
   if (pw1 !== pw2) { errEl.textContent = 'Salasanat eivät täsmää.'; return; }
+  authActionInProgress = true;
   auth.createUserWithEmailAndPassword(email, pw1).catch(err => {
     errEl.textContent = EMAIL_ERRORS[err.code] || 'Tunnuksen luonti epäonnistui.';
-  });
+  }).finally(() => { authActionInProgress = false; });
 }
 
 function sendPasswordReset() {
@@ -118,7 +130,9 @@ function sendPasswordReset() {
 }
 
 function signInAnonymously() {
-  auth.signInAnonymously().catch(() => toast('Anonyymi kirjautuminen epäonnistui.'));
+  if (authActionInProgress) return;
+  authActionInProgress = true;
+  auth.signInAnonymously().catch(() => toast('Anonyymi kirjautuminen epäonnistui.')).finally(() => { authActionInProgress = false; });
 }
 
 function signOut() {
