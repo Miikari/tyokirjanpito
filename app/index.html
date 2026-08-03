@@ -13,6 +13,13 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <script>
   (function() {
+    // hoyla.dev (GitHub Pages, the app's original domain) now redirects to
+    // hoyla.fi — see the matching guard in the root index.html for why this
+    // has to be a client-side, host-specific check rather than a server rule.
+    if (/(^|\.)hoyla\.dev$/.test(location.hostname)) {
+      location.replace('https://hoyla.fi' + location.pathname + location.search + location.hash);
+      return;
+    }
     var t = localStorage.getItem('theme');
     if (t === 'dark') document.documentElement.dataset.theme = 'dark';
     var ref = new URLSearchParams(location.search).get('v');

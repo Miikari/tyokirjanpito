@@ -19,6 +19,15 @@
 <link rel="stylesheet" href="landing.css">
 <script>
   (function() {
+    // hoyla.dev (still served via GitHub Pages, the app's original domain
+    // before hoyla.fi) now just redirects to the real one — GitHub Pages
+    // has no server-side redirect rules, so this has to happen client-side,
+    // and only for that host: the exact same file is also served from
+    // hoyla.fi itself, which must render normally rather than loop.
+    if (/(^|\.)hoyla\.dev$/.test(location.hostname)) {
+      location.replace('https://hoyla.fi' + location.pathname + location.search + location.hash);
+      return;
+    }
     // Someone can end up with a home-screen shortcut pointing at this
     // marketing page instead of the actual app — e.g. installed before
     // ever navigating into app/, or from an older version of this page

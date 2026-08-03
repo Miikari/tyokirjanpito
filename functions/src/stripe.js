@@ -12,7 +12,7 @@ const PRO_PRICE_IDS = {
   month: process.env.STRIPE_PRO_PRICE_ID || 'price_1TyHsGV05EjopucBzSlluF21',
   year: process.env.STRIPE_PRO_PRICE_ID_YEARLY || 'price_1TyHrxV05EjopucBYrO5Le6Z',
 };
-const APP_ORIGIN = process.env.APP_ORIGIN || 'https://hoyla.dev';
+const APP_ORIGIN = process.env.APP_ORIGIN || 'https://hoyla.fi';
 
 function getStripe() {
   return new Stripe(STRIPE_SECRET_KEY.value(), { apiVersion: '2026-06-24.dahlia' });
