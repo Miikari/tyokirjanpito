@@ -209,6 +209,12 @@ function chartAxisLabel(val) {
 function chartValLabel(val) {
   return Math.round(val).toLocaleString('fi-FI') + ' €';
 }
+// Net by default; with "Näytä ALV" on, val is already gross (net+vat — see
+// monthlyTotals below), so the vat portion is appended in parentheses
+// rather than shown as a separately-positioned label.
+function barValueLabel(val, vat) {
+  return showVatMonthly && vat > 0 ? `${chartValLabel(val)} (${chartValLabel(vat)})` : chartValLabel(val);
+}
 
 // Y-axis gridline spacing — "nice" round numbers rather than an arbitrary
 // 1/4-of-max split, so the axis reads the way you'd sketch it by hand.
@@ -226,11 +232,21 @@ function niceStep(maxVal) {
   return step;
 }
 
+// null = automatic (screen-width based); 'horizontal'/'vertical' once the
+// user has manually flipped it via the rotate button, overriding the width
+// check until they flip it again.
+let chartOrientationOverride = null;
+
+function toggleChartOrientation() {
+  const wrap = document.getElementById('chart-bars-wrap');
+  const current = chartOrientationOverride || (wrap.clientWidth < 480 ? 'horizontal' : 'vertical');
+  chartOrientationOverride = current === 'horizontal' ? 'vertical' : 'horizontal';
+  renderReports();
+}
+
 function drawBars(invs) {
   const wrap = document.getElementById('chart-bars-wrap');
   const W = wrap.clientWidth;
-  const H = 280;
-  const { ctx } = sizeCanvas('chart-bars', W, H);
 
   const monthlyNet = Array(12).fill(0);
   const monthlyVat = Array(12).fill(0);
@@ -244,10 +260,30 @@ function drawBars(invs) {
   const step = niceStep(maxVal);
   const axisTop = Math.ceil(maxVal / step) * step;
   const numSteps = axisTop / step;
+  const dark = document.documentElement.dataset.theme === 'dark';
+
+  // Below phone width, vertical bars leave so little room per month that
+  // every label has to rotate to fit. Turning the whole chart on its side
+  // — money axis along the top, months down the left — gives every label
+  // (both axes, both value labels) all the horizontal room it needs to
+  // read normally, since rows stack top-to-bottom instead of competing for
+  // side-by-side width. Wide screens keep the familiar vertical layout,
+  // unless the user has manually flipped it with the rotate button.
+  const horizontal = chartOrientationOverride ? chartOrientationOverride === 'horizontal' : W < 480;
+  if (horizontal) {
+    drawBarsHorizontal(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, step, numSteps, dark);
+  } else {
+    drawBarsVertical(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, step, numSteps, dark);
+  }
+}
+
+function drawBarsVertical(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, step, numSteps, dark) {
+  const H = 280;
+  const { ctx } = sizeCanvas('chart-bars', W, H);
 
   ctx.font = '11px -apple-system, sans-serif';
   const axisLabelWidth = ctx.measureText(chartAxisLabel(axisTop)).width;
-  const valLabelMaxWidth = Math.max(0, ...monthlyTotals.filter(v => v > 0).map(v => ctx.measureText(chartValLabel(v)).width));
+  const valLabelMaxWidth = Math.max(0, ...monthlyTotals.map((v, i) => v > 0 ? ctx.measureText(barValueLabel(v, monthlyVat[i])).width : 0));
 
   const pl = Math.ceil(axisLabelWidth) + 14, pr = 8;
   const cW = W - pl - pr;
@@ -261,8 +297,6 @@ function drawBars(invs) {
 
   const pt = 24, pb = 24 + (valLabelMaxWidth > 0 ? (rotateValLabel ? valLabelMaxWidth : 15) + 8 : 0);
   const cH = H - pt - pb;
-
-  const dark = document.documentElement.dataset.theme === 'dark';
 
   for (let i = 0; i <= numSteps; i++) {
     const val = i * step;
@@ -294,29 +328,10 @@ function drawBars(invs) {
     if (showVatMonthly && vatH > 0) {
       ctx.fillStyle = isCurrent ? '#4a9d82' : '#6ab89c';
       ctx.fillRect(x, y, bW, vatH);
-
-      // VAT is often too thin a segment to fit a label inside it, so its
-      // amount is shown just above the bar instead — rotated the same way
-      // (and for the same reason) as the total-value label below the bars,
-      // when the slot's too narrow for it to read horizontally.
-      ctx.save();
-      ctx.fillStyle = dark ? '#8fd6ba' : '#3d8b5f';
-      ctx.font = '11px -apple-system, sans-serif';
-      if (rotateValLabel) {
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.translate(x + bW / 2, y - 2);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(chartValLabel(vat), 0, 0);
-      } else {
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(chartValLabel(vat), x + bW / 2, y - 2);
-      }
-      ctx.restore();
     }
 
-    // Month name + that month's sum, stacked below the x-axis.
+    // Month name + that month's sum (net, or gross with the vat portion in
+    // parentheses — see barValueLabel), stacked below the x-axis.
     ctx.fillStyle = isCurrent ? '#1565C0' : '#505050';
     ctx.font = isCurrent ? 'bold 9px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
     ctx.textAlign = 'center';
@@ -334,13 +349,90 @@ function drawBars(invs) {
         ctx.textBaseline = 'middle';
         ctx.translate(x + bW / 2, H - 4);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillText(chartValLabel(val), 0, 0);
+        ctx.fillText(barValueLabel(val, vat), 0, 0);
       } else {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText(chartValLabel(val), x + bW / 2, H - pb + 20);
+        ctx.fillText(barValueLabel(val, vat), x + bW / 2, H - pb + 20);
       }
       ctx.restore();
+    }
+  });
+}
+
+function drawBarsHorizontal(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, step, numSteps, dark) {
+  const rowH = 28, pt = 20, pb = 4;
+  const H = pt + 12 * rowH + pb;
+  const { ctx } = sizeCanvas('chart-bars', W, H);
+
+  ctx.font = '11px -apple-system, sans-serif';
+  const monthLabelWidth = Math.max(...months().map(m => ctx.measureText(m).width));
+  const pl = Math.ceil(monthLabelWidth) + 12, pr = 8;
+  const cW = W - pl - pr;
+
+  // Money axis gridlines + labels along the top, reading left-to-right.
+  for (let i = 0; i <= numSteps; i++) {
+    const val = i * step;
+    const x = pl + (val / axisTop) * cW;
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, pt); ctx.lineTo(x, H - pb); ctx.stroke();
+    ctx.fillStyle = dark ? '#f2f2f2' : '#070707';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(chartAxisLabel(val), x, pt - 4);
+  }
+
+  const now = new Date();
+  monthlyNet.forEach((net, i) => {
+    const vat = monthlyVat[i];
+    const val = monthlyTotals[i];
+    const isCurrent = reportYear === now.getFullYear() && i === now.getMonth();
+    const rowY = pt + i * rowH;
+    const barH = Math.max(rowH * 0.55, 4);
+    const barY = rowY + (rowH - barH) / 2;
+
+    const bW = val > 0 ? Math.max((val / axisTop) * cW, 3) : 3;
+    const netW = val > 0 && showVatMonthly ? (net / axisTop) * cW : bW;
+    const vatW = val > 0 && showVatMonthly ? Math.max(bW - netW, 0) : 0;
+
+    ctx.fillStyle = val > 0 ? (isCurrent ? '#1565C0' : '#1976D2') : (dark ? 'rgba(255,255,255,0.2)' : '#e8e8e8');
+    ctx.fillRect(pl, barY, netW, barH);
+
+    if (showVatMonthly && vatW > 0) {
+      ctx.fillStyle = isCurrent ? '#4a9d82' : '#6ab89c';
+      ctx.fillRect(pl + netW, barY, vatW, barH);
+    }
+
+    // Month name, left of the axis, right-aligned against it.
+    ctx.fillStyle = isCurrent ? '#1565C0' : '#505050';
+    ctx.font = isCurrent ? 'bold 11px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(months()[i], pl - 6, rowY + rowH / 2);
+
+    if (val > 0) {
+      // Net, or gross with the vat portion in parentheses (see
+      // barValueLabel) — after the bar's end, reading normally left-to-right
+      // since a whole row's width is available instead of a single bar's
+      // worth. Falls back to inside the bar (right-aligned, light text)
+      // only if the bar itself reaches too close to the canvas edge to
+      // leave room, e.g. the year's peak month.
+      const label = barValueLabel(val, vat);
+      ctx.font = '11px -apple-system, sans-serif';
+      const labelWidth = ctx.measureText(label).width;
+      const barEndX = pl + bW;
+      const fitsOutside = barEndX + 6 + labelWidth <= W - pr;
+      ctx.textBaseline = 'middle';
+      if (fitsOutside) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = dark ? '#c8ccd2' : '#707070';
+        ctx.fillText(label, barEndX + 6, rowY + rowH / 2);
+      } else {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, barEndX - 6, rowY + rowH / 2);
+      }
     }
   });
 }
@@ -878,6 +970,7 @@ function downloadYearAccountantCsv() {
 
 window.setReportYear = setReportYear;
 window.toggleReportVat = toggleReportVat;
+window.toggleChartOrientation = toggleChartOrientation;
 window.downloadYearReport = downloadYearReport;
 window.viewYearReport = viewYearReport;
 window.downloadMonthReport = downloadMonthReport;

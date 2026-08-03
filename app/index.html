@@ -283,7 +283,12 @@
     <div class="card">
       <div class="card-label-row">
         <div class="card-label" style="margin-bottom:0;" data-i18n="monthlyComparison">Kuukausimyynnit</div>
-        <button id="btn-toggle-vat-2" class="vat-toggle-btn" onclick="toggleReportVat('monthly')">Näytä ALV</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button type="button" class="chart-orientation-btn" onclick="toggleChartOrientation()" aria-label="Vaihda kaavion suunta" title="Vaihda kaavion suunta">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+          <button id="btn-toggle-vat-2" class="vat-toggle-btn" onclick="toggleReportVat('monthly')">Näytä ALV</button>
+        </div>
       </div>
       <div id="chart-bars-wrap">
         <canvas id="chart-bars"></canvas>
@@ -464,35 +469,65 @@
     </label>
   </div>
 
-  <div class="card" style="margin-top:14px;">
-    <div class="card-label" data-i18n="backupSection">Varmuuskopiointi</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="backupHint">Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.</div>
-    <button class="btn-add" onclick="downloadBackup()" data-i18n="downloadBackup">↓ Lataa varmuuskopio</button>
-  </div>
-
-  <div class="card" style="margin-top:14px;" id="billing-card">
-    <div class="card-label" data-i18n="billingSection">Tilaus</div>
-    <div class="set-row" id="billing-interval-row" style="display:none;">
-      <div style="display:flex;gap:8px;width:100%;">
-        <button type="button" id="billing-interval-month" class="btn-add" style="margin:0;flex:1;" onclick="setBillingInterval('month')" data-i18n="billingIntervalMonth">Kuukausi – 14,90 €/kk</button>
-        <button type="button" id="billing-interval-year" class="btn-add" style="margin:0;flex:1;" onclick="setBillingInterval('year')" data-i18n="billingIntervalYear">Vuosi – 149,90 €/v</button>
+  <div class="settings-grid" style="margin-top:14px;">
+    <div class="card" id="billing-card">
+      <div class="card-label" data-i18n="billingSection">Tilaus</div>
+      <div class="set-row" id="billing-interval-row" style="display:none;">
+        <div style="display:flex;gap:8px;width:100%;">
+          <button type="button" id="billing-interval-month" class="btn-add" style="margin:0;flex:1;" onclick="setBillingInterval('month')" data-i18n="billingIntervalMonth">Kuukausi – 14,90 €/kk</button>
+          <button type="button" id="billing-interval-year" class="btn-add" style="margin:0;flex:1;" onclick="setBillingInterval('year')" data-i18n="billingIntervalYear">Vuosi – 149,90 €/v</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div>
+          <div class="set-label" id="billing-plan-label" data-i18n="planFree">Ilmainen</div>
+          <div class="set-sub" id="billing-plan-sub"></div>
+        </div>
+        <button class="btn-upgrade" id="billing-cta" style="width:auto;margin:0;" data-i18n="upgradeToProBtn">Päivitä Prohon</button>
       </div>
     </div>
-    <div class="set-row">
-      <div>
-        <div class="set-label" id="billing-plan-label" data-i18n="planFree">Ilmainen</div>
-        <div class="set-sub" id="billing-plan-sub"></div>
+
+    <div class="card" id="referral-card">
+      <div class="card-label" data-i18n="referralSection">Suosittele Hoylaa</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="referralHint">Jaa linkkisi. Kun suosittelemasi yrittäjä ottaa Pro-jäsenyyden, saat itse kuukauden ilmaiseksi.</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="referral-url" readonly style="flex:1;min-width:0;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text2);" autocomplete="off">
+        <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="shareReferralLink()" data-i18n="referralShare">Jaa</button>
       </div>
-      <button class="btn-upgrade" id="billing-cta" style="width:auto;margin:0;" data-i18n="upgradeToProBtn">Päivitä Prohon</button>
     </div>
   </div>
 
-  <div class="card" style="margin-top:14px;" id="referral-card">
-    <div class="card-label" data-i18n="referralSection">Suosittele Hoylaa</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="referralHint">Jaa linkkisi. Kun suosittelemasi yrittäjä ottaa Pro-jäsenyyden, saat itse kuukauden ilmaiseksi.</div>
-    <div style="display:flex;gap:8px;">
-      <input type="text" id="referral-url" readonly style="flex:1;font-size:12px;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text2);" autocomplete="off">
-      <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="shareReferralLink()" data-i18n="referralShare">Jaa</button>
+  <div class="card" style="margin-top:14px;" id="ideas-card">
+    <div class="card-label" data-i18n="ideasSectionTitle">💡 Kehitysideat</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="ideasHint">Ehdota uusi ominaisuus tai äänestä muiden ehdotuksia ylös.</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input type="text" id="idea-input" maxlength="300" placeholder="Esim. Verkkolaskutus" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
+      <button type="button" class="btn-add" id="idea-submit-btn" style="width:auto;flex-shrink:0;margin:0;white-space:nowrap;" onclick="addIdea()" data-i18n="ideasSubmit">Lähetä</button>
+    </div>
+    <div id="ideas-list"></div>
+  </div>
+
+  <div class="settings-grid" style="margin-top:14px;">
+    <div class="card">
+      <div class="card-label" data-i18n="backupSection">Varmuuskopiointi</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="backupHint">Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.</div>
+      <button class="btn-add" onclick="downloadBackup()" data-i18n="downloadBackup">↓ Lataa varmuuskopio</button>
+    </div>
+
+    <div class="card" style="border-color:var(--red);" id="danger-zone-card">
+      <div class="card-label" style="color:var(--red);" data-i18n="dangerZoneTitle">Poista tilisi ja tietosi</div>
+      <div id="danger-zone-default">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="dangerZoneHint">Tilin poistaminen poistaa pysyvästi kaikki tietosi: kirjaukset, laskut, asiakkaat ja asetukset.</div>
+        <button class="btn-add" id="delete-account-btn" style="background:transparent;color:var(--red);border:1.5px solid var(--red);" onclick="deleteAccountUI()" data-i18n="deleteAccountBtn">Poista tili ja kaikki data</button>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px;display:none;" id="delete-account-owner-hint" data-i18n="ownerOnlyDeleteHint">Vain organisaation omistaja voi poistaa tilin.</div>
+      </div>
+      <div id="danger-zone-pending" style="display:none;">
+        <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:10px;">
+          <span data-i18n="deletionScheduledPrefix">Tilisi ja kaikki tietosi poistetaan pysyvästi</span>
+          <span id="deletion-scheduled-date"></span>.
+        </div>
+        <button class="btn-add" onclick="cancelAccountDeletionUI()" data-i18n="cancelDeletionBtn">Peru poisto</button>
+      </div>
     </div>
   </div>
 
@@ -513,32 +548,6 @@
         <button class="btn-add" style="margin:0;white-space:nowrap;" onclick="joinWithCodeUI()" data-i18n="orgJoinBtn">Liity</button>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-top:4px;" data-i18n="orgJoinNote">Nykyiset tietosi eivät siirry uuteen organisaatioon.</div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:14px;" id="ideas-card">
-    <div class="card-label" data-i18n="ideasSectionTitle">💡 Kehitysideat</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="ideasHint">Ehdota uusi ominaisuus tai äänestä muiden ehdotuksia ylös.</div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <input type="text" id="idea-input" maxlength="300" placeholder="Esim. Verkkolaskutus" style="flex:1;min-width:0;padding:9px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;" autocomplete="off">
-      <button type="button" class="btn-add" id="idea-submit-btn" style="width:auto;flex-shrink:0;margin:0;white-space:nowrap;" onclick="addIdea()" data-i18n="ideasSubmit">Lähetä</button>
-    </div>
-    <div id="ideas-list"></div>
-  </div>
-
-  <div class="card" style="margin-top:14px;border-color:var(--red);" id="danger-zone-card">
-    <div class="card-label" style="color:var(--red);" data-i18n="dangerZoneTitle">Poista tilisi ja tietosi</div>
-    <div id="danger-zone-default">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="dangerZoneHint">Tilin poistaminen poistaa pysyvästi kaikki tietosi: kirjaukset, laskut, asiakkaat ja asetukset.</div>
-      <button class="btn-add" id="delete-account-btn" style="background:transparent;color:var(--red);border:1.5px solid var(--red);" onclick="deleteAccountUI()" data-i18n="deleteAccountBtn">Poista tili ja kaikki data</button>
-      <div style="font-size:12px;color:var(--text3);margin-top:8px;display:none;" id="delete-account-owner-hint" data-i18n="ownerOnlyDeleteHint">Vain organisaation omistaja voi poistaa tilin.</div>
-    </div>
-    <div id="danger-zone-pending" style="display:none;">
-      <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:10px;">
-        <span data-i18n="deletionScheduledPrefix">Tilisi ja kaikki tietosi poistetaan pysyvästi</span>
-        <span id="deletion-scheduled-date"></span>.
-      </div>
-      <button class="btn-add" onclick="cancelAccountDeletionUI()" data-i18n="cancelDeletionBtn">Peru poisto</button>
     </div>
   </div>
 

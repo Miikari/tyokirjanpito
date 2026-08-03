@@ -151,7 +151,7 @@ const i18n = {
     // Laskun kieli & tulostus
     custInvoiceLang: 'Laskun kieli', dueDateLabel: 'Eräpäivä', hourBreakdown: 'Tuntierittely',
     // Tilaus (Stripe)
-    billingSection: 'Tilaus', planFree: 'Ilmainen', planPro: 'Hoyla Pro',
+    billingSection: '💳 Tilaus', planFree: 'Ilmainen', planPro: 'Hoyla Pro',
     menuPlanFree: 'Ilmainen taso', menuPlanPro: 'Hoyla Pro -tilaus',
     planFreeHint: '{entries}/50 kirjausta, {invoices}/5 laskua · Pro 14,90 €/kk (early adopter -hinta)',
     planProRenews: 'Uusiutuu', upgradeToProBtn: 'Päivitä Prohon', manageSubscriptionBtn: 'Hallitse tilausta',
@@ -166,11 +166,11 @@ const i18n = {
     demoNoCheckout: 'Luo oma tili tilausta varten. Vierastilillä ei voi tilata.',
     billedHoursTotal: 'Laskutettu yhteensä {hours} h',
     // Varmuuskopiointi
-    backupSection: 'Varmuuskopiointi',
+    backupSection: '💾 Varmuuskopiointi',
     backupHint: 'Lataa kaikki tietosi (kirjaukset, laskut, asiakkaat, asetukset) yhtenä tiedostona omalle laitteellesi talteen.',
     downloadBackup: '↓ Lataa varmuuskopio', backupDownloaded: 'Varmuuskopio ladattu',
     // Suosittelu
-    referralSection: 'Suosittele Hoylaa',
+    referralSection: '🔗 Suosittele Hoylaa',
     referralHint: 'Jaa linkkisi. Kun suosittelemasi yrittäjä ottaa Pro-jäsenyyden, saat itse kuukauden ilmaiseksi.',
     referralShare: 'Jaa', referralLinkCopied: 'Suosittelulinkki kopioitu!',
     // Organisaatio
@@ -362,7 +362,7 @@ const i18n = {
     // Invoice language & print
     custInvoiceLang: 'Invoice language', dueDateLabel: 'Due date', hourBreakdown: 'Hour breakdown',
     // Subscription (Stripe)
-    billingSection: 'Subscription', planFree: 'Free', planPro: 'Hoyla Pro',
+    billingSection: '💳 Subscription', planFree: 'Free', planPro: 'Hoyla Pro',
     menuPlanFree: 'Free plan', menuPlanPro: 'Hoyla Pro subscription',
     planFreeHint: '{entries}/50 entries, {invoices}/5 invoices · Pro €14.90/mo (early adopter price)',
     planProRenews: 'Renews', upgradeToProBtn: 'Upgrade to Pro', manageSubscriptionBtn: 'Manage subscription',
@@ -377,11 +377,11 @@ const i18n = {
     demoNoCheckout: 'Create your own account to subscribe. Guest accounts cannot subscribe.',
     billedHoursTotal: 'Billed {hours} h total',
     // Backup
-    backupSection: 'Backup',
+    backupSection: '💾 Backup',
     backupHint: 'Download all your data (entries, invoices, customers, settings) as a single file to keep on your own device.',
     downloadBackup: '↓ Download backup', backupDownloaded: 'Backup downloaded',
     // Referral
-    referralSection: 'Refer Hoyla',
+    referralSection: '🔗 Refer Hoyla',
     referralHint: "Share your link. When someone you referred takes a Pro membership, you get a month free.",
     referralShare: 'Share', referralLinkCopied: 'Referral link copied!',
     // Organization
