@@ -273,6 +273,15 @@ function closeConfirm() {
   document.getElementById('modal-confirm').classList.remove('open');
 }
 
+// ── HELP MODAL ──
+function openHelpModal() {
+  document.getElementById('modal-help').classList.add('open');
+}
+
+function closeHelpModal() {
+  document.getElementById('modal-help').classList.remove('open');
+}
+
 window.showTab = showTab;
 window.showKelloSub = showKelloSub;
 window.setLang = setLang;
@@ -282,3 +291,5 @@ window.closeConfirm = closeConfirm;
 window.toggleUserMenu = toggleUserMenu;
 window.closeUserMenu = closeUserMenu;
 window.toggleInfoTip = toggleInfoTip;
+window.openHelpModal = openHelpModal;
+window.closeHelpModal = closeHelpModal;

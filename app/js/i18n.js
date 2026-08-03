@@ -74,7 +74,8 @@ const i18n = {
     hourDistribution: 'Tuntijakauma asiakkaiden välillä', monthlyComparison: 'Vertailu kuukausien välillä',
     noInvoicesYear: 'Ei laskuja vuodelle',
     downloadReport: 'Lataa raportti', monthReport: 'Kuukausiraportti', yearReport: 'Vuosiraportti',
-    downloadPdf: 'Lataa PDF', downloadCsv: 'Lataa CSV',
+    downloadPdf: '↓ PDF', downloadCsv: '↓ CSV',
+    accountantCsvBtn: 'Kirjanpitoraportti kirjanpitäjälle', vatRateHeader: 'ALV %', vatAmountHeader: 'ALV €',
     monthNames: ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu','Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'],
     monthNamesShort: ['Tam','Hel','Maa','Huh','Tou','Kes','Hei','Elo','Syy','Lok','Mar','Jou'],
     invoicedLabel: 'Laskutettu', createdOn: 'Luotu', monthlyBreakdown: 'Kuukausittainen erittely',
@@ -197,6 +198,18 @@ const i18n = {
     ideasEmptyInput: 'Kirjoita idea ensin.', ideasTooLong: 'Idea on liian pitkä (maks. 300 merkkiä).',
     ideaSubmitted: 'Kiitos ideasta!', ideasSaveError: 'Tallennus epäonnistui. Yritä uudelleen.',
     ideasLoadError: 'Kehitysideoiden lataus epäonnistui.',
+    // Ohjeet
+    helpMenuLabel: 'Ohjeet', helpTitle: 'Ohjeet',
+    helpStep1Title: '1. Kirjaa tunnit',
+    helpStep1Text: 'Kellota työt reaaliajassa Työnäkymässä, tai lisää tunnit jälkikäteen Kirjaukset-välilehdellä.',
+    helpStep2Title: '2. Lisää kulut ja kilometrit',
+    helpStep2Text: 'Kulukorvaukset ja ajetut kilometrit kirjataan samaan paikkaan kuin tunnit, ja ne tulevat automaattisesti mukaan seuraavaan laskuun.',
+    helpStep3Title: '3. Lisää asiakkaat',
+    helpStep3Text: 'Syötä asiakkaan tiedot (osoite, ALV, maksuehto) kerran Asiakkaat-välilehdellä — ne toistuvat automaattisesti joka laskulla.',
+    helpStep4Title: '4. Kokoa lasku',
+    helpStep4Text: 'Valitse laskuttamattomat kirjaukset Kirjaukset-näkymässä ja paina "Kokoa lasku". Hoyla laskee ALV:n, laskunumeron ja eräpäivän puolestasi.',
+    helpStep5Title: '5. Lähetä lasku',
+    helpStep5Text: 'Valmiin laskun voi tulostaa tai tallentaa PDF:nä, tai lähettää suoraan asiakkaan sähköpostiin yhdellä klikkauksella Laskut-välilehdeltä.',
   },
   en: {
     // App
@@ -271,7 +284,8 @@ const i18n = {
     hourDistribution: 'Hour distribution by customer', monthlyComparison: 'Monthly comparison',
     noInvoicesYear: 'No invoices for',
     downloadReport: 'Download report', monthReport: 'Monthly', yearReport: 'Annual',
-    downloadPdf: 'Download PDF', downloadCsv: 'Download CSV',
+    downloadPdf: '↓ PDF', downloadCsv: '↓ CSV',
+    accountantCsvBtn: 'Accounting report for your accountant', vatRateHeader: 'VAT %', vatAmountHeader: 'VAT €',
     monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     monthNamesShort: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
     invoicedLabel: 'Invoiced', createdOn: 'Created', monthlyBreakdown: 'Monthly breakdown',
@@ -394,6 +408,18 @@ const i18n = {
     ideasEmptyInput: 'Write an idea first.', ideasTooLong: 'Idea is too long (max 300 characters).',
     ideaSubmitted: 'Thanks for the idea!', ideasSaveError: 'Could not save. Please try again.',
     ideasLoadError: 'Could not load feature ideas.',
+    // Help
+    helpMenuLabel: 'Help', helpTitle: 'Help',
+    helpStep1Title: '1. Log your hours',
+    helpStep1Text: 'Clock in live from the Work view, or add hours after the fact from the Entries tab.',
+    helpStep2Title: '2. Add expenses and mileage',
+    helpStep2Text: 'Expense reimbursements and driven kilometers are logged in the same place as hours, and are automatically included in the next invoice.',
+    helpStep3Title: '3. Add customers',
+    helpStep3Text: 'Enter a customer’s details (address, VAT, payment terms) once in the Customers tab — they’re applied automatically on every invoice.',
+    helpStep4Title: '4. Build the invoice',
+    helpStep4Text: 'Select the unbilled entries in the Entries view and press "Build invoice". Hoyla works out the VAT, invoice number and due date for you.',
+    helpStep5Title: '5. Send the invoice',
+    helpStep5Text: 'Print or save the finished invoice as a PDF, or send it straight to the customer’s email with one click from the Invoices tab.',
   }
 };
 

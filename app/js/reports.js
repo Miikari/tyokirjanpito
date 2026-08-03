@@ -833,6 +833,37 @@ function downloadMonthReportCsv() {
   downloadCsv(`${monthName}-${year}.csv`, [entrySection, invSection, expSection]);
 }
 
+// ── Kirjanpitäjän CSV ──
+// Deliberately a single flat table (header row + one row per invoice, no
+// title line or other sections) — unlike the multi-section reports above,
+// this is meant to be imported as-is into accounting software (Netvisor,
+// Merit Aktiva, Fennoa etc.), which expects one clean table, not several
+// concatenated ones.
+function downloadAccountantCsv(filename, invs) {
+  const headers = [t('date'), t('numberLabel'), t('customer'), t('vatExcl'), t('vatRateHeader'), t('vatAmountHeader'), t('totalRow')];
+  const rows = invs.map(inv => [
+    fmtDate(inv.date),
+    `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`,
+    [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
+    csvNum(inv.subtotal ?? 0),
+    csvNum(inv.vat ?? 0),
+    csvNum(inv.vatAmount ?? 0),
+    csvNum(inv.total),
+  ]);
+  downloadCsv(filename, [[csvRow(headers), ...rows.map(csvRow)].join('\r\n')]);
+}
+
+function downloadMonthAccountantCsv() {
+  const sel = document.getElementById('rep-month-sel');
+  const { year, monthName, invs } = getMonthReportData(reportYear, parseInt(sel.value));
+  downloadAccountantCsv(`${monthName}-${year}-kirjanpitajalle.csv`, invs);
+}
+
+function downloadYearAccountantCsv() {
+  const { year, invs } = getYearReportData(reportYear);
+  downloadAccountantCsv(`${t('yearReport')}-${year}-kirjanpitajalle.csv`, invs);
+}
+
 window.setReportYear = setReportYear;
 window.toggleReportVat = toggleReportVat;
 window.downloadYearReport = downloadYearReport;
@@ -840,3 +871,5 @@ window.viewYearReport = viewYearReport;
 window.downloadMonthReport = downloadMonthReport;
 window.downloadYearReportCsv = downloadYearReportCsv;
 window.downloadMonthReportCsv = downloadMonthReportCsv;
+window.downloadYearAccountantCsv = downloadYearAccountantCsv;
+window.downloadMonthAccountantCsv = downloadMonthAccountantCsv;

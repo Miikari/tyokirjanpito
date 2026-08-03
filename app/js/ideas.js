@@ -52,7 +52,6 @@ function renderIdeasList() {
       </button>
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;color:var(--text);">${esc(idea.text)}</div>
-        ${idea.createdByName ? `<div style="font-size:12px;color:var(--text3);margin-top:2px;">${esc(idea.createdByName)}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -71,8 +70,9 @@ export async function addIdea() {
   try {
     await ideasCol().add({
       text,
+      // createdByUid is never shown to anyone — kept only so firestore.rules
+      // can verify a create/vote is done by the account making it.
       createdByUid: state.uid,
-      createdByName: state.cfg.company || state.accountName || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     input.value = '';

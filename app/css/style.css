@@ -755,5 +755,6 @@ html[data-theme="dark"] .toast.toast-success { background: var(--green); color: 
 .rep-download-title { width:100%; border:none; background:var(--blue); color:#fff; font-weight:700; font-size:15px; font-family:inherit; text-align:center; padding:12px 14px; border-radius:var(--r-sm); cursor:pointer; }
 .rep-download-title:active { opacity:0.85; }
 .rep-btn-row { display:flex; gap:6px; }
+.rep-accountant-link { flex:1; background:none; border:none; padding:4px 0; color:var(--blue); font-size:13px; font-weight:600; text-decoration:underline; text-align:center; cursor:pointer; font-family:inherit; }
 #clock-rate-confirm-btn.rate-changed { background:var(--green); color:#fff; }
 .rec-count-badge { font-size:12px; font-weight:700; color:var(--text3); background:var(--surface2); padding:2px 10px; border-radius:999px; flex-shrink:0; }
