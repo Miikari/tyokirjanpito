@@ -285,7 +285,7 @@ const i18n = {
     noInvoicesYear: 'No invoices for',
     downloadReport: 'Download report', monthReport: 'Monthly', yearReport: 'Annual',
     downloadPdf: '↓ PDF', downloadCsv: '↓ CSV',
-    accountantCsvBtn: 'Accounting report for your accountant', vatRateHeader: 'VAT %', vatAmountHeader: 'VAT €',
+    accountantCsvBtn: 'Report for accountant', vatRateHeader: 'VAT %', vatAmountHeader: 'VAT €',
     monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     monthNamesShort: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
     invoicedLabel: 'Invoiced', createdOn: 'Created', monthlyBreakdown: 'Monthly breakdown',

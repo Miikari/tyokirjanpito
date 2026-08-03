@@ -296,12 +296,24 @@ function drawBars(invs) {
       ctx.fillRect(x, y, bW, vatH);
 
       // VAT is often too thin a segment to fit a label inside it, so its
-      // amount is shown just above the bar instead.
+      // amount is shown just above the bar instead — rotated the same way
+      // (and for the same reason) as the total-value label below the bars,
+      // when the slot's too narrow for it to read horizontally.
+      ctx.save();
       ctx.fillStyle = dark ? '#8fd6ba' : '#3d8b5f';
       ctx.font = '11px -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(chartValLabel(vat), x + bW / 2, y - 2);
+      if (rotateValLabel) {
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.translate(x + bW / 2, y - 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(chartValLabel(vat), 0, 0);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(chartValLabel(vat), x + bW / 2, y - 2);
+      }
+      ctx.restore();
     }
 
     // Month name + that month's sum, stacked below the x-axis.

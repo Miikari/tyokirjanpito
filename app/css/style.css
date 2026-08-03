@@ -417,6 +417,10 @@ body {
   .user-menu-dropdown { min-width: 160px; }
   .row-search input { padding: 9px 8px; font-size: 13px; }
   #cust-postal-row { grid-template-columns: 1fr; }
+  /* Bleeds the monthly comparison chart out past the card's own padding —
+     mostly to the left (axis labels need the room more than the right edge
+     does) — so each month's bar gets a bit more width on narrow screens. */
+  #chart-bars-wrap { margin-left: -14px; margin-right: -4px; }
 }
 @media (min-width: 1200px) {
   .header h1 { font-size: 26px; }
