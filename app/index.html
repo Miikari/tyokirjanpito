@@ -208,13 +208,13 @@
 
     <div class="card card-form">
       <div class="card-label" data-i18n="manualEntry">Manuaalinen kirjaus</div>
-      <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:0 10px;">
-        <div class="fg" style="grid-column:span 5;min-width:0;"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off" style="width:100%;"></div>
-        <div class="fg" style="grid-column:span 5;min-width:0;"><label data-i18n="service">Palvelu</label><select id="m-service" onchange="selManualService(this.value)" style="width:100%;"></select></div>
-        <div class="fg" style="grid-column:span 5;min-width:0;"><label data-i18n="customer">Asiakas</label><select id="m-customer" onchange="handleCustomerSelectChange(this)" style="width:100%;"></select></div>
-        <div class="fg" style="grid-column:span 2;min-width:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off" style="width:100%;"></div>
-        <div class="fg" style="grid-column:span 2;min-width:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off" style="width:100%;"></div>
-        <div class="fg" style="grid-column:span 1;min-width:0;"><label data-i18n="hourlyRateLabel">Tuntihinta</label><input type="number" id="m-rate" min="0" step="0.5" autocomplete="off" style="width:100%;"></div>
+      <div class="m-entry-grid">
+        <div class="fg m-date-fg" style="min-width:0;"><label data-i18n="date">Päivämäärä</label><input type="date" id="m-date" autocomplete="off" style="width:100%;"></div>
+        <div class="fg m-service-fg" style="min-width:0;"><label data-i18n="service">Palvelu</label><select id="m-service" onchange="selManualService(this.value)" style="width:100%;"></select></div>
+        <div class="fg m-rate-fg" style="min-width:0;"><label data-i18n="rateLabel">Hinta</label><input type="number" id="m-rate" min="0" step="0.5" autocomplete="off" style="width:100%;"></div>
+        <div class="fg m-customer-fg" style="min-width:0;"><label data-i18n="customer">Asiakas</label><select id="m-customer" onchange="handleCustomerSelectChange(this)" style="width:100%;"></select></div>
+        <div class="fg m-hours-fg" style="min-width:0;"><label data-i18n="hours">Tunnit</label><input type="number" id="m-h" min="0" max="24" placeholder="0" autocomplete="off" style="width:100%;"></div>
+        <div class="fg m-minutes-fg" style="min-width:0;"><label data-i18n="minutes">Minuutit</label><input type="number" id="m-m" min="0" max="59" placeholder="0" autocomplete="off" style="width:100%;"></div>
       </div>
       <div class="fg fg-grow"><label data-i18n="notes">Merkintöjä</label><textarea id="m-notes" placeholder="Lisätietoja..." autocomplete="off"></textarea></div>
       <button class="btn-add" id="manual-add-btn" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
@@ -222,9 +222,9 @@
 
     <div class="card card-form">
       <div class="card-label" data-i18n="expenses">Kulukorvaukset</div>
-      <div style="display:flex;gap:10px;">
-        <div class="fg" style="flex:1;min-width:0;"><label data-i18n="date">Päivämäärä</label><input type="date" id="exp-date" autocomplete="off" style="width:100%;"></div>
-        <div class="fg" id="exp-end-date-row" style="flex:1;min-width:0;display:none;"><label data-i18n="expEndDate">Loppupäivä</label><input type="date" id="exp-end-date" autocomplete="off" style="width:100%;"></div>
+      <div class="m-exp-row" style="display:flex;gap:10px;">
+        <div class="fg" style="flex:1;min-width:0;"><label data-i18n="date">Päivämäärä</label><input type="date" id="exp-date" autocomplete="off" style="width:100%;" onchange="refreshExpensePerdiemPreview()"></div>
+        <div class="fg" id="exp-end-date-row" style="flex:1;min-width:0;display:none;"><label data-i18n="expEndDate">Loppupäivä</label><input type="date" id="exp-end-date" autocomplete="off" style="width:100%;" onchange="refreshExpensePerdiemPreview()"></div>
       </div>
       <div class="fg" id="exp-multi-day-row" style="display:none;">
         <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;">
@@ -232,7 +232,7 @@
           <span data-i18n="markMultipleDays">Merkkaa useita kerralla</span>
         </label>
       </div>
-      <div style="display:flex;gap:10px;">
+      <div class="m-exp-row" style="display:flex;gap:10px;">
         <div class="fg" style="flex:1;min-width:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;" onchange="handleCustomerSelectChange(this)"></select></div>
         <div class="fg" style="flex:1;min-width:0;"><label data-i18n="expenseType">Kulun tyyppi</label>
           <select id="exp-kind" onchange="onExpenseKindChange()" style="width:100%;">
@@ -242,13 +242,13 @@
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:10px;">
+      <div class="m-exp-row" style="display:flex;gap:10px;">
         <div class="fg" style="flex:1;min-width:0;"><label id="exp-desc-label" data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." style="width:100%;" autocomplete="off"></div>
         <div class="fg" style="flex:1;min-width:0;"><label id="exp-amount-label" data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
       </div>
-      <div id="exp-perdiem-time-row" style="display:none;gap:10px;margin-bottom:10px;">
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="departureTime">Lähtöaika</label><input type="time" id="exp-departure-time" style="width:100%;" autocomplete="off"></div>
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="returnTime">Paluuaika</label><input type="time" id="exp-return-time" style="width:100%;" autocomplete="off"></div>
+      <div id="exp-perdiem-time-row" class="m-exp-row" style="display:none;gap:10px;margin-bottom:10px;">
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="departureTime">Lähtöaika</label><input type="time" id="exp-departure-time" style="width:100%;" autocomplete="off" onchange="refreshExpensePerdiemPreview()"></div>
+        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="returnTime">Paluuaika</label><input type="time" id="exp-return-time" style="width:100%;" autocomplete="off" onchange="refreshExpensePerdiemPreview()"></div>
       </div>
       <button class="btn-add" id="exp-add-btn" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
     </div>
@@ -379,21 +379,24 @@
   <div class="panel" id="panel-asetukset">
   <div class="settings-grid" style="margin-bottom:14px;">
     <div class="card">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language" data-i18n="language">Kieli</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;flex:1;">🇫🇮 Suomi</button>
+        <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;flex:1;">🇬🇧 English</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="theme">Teema</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="setTheme('light')" id="btn-theme-light" class="btn-add" style="margin:0;flex:1;" data-i18n="themeLight">☀️ Vaalea</button>
+        <button onclick="setTheme('dark')" id="btn-theme-dark" class="btn-add" style="margin:0;flex:1;" data-i18n="themeDark">🌙 Tumma</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-grid" style="margin-bottom:14px;">
+    <div class="card" style="align-self:stretch;">
       <div class="card-label" data-i18n="companyInfo">Yritystiedot</div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language" data-i18n="language">Kieli</div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="setLang('fi')" id="btn-fi" class="btn-add" style="margin:0;flex:1;">🇫🇮 Suomi</button>
-          <button onclick="setLang('en')" id="btn-en" class="btn-add" style="margin:0;flex:1;">🇬🇧 English</button>
-        </div>
-      </div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="theme">Teema</div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="setTheme('light')" id="btn-theme-light" class="btn-add" style="margin:0;flex:1;" data-i18n="themeLight">☀️ Vaalea</button>
-          <button onclick="setTheme('dark')" id="btn-theme-dark" class="btn-add" style="margin:0;flex:1;" data-i18n="themeDark">🌙 Tumma</button>
-        </div>
-      </div>
       <div class="fg"><label data-i18n="companyName">Nimi / Yritys</label><input type="text" id="set-company" placeholder="Oma Nimi tai Yritys Oy" oninput="markSettingsDirty()" autocomplete="off"></div>
       <div class="fg"><label data-i18n="companyAddress">Osoite</label><input type="text" id="set-address" placeholder="Katuosoite 1, 00100 Helsinki" oninput="markSettingsDirty()" autocomplete="off"></div>
       <div class="fg"><label data-i18n="companyPhone">Puhelin</label><input type="text" id="set-phone" placeholder="+358 40 123 4567" oninput="markSettingsDirty()" autocomplete="off"></div>
@@ -402,7 +405,7 @@
       <div class="fg"><label data-i18n="bankAccount">Tilinumero</label><input type="text" id="set-tilinumero" placeholder="FI12 3456 7890 1234 56" oninput="markSettingsDirty()" autocomplete="off"></div>
     </div>
 
-    <div class="card">
+    <div class="card" style="align-self:stretch;">
       <div class="card-label" data-i18n="pricing">Hinnoittelu</div>
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="services">Palvelut</div>
@@ -448,58 +451,73 @@
           </select>
         </div>
       </div>
-      <div class="set-row" id="set-vat-zero-reason-row" style="display:none;">
+      <div class="set-row" id="set-vat-zero-reason-row" style="visibility:hidden;">
         <div><div class="set-label" data-i18n="vatZeroReasonLabel">ALV 0% syy</div></div>
         <div class="set-input-wrap">
-          <select id="set-vat-zero-reason" onchange="markSettingsDirty()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);">
+          <select id="set-vat-zero-reason" onchange="markSettingsDirty()" style="padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r-sm);font-size:15px;font-weight:700;background:var(--bg);color:var(--text);max-width:190px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;">
             <option value="" data-i18n="vatZeroReasonChoose">Valitse syy</option>
             <option value="reverse" data-i18n="vatReverseCharge">Käänteinen ALV (8 §)</option>
             <option value="exempt" data-i18n="vatExempt">Ei arvonlisäverovelvollinen (3 §)</option>
           </select>
         </div>
       </div>
-      <div class="set-row" style="margin-top:10px;">
-        <div><div class="set-label" data-i18n="kmReimbursement">Kilometrikorvaus</div><div class="set-sub" data-i18n="kmRateHint">Kilometrihinta laskuun</div></div>
-        <div class="set-input-wrap">
+    </div>
+
+    <div class="card" style="align-self:stretch;">
+      <div class="card-label" data-i18n="invoiceSettings">Laskuasetukset</div>
+      <label class="toggle-row">
+        <input type="checkbox" id="inv-show-erapaiva" onchange="saveInvoiceSettings()">
+        <div><div class="set-label" data-i18n="dueDate">Eräpäivä ja maksuehto</div><div class="set-sub" data-i18n="dueDateHint">Lasketaan asiakkaan maksuehdosta</div></div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="inv-show-viitenumero" onchange="saveInvoiceSettings()">
+        <div><div class="set-label" data-i18n="referenceNumber">Viitenumero</div><div class="set-sub" data-i18n="referenceNumberHint">Automaattisesti generoitu</div></div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="inv-show-tilinumero" onchange="saveInvoiceSettings()">
+        <div><div class="set-label" data-i18n="bankAccount">Tilinumero</div><div class="set-sub" data-i18n="bankAccountHint">Asetuksissa määritetty tilinumero</div></div>
+      </label>
+    </div>
+
+    <div class="card" style="align-self:stretch;">
+      <div class="card-label" data-i18n="kmPerdiemSection">Kilometrit ja päivärahat</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid var(--border);">
+        <label style="display:flex;align-items:center;gap:14px;cursor:pointer;flex:1;min-width:0;">
+          <input type="checkbox" id="set-enable-km" onchange="markSettingsDirty();onEnableExpenseKindChange()" style="width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:var(--blue);">
+          <div><div class="set-label" data-i18n="enableKmExpense">Laskutan km-korvauksia</div><div class="set-sub" data-i18n="enableKmExpenseHint">Näyttää kilometrikorvauksen kulukirjauksissa</div></div>
+        </label>
+        <div id="set-kmrate-inline" class="set-input-wrap" style="display:none;flex-shrink:0;">
           <input type="number" id="set-kmrate" min="0" step="0.01" oninput="markSettingsDirty()" autocomplete="off">
           <span style="font-size:15px;font-weight:600;color:var(--text2);">€/km</span>
         </div>
       </div>
-      <div class="set-row" style="margin-top:10px;">
-        <div><div class="set-label" data-i18n="perdiemFullLabel">Kokopäiväraha</div><div class="set-sub" data-i18n="perdiemRateHint">Verohallinnon vuosittainen taso — tarkista ajantasainen summa</div></div>
-        <div class="set-input-wrap">
-          <input type="number" id="set-perdiem-full" min="0" step="0.01" oninput="markSettingsDirty()" autocomplete="off">
-          <span style="font-size:15px;font-weight:600;color:var(--text2);">€</span>
-        </div>
-      </div>
-      <div class="set-row">
-        <div><div class="set-label" data-i18n="perdiemHalfLabel">Osapäiväraha</div></div>
-        <div class="set-input-wrap">
-          <input type="number" id="set-perdiem-half" min="0" step="0.01" oninput="markSettingsDirty()" autocomplete="off">
-          <span style="font-size:15px;font-weight:600;color:var(--text2);">€</span>
+      <label class="toggle-row">
+        <input type="checkbox" id="set-enable-perdiem" onchange="markSettingsDirty();onEnableExpenseKindChange()">
+        <div><div class="set-label" data-i18n="enablePerdiemExpense">Laskutan päivärahoja</div><div class="set-sub" data-i18n="enablePerdiemExpenseHint">Näyttää päivärahakorvauksen kulukirjauksissa</div></div>
+      </label>
+      <div id="set-perdiem-rates-row" style="visibility:hidden;margin-top:10px;">
+        <div style="display:flex;gap:10px;">
+          <div class="fg" style="flex:1;min-width:0;margin:0;">
+            <label data-i18n="perdiemFullLabel">Kokopäiväraha</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="number" id="set-perdiem-full" min="0" step="0.01" oninput="markSettingsDirty()" style="width:100%;" autocomplete="off">
+              <span style="font-size:14px;font-weight:600;color:var(--text2);">€</span>
+            </div>
+          </div>
+          <div class="fg" style="flex:1;min-width:0;margin:0;">
+            <label data-i18n="perdiemHalfLabel">Osapäiväraha</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="number" id="set-perdiem-half" min="0" step="0.01" oninput="markSettingsDirty()" style="width:100%;" autocomplete="off">
+              <span style="font-size:14px;font-weight:600;color:var(--text2);">€</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:14px;">
-    <div class="card-label" data-i18n="invoiceSettings">Laskuasetukset</div>
-    <label class="toggle-row">
-      <input type="checkbox" id="inv-show-erapaiva" onchange="saveInvoiceSettings()">
-      <div><div class="set-label" data-i18n="dueDate">Eräpäivä ja maksuehto</div><div class="set-sub" data-i18n="dueDateHint">Lasketaan asiakkaan maksuehdosta</div></div>
-    </label>
-    <label class="toggle-row">
-      <input type="checkbox" id="inv-show-viitenumero" onchange="saveInvoiceSettings()">
-      <div><div class="set-label" data-i18n="referenceNumber">Viitenumero</div><div class="set-sub" data-i18n="referenceNumberHint">Automaattisesti generoitu</div></div>
-    </label>
-    <label class="toggle-row">
-      <input type="checkbox" id="inv-show-tilinumero" onchange="saveInvoiceSettings()">
-      <div><div class="set-label" data-i18n="bankAccount">Tilinumero</div><div class="set-sub" data-i18n="bankAccountHint">Asetuksissa määritetty tilinumero</div></div>
-    </label>
-  </div>
-
   <div class="settings-grid" style="margin-top:14px;">
-    <div class="card" id="billing-card">
+    <div class="card" id="billing-card" style="align-self:stretch;">
       <div class="card-label" data-i18n="billingSection">Tilaus</div>
       <div class="set-row" id="billing-interval-row" style="display:none;">
         <div style="display:flex;gap:8px;width:100%;">
@@ -516,7 +534,7 @@
       </div>
     </div>
 
-    <div class="card" id="referral-card">
+    <div class="card" id="referral-card" style="align-self:stretch;">
       <div class="card-label" data-i18n="referralSection">Suosittele Hoylaa</div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:12px;" data-i18n="referralHint">Jaa linkkisi. Kun suosittelemasi yrittäjä ottaa Pro-jäsenyyden, saat itse kuukauden ilmaiseksi.</div>
       <div style="display:flex;gap:8px;">

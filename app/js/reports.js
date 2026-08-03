@@ -281,9 +281,15 @@ function drawBarsVertical(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, ste
   const H = 280;
   const { ctx } = sizeCanvas('chart-bars', W, H);
 
-  ctx.font = '11px -apple-system, sans-serif';
+  const rotatedValFont = '9px -apple-system, sans-serif';
+  const valFont = '11px -apple-system, sans-serif';
+
+  ctx.font = valFont;
   const axisLabelWidth = ctx.measureText(chartAxisLabel(axisTop)).width;
-  const valLabelMaxWidth = Math.max(0, ...monthlyTotals.map((v, i) => v > 0 ? ctx.measureText(barValueLabel(v, monthlyVat[i])).width : 0));
+  // Price-only width — once rendered, the ALV portion sits on its own line
+  // next to the price (see the render loop) rather than appended inline, so
+  // it no longer factors into whether the label fits its slot.
+  const priceLabelWidth = Math.max(0, ...monthlyTotals.map(v => v > 0 ? ctx.measureText(chartValLabel(v)).width : 0));
 
   const pl = Math.ceil(axisLabelWidth) + 14, pr = 8;
   const cW = W - pl - pr;
@@ -293,9 +299,23 @@ function drawBarsVertical(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, ste
   // it's narrower than its own slot — true on desktop-width charts, not on
   // phone-width ones. When it doesn't fit, rotate it (reads bottom-to-top)
   // so it only needs ~11px of horizontal room instead of the full string.
-  const rotateValLabel = valLabelMaxWidth > slot - 4;
+  const rotateValLabel = priceLabelWidth > slot - 4;
+  const hasVatLine = !rotateValLabel && showVatMonthly && monthlyVat.some(v => v > 0);
 
-  const pt = 24, pb = 24 + (valLabelMaxWidth > 0 ? (rotateValLabel ? valLabelMaxWidth : 15) + 8 : 0);
+  // Rotated rendering draws the old combined "price (vat)" string (see
+  // below) at a smaller font than the normal case — narrow screens are
+  // exactly where this branch fires, so keeping it compact leaves more of
+  // the fixed canvas height for the bars themselves instead of the label.
+  ctx.font = rotatedValFont;
+  const combinedLabelWidth = Math.max(0, ...monthlyTotals.map((v, i) => v > 0 ? ctx.measureText(barValueLabel(v, monthlyVat[i])).width : 0));
+  ctx.font = valFont;
+
+  // Both rotated and non-rotated price (+ optional vat) labels sit above
+  // their own bar now, so headroom lives at the top; the rotated case needs
+  // more of it since its label reads sideways along that same vertical
+  // space instead of stacking as short horizontal lines.
+  const pt = 24 + (priceLabelWidth > 0 ? (rotateValLabel ? combinedLabelWidth + 4 : (hasVatLine ? 30 : 16)) : 0);
+  const pb = 24;
   const cH = H - pt - pb;
 
   for (let i = 0; i <= numSteps; i++) {
@@ -330,30 +350,50 @@ function drawBarsVertical(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, ste
       ctx.fillRect(x, y, bW, vatH);
     }
 
-    // Month name + that month's sum (net, or gross with the vat portion in
-    // parentheses — see barValueLabel), stacked below the x-axis.
+    // Month name below the x-axis; that month's sum sits above its own bar
+    // instead (rotated sideways when it wouldn't otherwise fit its slot).
+    // When ALV is shown, the vat portion is drawn in green rather than
+    // being appended inline with the price.
     ctx.fillStyle = isCurrent ? '#1565C0' : '#505050';
-    ctx.font = isCurrent ? 'bold 9px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
+    ctx.font = isCurrent ? 'bold 11px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(months()[i], x + bW / 2, H - pb + 4);
     if (val > 0) {
       ctx.save();
       ctx.fillStyle = dark ? '#c8ccd2' : '#707070';
-      ctx.font = '11px -apple-system, sans-serif';
+      ctx.font = rotateValLabel ? rotatedValFont : valFont;
       if (rotateValLabel) {
-        // Rotated (reads bottom-to-top), anchored near the canvas bottom —
-        // a vertical label is only ~11px wide instead of the full string
-        // width, so it no longer overlaps the neighbouring month's label.
+        // Rotated (reads bottom-to-top), anchored just above this bar's own
+        // top and growing further upward from there — a vertical label is
+        // only ~9px wide instead of the full string width, so it no longer
+        // overlaps the neighbouring month's label. Smaller font than the
+        // normal case since narrow screens (where this branch fires) have
+        // the least headroom to spare. Price and vat are drawn as two
+        // separate segments end-to-end along that same rotated line (vat
+        // second, in green) instead of one combined string, matching the
+        // non-rotated layout below.
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.translate(x + bW / 2, H - 4);
+        ctx.translate(x + bW / 2, y - 4);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillText(barValueLabel(val, vat), 0, 0);
+        const priceText = chartValLabel(val);
+        ctx.fillText(priceText, 0, 0);
+        if (showVatMonthly && vat > 0) {
+          const priceWidth = ctx.measureText(priceText).width;
+          ctx.fillStyle = isCurrent ? '#4a9d82' : '#6ab89c';
+          ctx.fillText(`(${chartValLabel(vat)})`, priceWidth + 6, 0);
+        }
       } else {
+        // Above the bar's own top instead of below the axis — price closest
+        // to the bar, vat (when shown) in green just above that.
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(barValueLabel(val, vat), x + bW / 2, H - pb + 20);
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(chartValLabel(val), x + bW / 2, y - 4);
+        if (showVatMonthly && vat > 0) {
+          ctx.fillStyle = isCurrent ? '#4a9d82' : '#6ab89c';
+          ctx.fillText(`(${chartValLabel(vat)})`, x + bW / 2, y - 4 - 13);
+        }
       }
       ctx.restore();
     }

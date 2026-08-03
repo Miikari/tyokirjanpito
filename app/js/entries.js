@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration } from './utils.js';
+import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration, localDateStr } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
@@ -276,7 +276,7 @@ function onExpenseKindChange() {
   const descInput = document.getElementById('exp-desc');
   const descLabel = document.getElementById('exp-desc-label');
   const amountInput = document.getElementById('exp-amount');
-  const amountRow = amountInput.closest('.fg');
+  const amountLabel = document.getElementById('exp-amount-label');
   const multiDayRow = document.getElementById('exp-multi-day-row');
   const multiDayCheckbox = document.getElementById('exp-multi-day');
   const perdiemTimeRow = document.getElementById('exp-perdiem-time-row');
@@ -284,26 +284,33 @@ function onExpenseKindChange() {
   multiDayRow.style.display = (kind === 'km' || kind === 'perdiem') ? '' : 'none';
   multiDayCheckbox.checked = false;
   perdiemTimeRow.style.display = kind === 'perdiem' ? 'flex' : 'none';
-  amountRow.style.display = kind === 'perdiem' ? 'none' : '';
   onExpenseMultiDayChange();
   if (kind === 'km') {
     descLabel.textContent = t('kmCount');
     descInput.type = 'number';
     descInput.min = '0'; descInput.step = '1';
     descInput.placeholder = '0';
-    document.getElementById('exp-amount-label').textContent = t('kmReimbursementRate');
+    amountLabel.textContent = t('kmReimbursementRate');
+    amountInput.type = 'number';
+    amountInput.readOnly = false;
     amountInput.value = (state.cfg.kmRate ?? 0.57).toFixed(2);
   } else if (kind === 'perdiem') {
     descLabel.textContent = t('expenseDescOptional');
     descInput.type = 'text';
     descInput.removeAttribute('min'); descInput.removeAttribute('step');
     descInput.placeholder = t('expenseDescPlaceholder');
+    amountLabel.textContent = t('perdiemDaysCountLabel');
+    amountInput.type = 'text';
+    amountInput.readOnly = true;
+    refreshExpensePerdiemPreview();
   } else {
     descLabel.textContent = t('expenseDesc');
     descInput.type = 'text';
     descInput.removeAttribute('min'); descInput.removeAttribute('step');
     descInput.placeholder = 'esim. Matkakulut, materiaali...';
-    document.getElementById('exp-amount-label').textContent = t('expenseAmount');
+    amountLabel.textContent = t('expenseAmount');
+    amountInput.type = 'number';
+    amountInput.readOnly = false;
     amountInput.value = '';
   }
 }
@@ -316,39 +323,81 @@ function onExpenseMultiDayChange() {
   const endDateRow = document.getElementById('exp-end-date-row');
   endDateRow.style.display = checked ? '' : 'none';
   if (!checked) document.getElementById('exp-end-date').value = '';
+  refreshExpensePerdiemPreview();
+}
+
+// Live "vuorokausien määrä" preview shown where Summa normally sits — the
+// perdiem euro amount isn't known until submit (it depends on which of the
+// configured full/half rates apply), so this just previews how many
+// matkavuorokausia the current date/time inputs will produce.
+function refreshExpensePerdiemPreview() {
+  const amountInput = document.getElementById('exp-amount');
+  if (document.getElementById('exp-kind').value !== 'perdiem') return;
+  const dateVal = document.getElementById('exp-date').value;
+  const endDateVal = document.getElementById('exp-end-date').value || dateVal;
+  if (!dateVal || endDateVal < dateVal) { amountInput.value = ''; return; }
+  const departureTime = document.getElementById('exp-departure-time').value || '00:00';
+  const returnTime = document.getElementById('exp-return-time').value || '23:59';
+  amountInput.value = classifyPerdiemDays(dateVal, departureTime, endDateVal, returnTime).length;
+}
+
+// Hides the km/perdiem <option>s in the kind select for orgs that haven't
+// opted into billing that expense type (settings.js toggles) — keeps the
+// dropdown uncluttered for freelancers who never use them. Falls back to
+// "general" if the currently selected kind just got hidden out from under it.
+function updateExpenseKindOptions() {
+  const kindSelect = document.getElementById('exp-kind');
+  const kmOpt = kindSelect.querySelector('option[value="km"]');
+  const perdiemOpt = kindSelect.querySelector('option[value="perdiem"]');
+  if (kmOpt) kmOpt.hidden = !state.cfg.enableKmExpense;
+  if (perdiemOpt) perdiemOpt.hidden = !state.cfg.enablePerdiemExpense;
+  if ((kindSelect.value === 'km' && !state.cfg.enableKmExpense) ||
+      (kindSelect.value === 'perdiem' && !state.cfg.enablePerdiemExpense)) {
+    kindSelect.value = 'general';
+    onExpenseKindChange();
+  }
 }
 
 // Every calendar day from start to end inclusive, as 'YYYY-MM-DD' strings.
 function dateRangeDays(startStr, endStr) {
   const days = [];
-  let d = new Date(startStr + 'T00:00:00');
+  const d = new Date(startStr + 'T00:00:00');
   const last = new Date(endStr + 'T00:00:00');
   while (d <= last) {
-    days.push(d.toISOString().slice(0, 10));
-    d = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+    days.push(localDateStr(d));
+    d.setDate(d.getDate() + 1); // setDate (not raw ms) so DST changeover days still land on the right calendar date
   }
   return days;
 }
 
-// Simplified against Verohallinto's hour thresholds (over 10h that calendar
-// day = kokopäiväraha, over 6h = osapäiväraha, otherwise no allowance) —
-// applied per calendar day rather than the official rolling 24h-from-
-// departure window, since that would need the exact departure moment as
-// its own anchor for every subsequent period. A full calendar day strictly
-// between the departure and return days always qualifies as kokopäiväraha
-// regardless of clock times; only the first and last day depend on them.
+// Verohallinto's actual rule: a "matkavuorokausi" is a rolling 24-hour period
+// starting at the exact departure moment, not a calendar day. Every full
+// 24h period is a kokopäiväraha; only the leftover time after the last full
+// period is judged by its own length (>10h -> another full day, >6h -> half,
+// otherwise nothing). An earlier version of this measured calendar days
+// (midnight to midnight) instead, which over-counted the trailing day on
+// 3+ day trips — e.g. depart Mon 08:00, return Wed 14:00 is 54h total: two
+// full matkavuorokausi (Mon, Tue) plus a 6h remainder that does NOT clear
+// the >6h bar, so no third allowance — but midnight-to-midnight measured
+// Wednesday itself as 14 hours and wrongly granted it a full day too.
 function classifyPerdiemDays(startStr, departureTime, endStr, returnTime) {
   const departure = new Date(`${startStr}T${departureTime || '00:00'}:00`);
-  const arrival = new Date(`${endStr}T${returnTime || '23:59'}:59`);
-  return dateRangeDays(startStr, endStr).map(dateStr => {
-    const dayStart = new Date(dateStr + 'T00:00:00');
-    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-    const segStart = Math.max(dayStart.getTime(), departure.getTime());
-    const segEnd = Math.min(dayEnd.getTime(), arrival.getTime());
-    const hours = Math.max(0, (segEnd - segStart) / 3600000);
-    const type = hours > 10 ? 'full' : hours > 6 ? 'half' : 'none';
-    return { date: dateStr, hours, type };
-  });
+  const arrival = returnTime ? new Date(`${endStr}T${returnTime}:00`) : new Date(`${endStr}T23:59:59`);
+  const totalHours = Math.max(0, (arrival - departure) / 3600000);
+  const fullPeriods = Math.floor(totalHours / 24);
+  const remainder = totalHours - fullPeriods * 24;
+  const days = [];
+  for (let i = 0; i < fullPeriods; i++) {
+    days.push({ date: localDateStr(new Date(departure.getTime() + i * 24 * 3600000)), hours: 24, type: 'full' });
+  }
+  if (remainder > 6) {
+    days.push({
+      date: localDateStr(new Date(departure.getTime() + fullPeriods * 24 * 3600000)),
+      hours: remainder,
+      type: remainder > 10 ? 'full' : 'half',
+    });
+  }
+  return days;
 }
 
 export async function addExpense() {
@@ -540,5 +589,7 @@ window.toggleEntry = toggleEntry;
 window.addExpense = addExpense;
 window.onExpenseKindChange = onExpenseKindChange;
 window.onExpenseMultiDayChange = onExpenseMultiDayChange;
+window.refreshExpensePerdiemPreview = refreshExpensePerdiemPreview;
+window.updateExpenseKindOptions = updateExpenseKindOptions;
 window.toggleExpense = toggleExpense;
 window.deleteExpense = deleteExpense;

@@ -34,6 +34,10 @@ const i18n = {
     expenseReimbursement: 'Kulukorvaus',
     expEndDate: 'Loppupäivä', departureTime: 'Lähtöaika', returnTime: 'Paluuaika',
     markMultipleDays: 'Merkkaa useita kerralla',
+    perdiemDaysCountLabel: 'Vuorokausien määrä',
+    enableKmExpense: 'Laskutan km-korvauksia', enableKmExpenseHint: 'Näyttää kilometrikorvauksen kulukirjauksissa',
+    enablePerdiemExpense: 'Laskutan päivärahoja', enablePerdiemExpenseHint: 'Näyttää päivärahakorvauksen kulukirjauksissa',
+    kmPerdiemSection: 'Kilometrit ja päivärahat',
     expenseDescOptional: 'Kuvaus (valinnainen)', invalidDateRange: 'Loppupäivä ei voi olla ennen alkupäivää',
     perdiemRatesMissing: 'Aseta ensin päivärahojen eurosummat asetuksista (Hinnoittelu)',
     perdiemNoEligibleDays: 'Yksikään päivä ei täytä päivärahan alarajaa (yli 6h)',
@@ -72,7 +76,6 @@ const i18n = {
     // Kilometrikorvaus
     kmReimbursement: 'Kilometrikorvaus', kmRate: 'Kilometrikorvaus', kmRateHint: 'Kilometrihinta laskuun',
     perdiemFullLabel: 'Kokopäiväraha', perdiemHalfLabel: 'Osapäiväraha',
-    perdiemRateHint: 'Verohallinnon vuosittainen taso — tarkista ajantasainen summa',
     // Kuukausiveloitukset
     recurring: 'Kuukausiveloitukset', noRecurring: 'Ei kuukausiveloituksia vielä.',
     doAddRecurring: 'Lisätäänkö kuukausiveloitukset?',
@@ -256,6 +259,10 @@ const i18n = {
     expenseReimbursement: 'Expense',
     expEndDate: 'End date', departureTime: 'Departure time', returnTime: 'Return time',
     markMultipleDays: 'Mark multiple days at once',
+    perdiemDaysCountLabel: 'Number of days',
+    enableKmExpense: 'I bill mileage reimbursements', enableKmExpenseHint: 'Shows mileage reimbursement in expense entries',
+    enablePerdiemExpense: 'I bill per diems', enablePerdiemExpenseHint: 'Shows per diem allowance in expense entries',
+    kmPerdiemSection: 'Mileage and per diems',
     expenseDescOptional: 'Description (optional)', invalidDateRange: 'End date cannot be before start date',
     perdiemRatesMissing: 'Set the per diem euro rates in Settings (Pricing) first',
     perdiemNoEligibleDays: 'No day meets the per diem minimum (over 6h)',
@@ -294,7 +301,6 @@ const i18n = {
     // Mileage
     kmReimbursement: 'Mileage reimbursement', kmRate: 'Mileage rate', kmRateHint: 'Rate per kilometer on invoice',
     perdiemFullLabel: 'Full-day allowance', perdiemHalfLabel: 'Half-day allowance',
-    perdiemRateHint: "Verohallinto's annual rate — check the current amount",
     // Recurring
     recurring: 'Monthly charges', noRecurring: 'No monthly charges yet.',
     doAddRecurring: 'Do you want to add recurring costs?',

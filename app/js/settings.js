@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import {
   fmtEur, esc, isValidCompanyName, isValidAddress, isValidPhone,
-  isValidEmailField, isValidYtunnus, isValidIban,
+  isValidEmailField, isValidYtunnus, isValidIban, todayLocalStr,
 } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { saveConfig } from './storage.js';
@@ -24,13 +24,26 @@ function saveMinRounding() {
 
 // Pure UI toggle — the 0%-reason row only makes sense once 0% is picked,
 // but nothing is saved until saveAllSettings() runs (top save banner).
+// visibility (not display) so the row keeps reserving its space either way —
+// Hinnoittelu's height then stays constant regardless of VAT choice, instead
+// of jumping every time this row appears/disappears.
 function onVatSelectChange() {
   const val = document.getElementById('set-vat').value;
-  document.getElementById('set-vat-zero-reason-row').style.display = val === '0' ? '' : 'none';
+  document.getElementById('set-vat-zero-reason-row').style.visibility = val === '0' ? 'visible' : 'hidden';
 }
 
 function markSettingsDirty() {
   document.getElementById('settings-save-banner').classList.add('show');
+}
+
+// Pure UI toggle, mirrors onVatSelectChange() — only affects which rate
+// rows are visible in the settings form; nothing is saved until
+// saveAllSettings() runs. The perdiem rates row uses visibility (not
+// display) so it keeps reserving its space either way — the card doesn't
+// grow/shrink when the checkbox is toggled, same trick as the ALV0 row.
+function onEnableExpenseKindChange() {
+  document.getElementById('set-kmrate-inline').style.display = document.getElementById('set-enable-km').checked ? 'flex' : 'none';
+  document.getElementById('set-perdiem-rates-row').style.visibility = document.getElementById('set-enable-perdiem').checked ? 'visible' : 'hidden';
 }
 
 // Re-populates every settings field from state.cfg (nothing was persisted
@@ -58,9 +71,12 @@ export function renderSettings() {
   document.getElementById('set-kmrate').value = state.cfg.kmRate ?? 0.57;
   document.getElementById('set-perdiem-full').value = state.cfg.perdiemFullRate ?? '';
   document.getElementById('set-perdiem-half').value = state.cfg.perdiemHalfRate ?? '';
+  document.getElementById('set-enable-km').checked = state.cfg.enableKmExpense !== false;
+  document.getElementById('set-enable-perdiem').checked = state.cfg.enablePerdiemExpense === true;
+  onEnableExpenseKindChange();
   document.getElementById('set-vat').value = state.cfg.vat === null || state.cfg.vat === undefined ? '' : state.cfg.vat;
   document.getElementById('set-vat-zero-reason').value = state.cfg.vatZeroReason || '';
-  document.getElementById('set-vat-zero-reason-row').style.display = state.cfg.vat === 0 ? '' : 'none';
+  document.getElementById('set-vat-zero-reason-row').style.visibility = state.cfg.vat === 0 ? 'visible' : 'hidden';
   ['fi', 'en'].forEach(l => {
     const btn = document.getElementById('btn-' + l);
     const active = state.lang === l;
@@ -73,6 +89,9 @@ export function renderSettings() {
 }
 
 function saveAllSettings() {
+  const enableKmExpense = document.getElementById('set-enable-km').checked;
+  const enablePerdiemExpense = document.getElementById('set-enable-perdiem').checked;
+
   const kmRate = parseFloat(document.getElementById('set-kmrate').value);
   if (isNaN(kmRate) || kmRate < 0) { toast(t('invalidPrice')); return; }
 
@@ -114,9 +133,12 @@ function saveAllSettings() {
   state.cfg.kmRate = kmRate;
   state.cfg.perdiemFullRate = perdiemFullRate;
   state.cfg.perdiemHalfRate = perdiemHalfRate;
+  state.cfg.enableKmExpense = enableKmExpense;
+  state.cfg.enablePerdiemExpense = enablePerdiemExpense;
   state.cfg.vat = vat;
   state.cfg.vatZeroReason = vat === 0 ? vatZeroReason : null;
   saveConfig(); updateUserNameDisplay();
+  window.updateExpenseKindOptions?.();
   document.getElementById('settings-save-banner').classList.remove('show');
   toast(t('saved'), 'success');
 }
@@ -206,7 +228,7 @@ function downloadBackup() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `tyotunnit-varmuuskopio-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `tyotunnit-varmuuskopio-${todayLocalStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   toast(t('backupDownloaded'));
@@ -305,6 +327,7 @@ window.saveRounding = saveRounding;
 window.saveMinRounding = saveMinRounding;
 window.onVatSelectChange = onVatSelectChange;
 window.markSettingsDirty = markSettingsDirty;
+window.onEnableExpenseKindChange = onEnableExpenseKindChange;
 window.discardSettingsChanges = discardSettingsChanges;
 window.saveInvoiceSettings = saveInvoiceSettings;
 window.downloadBackup = downloadBackup;

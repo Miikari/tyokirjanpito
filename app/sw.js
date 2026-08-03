@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v121';
+const CACHE = 'tyotunnit-v123';
 const FILES = [
   'manifest.json',
   'icons/icon-192.png',

@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { state, defaultCfg } from './state.js';
 
 function d(dateStr) {
   return new Date(dateStr + 'T12:00:00').toISOString();
@@ -32,6 +32,7 @@ export function loadDemoData() {
 
 function loadDemoDataFi() {
   state.cfg = {
+    ...defaultCfg(),
     hourly: 50,
     company: 'Vierailija Oy',
     ytunnus: '1234567-8',
@@ -44,7 +45,6 @@ function loadDemoDataFi() {
     kmRate: 0.57,
     showTilinumero: true,
     showErapaiva: true,
-    showViitenumero: false,
     recurring: [],
     services: [{ id: 1, name: 'Tuntityö', rate: 50 }, { id: 2, name: 'Konsultointi', rate: 90 }],
     hideRate: false,
@@ -155,6 +155,7 @@ function loadDemoDataFi() {
 
 function loadDemoDataEn() {
   state.cfg = {
+    ...defaultCfg(),
     hourly: 50,
     company: 'Guest Ltd',
     ytunnus: '1234567-8',
@@ -167,7 +168,6 @@ function loadDemoDataEn() {
     kmRate: 0.57,
     showTilinumero: true,
     showErapaiva: true,
-    showViitenumero: false,
     recurring: [],
     services: [{ id: 1, name: 'Hourly work', rate: 50 }, { id: 2, name: 'Consulting', rate: 90 }],
     hideRate: false,

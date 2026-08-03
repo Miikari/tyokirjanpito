@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDate } from './utils.js';
+import { fmtDate, todayLocalStr } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
 import { initClockRate, renderMainBtns, renderPills, setBadge, syncSelectLabel, tick } from './clock.js';
 import { renderAllSelects, renderCustChips } from './customers.js';
@@ -136,8 +136,9 @@ export async function loadFromFirestore() {
   } catch (e) { toast(t('latausVirhe') + e.message); }
 
   renderServiceSelects();
-  document.getElementById('m-date').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('exp-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('m-date').value = todayLocalStr();
+  document.getElementById('exp-date').value = todayLocalStr();
+  window.updateExpenseKindOptions?.();
   renderAllSelects(); renderCustChips(); renderPills(); renderEntries();
   window.updateInvoiceBadge?.();
 

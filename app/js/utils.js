@@ -9,6 +9,15 @@ export function fmtShort(s) { return pad(Math.floor(s / 3600)) + ':' + pad(Math.
 
 export function fmtDate(d) { return new Date(d).toLocaleDateString('fi-FI', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
 
+// Y-M-D in LOCAL time. toISOString() converts through UTC first, which
+// rolls the date back by one for any positive UTC offset (all of Finland,
+// all year) during the first few hours after local midnight.
+export function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function todayLocalStr() { return localDateStr(new Date()); }
+
 export function fmtDateTime(d) {
   return new Date(d).toLocaleString('fi-FI', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }

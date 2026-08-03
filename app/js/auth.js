@@ -196,6 +196,7 @@ auth.onAuthStateChanged(async user => {
         const { renderEntries } = await import('./entries.js');
         const { renderPills } = await import('./clock.js');
         renderAllSelects(); renderCustChips(); renderServiceSelects(); renderPills(); renderEntries();
+        window.updateExpenseKindOptions?.();
         window.updateInvoiceBadge?.();
       }
       renderOrgSettings();
