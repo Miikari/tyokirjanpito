@@ -66,10 +66,16 @@ service cloud.firestore {
       // Billing fields can never be touched by this rule (Cloud Functions
       // only, via the Admin SDK), and the lifetime counters must go through
       // the dedicated increment-only rule below, not this general one.
+      // inviteCode is excluded too — regenerating it now goes through the
+      // regenerateInviteCode Cloud Function, which checks for collisions
+      // against every other org's code before writing; a client able to set
+      // its own inviteCode directly could pick a short/predictable one or
+      // collide with another org's code with no check at all (2026-08-04
+      // security review).
       allow update: if request.auth != null
         && request.auth.uid == resource.data.ownerId
         && request.resource.data.ownerId == resource.data.ownerId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(billingFields().concat(counterFields()));
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(billingFields().concat(counterFields()).concat(['inviteCode']));
 
       // Lifetime usage counters that gate the free tier (entries/invoices
       // created). Any member may bump them (any member can create entries),

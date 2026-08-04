@@ -1,6 +1,8 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { getFirestore } = require('firebase-admin/firestore');
 const { checkRateLimit } = require('./rateLimit.js');
+const { genCode } = require('./codeGen.js');
+const { requireOrgOwner } = require('./org.js');
 
 function requireNonAnonymous(request) {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Sign-in required.');
@@ -53,14 +55,53 @@ const joinOrgByInviteCode = onCall(async (request) => {
   const displayName = request.auth.token.name || request.auth.token.email || 'Vieras';
   const email = request.auth.token.email || '';
 
+  // Every user belongs to exactly one org today (users/{uid}.orgId is the
+  // single "current org" pointer, not a membership list — orgs/{orgId}.
+  // members is the actual source of truth per org). Joining a second org
+  // without leaving the first would desync those two: the org doc would
+  // gain a member that users/{uid}.orgId no longer points at, and — if the
+  // caller owns their current org — could orphan it entirely. There's no
+  // "leave org" flow yet, so for now this is simply blocked rather than
+  // silently switching (2026-08-04 security review).
+  const userDoc = await db.collection('users').doc(request.auth.uid).get();
+  const currentOrgId = userDoc.exists ? userDoc.data().orgId : null;
+  if (currentOrgId && currentOrgId !== doc.id) {
+    throw new HttpsError('failed-precondition', 'Olet jo toisen organisaation jäsen.');
+  }
+
   if (!(org.members && org.members[request.auth.uid])) {
-    await doc.ref.update({
-      [`members.${request.auth.uid}`]: { role: 'member', email, displayName },
-    });
-    await db.collection('users').doc(request.auth.uid).set({ orgId: doc.id, email, displayName }, { merge: true });
+    // Batched so the membership write and the users/{uid}.orgId write can
+    // never partially succeed — a failure after only the first would leave
+    // the org and the user doc disagreeing about membership (2026-08-04
+    // security review, data-integrity finding).
+    const batch = db.batch();
+    batch.update(doc.ref, { [`members.${request.auth.uid}`]: { role: 'member', email, displayName } });
+    batch.set(db.collection('users').doc(request.auth.uid), { orgId: doc.id, email, displayName }, { merge: true });
+    await batch.commit();
   }
 
   return { orgId: doc.id, name: org.name };
 });
 
-module.exports = { lookupOrgByInviteCode, joinOrgByInviteCode };
+// Owner-only: mints a fresh invite code, retrying on collision against every
+// other org's code (the same astronomically-unlikely-but-still-checked
+// pattern as ensureReferralCode in referrals.js). Direct client writes to
+// inviteCode are blocked in firestore.rules, so this is the only way it can
+// change after an org's creation.
+const regenerateInviteCode = onCall(async (request) => {
+  const { orgRef } = await requireOrgOwner(request);
+  await checkRateLimit(request.auth.uid, 'regenerateInviteCode', { maxCalls: 10, windowMs: 5 * 60 * 1000 });
+
+  const db = getFirestore();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = genCode();
+    const existing = await db.collection('orgs').where('inviteCode', '==', code).limit(1).get();
+    if (existing.empty) {
+      await orgRef.update({ inviteCode: code });
+      return { inviteCode: code };
+    }
+  }
+  throw new HttpsError('internal', 'Could not generate a unique invite code — please try again.');
+});
+
+module.exports = { lookupOrgByInviteCode, joinOrgByInviteCode, regenerateInviteCode };

@@ -4,8 +4,19 @@ import { fmtDateTime } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { renderBillingSettings } from './billing.js';
 
-function genCode() {
-  return Math.random().toString(36).slice(2, 10).toUpperCase();
+// Only used for a brand-new org's initial invite code (org creation is a
+// single client-side `create` write, so there's no server round-trip to
+// hook a collision check into) — every code minted after that goes through
+// the regenerateInviteCode Cloud Function instead, which checks for
+// collisions server-side (see functions/src/codeGen.js for why this needs
+// to be crypto-random rather than Math.random). Mirrors that file's
+// alphabet/length so a brand-new org's first code is exactly as strong as
+// a regenerated one.
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function genCode(length = 12) {
+  const bytes = new Uint32Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
 }
 
 function orgRef() {
@@ -198,10 +209,17 @@ export async function loadOrgInfo() {
   return doc.exists ? { id: doc.id, ...doc.data() } : null;
 }
 
+// Goes through a Cloud Function rather than a direct client write — the
+// code needs a server-side collision check against every other org's
+// inviteCode (functions/src/orgJoin.js), which a client can't safely do
+// itself without the orgs collection being list-able (removed for the same
+// reason the old self-join rule was, see the 2026-08-04 security review).
+// firestore.rules also blocks any direct client write to inviteCode now,
+// so this Cloud Function is the only way it can ever change.
 export async function regenerateInviteCode() {
-  const code = genCode();
-  await orgRef().update({ inviteCode: code });
-  return code;
+  const fn = firebase.functions().httpsCallable('regenerateInviteCode');
+  const { data } = await fn({ orgId: state.orgId });
+  return data.inviteCode;
 }
 
 export async function removeMember(uid) {

@@ -2,10 +2,7 @@ const { onCall } = require('firebase-functions/v2/https');
 const { getFirestore } = require('firebase-admin/firestore');
 const { requireOrgMember } = require('./org.js');
 const { checkRateLimit } = require('./rateLimit.js');
-
-function genCode() {
-  return Math.random().toString(36).slice(2, 10).toUpperCase();
-}
+const { genCode } = require('./codeGen.js');
 
 // Generates and stores this org's own shareable referral code, retrying on
 // the astronomically unlikely case of a collision. Done server-side (rather
