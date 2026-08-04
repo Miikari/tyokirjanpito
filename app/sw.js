@@ -1,5 +1,6 @@
-const CACHE = 'tyotunnit-v131';
+const CACHE = 'tyotunnit-v133';
 const FILES = [
+  'index.html',
   'manifest.json',
   'icons/icon-192.png',
   'icons/icon-512.png',
@@ -29,6 +30,17 @@ const FILES = [
 // miikari.github.io/tyokirjanpito/app/ -asennuksissa (eri base path).
 const HTML_URLS = ['/', 'index.html'];
 
+// A visit to plain ".../app/" (the common case — every "Kirjaudu"/"Kokeile"
+// link on the marketing pages points here) and a visit to ".../app/index.html"
+// are different Request URLs, so caching each under its own key would mean
+// the offline fallback only works for whichever variant happened to be
+// fetched last. Every successful HTML fetch is cached under this single
+// canonical key instead, and the offline fallback always reads back that
+// same key — resolved relative to this script's own URL, so it still works
+// correctly whichever base path (Firebase Hosting vs GitHub Pages) sw.js is
+// actually served from (2026-08-04 review).
+const APP_SHELL_URL = new URL('index.html', self.location).toString();
+
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
@@ -53,10 +65,10 @@ self.addEventListener('fetch', e => {
       fetch(e.request)
         .then(response => {
           const clone = response.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+          caches.open(CACHE).then(c => c.put(APP_SHELL_URL, clone));
           return response;
         })
-        .catch(() => caches.match('index.html'))
+        .catch(() => caches.match(APP_SHELL_URL))
     );
     return;
   }
