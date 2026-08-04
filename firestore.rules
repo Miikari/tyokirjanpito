@@ -41,7 +41,13 @@ service cloud.firestore {
       // checks for collisions first.
       function billingFields() {
         return ['plan', 'subscriptionStatus', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd',
-                'pendingReferralCreditCents', 'referralRewardGranted', 'referralCode'];
+                'pendingReferralCreditCents', 'referralRewardGranted', 'referralCode',
+                // Tracks the Stripe event `created` timestamp of the last
+                // subscription-state update actually applied (webhook.js's
+                // applyIfNewer) — a client able to reset or forge this could
+                // make a stale/out-of-order webhook event's state look newer
+                // than it is and get it re-applied.
+                'lastSubscriptionEventAt'];
       }
 
       // Lifetime usage counters (see the dedicated increment-only rule below).
