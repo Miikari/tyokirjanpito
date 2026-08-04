@@ -135,12 +135,19 @@ body {
 .timer-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 14px; min-height: 18px; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
 .clock-badge {
   display: inline-block; font-size: 12px; font-weight: 600;
-  padding: 4px 16px; border-radius: 99px; margin-bottom: 20px;
+  padding: 4px 12px 4px 10px; border-radius: 99px; margin-bottom: 20px;
   letter-spacing: 0.03em;
 }
 .cb-idle    { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); }
-.cb-running { background: rgba(255,255,255,0.25); color: #fff; }
+.cb-running { background: rgba(102,187,106,0.22); color: #6fe089; }
 .cb-paused  { background: rgba(255,200,0,0.25); color: #ffe082; }
+.status-dot { display: inline-block; position: relative; top: -1px; }
+@keyframes clock-badge-pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+.cb-running .status-dot { animation: clock-badge-pulse 1.5s infinite ease-in-out; }
 
 /* Customer picker on clock card */
 .clock-cust-wrap { position: relative; max-width: 260px; margin: 0 auto 20px; }
@@ -182,8 +189,8 @@ body {
 }
 .btn:active { opacity: 0.82; transform: scale(0.97); }
 .btn-signin  { background: var(--blue); color: #fff; }
-.btn-pause   { background: rgba(255,255,255,0.15); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
-.btn-signout { background: rgba(220,53,69,0.18); color: #ffcdd2; border: 1.5px solid rgba(220,53,69,0.35); }
+.btn-pause   { background: rgba(255,255,255,0.15); color: #fff; border: 1.5px solid rgba(255,255,255,0.45); }
+.btn-signout { background: rgba(220,53,69,0.18); color: #ffcdd2; border: 1.5px solid rgba(220,53,69,0.45); }
 
 /* ── CARDS ── */
 .card {
@@ -478,7 +485,17 @@ body {
   .set-label { font-size: 17px; }
   .set-sub { font-size: 14px; }
 }
-#clock-bg { z-index: 0; background-image: url('../images/background2.jpg'); background-size: cover; background-position: center 70%; background-repeat: no-repeat; }
+#clock-bg { z-index: 0; }
+.clock-bg-layer {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center 70%; background-repeat: no-repeat;
+  filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.clock-bg-layer.clock-bg-visible { opacity: 1; }
+#clock-bg-still { background-image: url('../images/background2.jpg'); }
+#clock-bg-anim  { background-image: url('../images/background3.gif'); }
 .clock-card > *:not(#clock-bg) { position: relative; z-index: 2; }
 
 /* ── MODAL ── */

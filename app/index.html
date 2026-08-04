@@ -162,8 +162,11 @@
 
     <div class="subpanel active" id="subpanel-kirjaa">
     <div class="clock-card">
-      <div id="clock-bg" style="position:absolute;inset:0;border-radius:var(--r);transition:opacity 0.5s;opacity:0.9;pointer-events:none;z-index:0;"></div>
-      <div class="timer" id="timer">00:00:00</div>
+      <div id="clock-bg" style="position:absolute;inset:0;border-radius:var(--r);overflow:hidden;opacity:0.9;pointer-events:none;z-index:0;">
+        <div id="clock-bg-still" class="clock-bg-layer clock-bg-visible"></div>
+        <div id="clock-bg-anim" class="clock-bg-layer"></div>
+      </div>
+      <div class="timer" id="timer"><span id="timer-h">00</span><span class="timer-colon">:</span><span id="timer-m">00</span><span class="timer-colon">:</span><span id="timer-s">00</span></div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge" data-i18n="idle">Ei käynnissä</span>
       <div class="clock-cust-wrap">

@@ -6,9 +6,19 @@ import { addEntry } from './entries.js';
 import { saveConfig } from './storage.js';
 import { customerName, ADD_NEW_VALUE } from './customers.js';
 
+export function setTimerText(str) {
+  const [h, m, s] = str.split(':');
+  document.getElementById('timer-h').textContent = h;
+  document.getElementById('timer-m').textContent = m;
+  document.getElementById('timer-s').textContent = s;
+}
+
+const TICK_ENABLED = false; // pois käytöstä toistaiseksi
+
 export function tick() {
+  if (!TICK_ENABLED) return;
   const total = Math.floor((state.elapsedMs + (Date.now() - state.startTime)) / 1000);
-  document.getElementById('timer').textContent = fmtDur(total);
+  setTimerText(fmtDur(total));
   state.timerRaf = requestAnimationFrame(tick);
 }
 
@@ -156,9 +166,9 @@ async function clockOut() {
   document.getElementById('notes-box').style.display = 'none';
   document.getElementById('notes-toggle-icon').textContent = '+';
   state.clockState = 'idle'; state.elapsedMs = 0; state.startTime = null;
-  document.getElementById('timer').textContent = '00:00:00';
+  setTimerText('00:00:00');
   document.getElementById('timer-sub').textContent = '—';
-  setBadge('idle', t('idle')); renderMainBtns();
+  setBadge('idle', t('idle')); renderMainBtns(); renderPills();
   if (state.uid) db.collection('users').doc(state.uid).collection('data').doc('active').delete();
   initClockRate();
   toast(t('kirjattu') + fmtDur(secs));
@@ -167,7 +177,13 @@ async function clockOut() {
 
 export function setBadge(type, txt) {
   const el = document.getElementById('clock-badge');
-  el.className = 'clock-badge cb-' + type; el.textContent = txt;
+  el.className = 'clock-badge cb-' + type;
+  const m = txt.match(/^([●⏸])(\s*)(.*)$/);
+  if (m) {
+    el.innerHTML = `<span class="status-dot">${m[1]}</span>${m[2]}${esc(m[3])}`;
+  } else {
+    el.textContent = txt;
+  }
 }
 
 export function renderMainBtns() {

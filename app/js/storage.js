@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, todayLocalStr } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
-import { initClockRate, renderMainBtns, renderPills, setBadge, syncSelectLabel, tick } from './clock.js';
+import { initClockRate, renderMainBtns, renderPills, setBadge, setTimerText, syncSelectLabel, tick } from './clock.js';
 import { renderAllSelects, renderCustChips } from './customers.js';
 import { renderEntries } from './entries.js';
 import { renderServiceSelects } from './settings.js';
@@ -205,7 +205,7 @@ export function listenActiveState() {
         cancelAnimationFrame(state.timerRaf);
         state.clockState = 'idle'; state.elapsedMs = 0; state.startTime = null;
         state.clockInDate = null; state.activeCustomerId = null;
-        document.getElementById('timer').textContent = '00:00:00';
+        setTimerText('00:00:00');
         document.getElementById('timer-sub').textContent = '—';
         setBadge('idle', ''); renderMainBtns(); renderPills();
         updateClockBg();

@@ -1,4 +1,4 @@
-import { state, STILL_IMG, ANIM_GIF } from './state.js';
+import { state, ANIM_GIF } from './state.js';
 import { t } from './i18n.js';
 import { renderMainBtns, renderPills } from './clock.js';
 import { renderEntries } from './entries.js';
@@ -243,13 +243,15 @@ armBackTrap();
 
 // ── CLOCK BG ──
 export function updateClockBg() {
-  const bg = document.getElementById('clock-bg');
-  if (!bg) return;
-  if (state.clockState === 'running' || state.clockState === 'paused') {
-    bg.style.backgroundImage = `url('${ANIM_GIF}?t=${Date.now()}')`;
-  } else {
-    bg.style.backgroundImage = `url('${STILL_IMG}')`;
+  const stillEl = document.getElementById('clock-bg-still');
+  const animEl = document.getElementById('clock-bg-anim');
+  if (!stillEl || !animEl) return;
+  const running = state.clockState === 'running' || state.clockState === 'paused';
+  if (running) {
+    animEl.style.backgroundImage = `url('${ANIM_GIF}?t=${Date.now()}')`;
   }
+  animEl.classList.toggle('clock-bg-visible', running);
+  stillEl.classList.toggle('clock-bg-visible', !running);
 }
 
 // ── USER MENU ──
