@@ -234,7 +234,16 @@ export async function removeMember(uid) {
 export async function renderOrgSettings() {
   const org = await loadOrgInfo();
   if (!org) return;
+  await applyOrgData(org);
+}
 
+// Split out from renderOrgSettings so listenOrgState() (a live onSnapshot
+// listener) can apply each update without an extra one-time-get() on top of
+// the snapshot it already has — this is also what makes plan/subscription
+// changes (e.g. right after a Stripe checkout, or a webhook landing a beat
+// late) show up on screen without the user having to reload or re-open
+// Asetukset (2026-08-04 review).
+async function applyOrgData(org) {
   state.orgPlan = org.plan || 'free';
   state.orgSubStatus = org.subscriptionStatus || 'none';
   state.orgPeriodEnd = org.currentPeriodEnd || null;
@@ -288,6 +297,28 @@ export async function renderOrgSettings() {
     const referralInput = document.getElementById('referral-url');
     if (referralInput) referralInput.value = `${location.origin}/?v=${referralCode}`;
   }
+}
+
+let orgUnsub = null;
+
+// Live-updates plan/subscription/members/danger-zone state for as long as
+// the user is signed in — without this, a Stripe webhook landing a moment
+// after the checkout-success redirect (or a subscription lapsing/renewing
+// while the app is just sitting open) wouldn't show up until the user
+// reloaded or navigated away from and back to Asetukset. Mirrors
+// storage.js's listenActiveState()/unlistenActiveState() pattern.
+export function listenOrgState() {
+  if (orgUnsub) { orgUnsub(); orgUnsub = null; }
+  if (!state.orgId) return;
+
+  orgUnsub = orgRef().onSnapshot(doc => {
+    if (!doc.exists) return;
+    applyOrgData({ id: doc.id, ...doc.data() });
+  }, () => {});
+}
+
+export function unlistenOrgState() {
+  if (orgUnsub) { orgUnsub(); orgUnsub = null; }
 }
 
 function esc(s) {

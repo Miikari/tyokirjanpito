@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { avatarInitial } from './utils.js';
 import { toast, applyLang, showTab } from './ui.js';
 import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
-import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
+import { initOrg, handleJoinLink, renderOrgSettings, listenOrgState, unlistenOrgState } from './org.js';
 import { renderPills } from './clock.js';
 import { renderEntries } from './entries.js';
 import { renderAllSelects } from './customers.js';
@@ -189,6 +189,7 @@ auth.onAuthStateChanged(async user => {
       updateUserNameDisplay();
       applyLang();
       listenActiveState();
+      listenOrgState();
       if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
         const { loadDemoData } = await import('./demo.js');
         loadDemoData();
@@ -221,6 +222,7 @@ auth.onAuthStateChanged(async user => {
     }
   } else {
     unlistenActiveState();
+    unlistenOrgState();
     document.getElementById('login-screen').classList.add('visible');
     showLoginView('main');
     state.uid = null; state.orgId = null; state.accountName = ''; state.accountPhotoURL = '';
