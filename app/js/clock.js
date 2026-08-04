@@ -13,10 +13,7 @@ export function setTimerText(str) {
   document.getElementById('timer-s').textContent = s;
 }
 
-const TICK_ENABLED = false; // pois käytöstä toistaiseksi
-
 export function tick() {
-  if (!TICK_ENABLED) return;
   const total = Math.floor((state.elapsedMs + (Date.now() - state.startTime)) / 1000);
   setTimerText(fmtDur(total));
   state.timerRaf = requestAnimationFrame(tick);
@@ -122,7 +119,7 @@ function clockIn() {
   state.timerRaf = requestAnimationFrame(tick);
   const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
   document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
-  setBadge('running', t('working')); renderMainBtns();
+  setBadge('running', t('working')); renderMainBtns(); renderPills();
   toast(t('clockedIn') + customerName(state.activeCustomerId));
   updateClockBg();
 }
