@@ -51,6 +51,14 @@ service cloud.firestore {
         return ['lifetimeEntryCount', 'lifetimeInvoiceCount'];
       }
 
+      // Transient lock used by createCheckoutSession to serialize concurrent
+      // checkout attempts for the same org (functions/src/checkout.js) —
+      // Cloud Functions only, same reasoning as inviteCode: a client able to
+      // clear/forge this directly could defeat the lock it exists to enforce.
+      function lockFields() {
+        return ['checkoutLockAt'];
+      }
+
       // Any authenticated user may create an org for themselves (anonymous
       // users get their own private workspace). The creator must be set as
       // ownerId and must be present in the members map. Billing fields may
@@ -75,7 +83,7 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.auth.uid == resource.data.ownerId
         && request.resource.data.ownerId == resource.data.ownerId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(billingFields().concat(counterFields()).concat(['inviteCode']));
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(billingFields().concat(counterFields()).concat(lockFields()).concat(['inviteCode']));
 
       // Lifetime usage counters that gate the free tier (entries/invoices
       // created). Any member may bump them (any member can create entries),
