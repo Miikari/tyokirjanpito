@@ -5,6 +5,7 @@ const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestor
 const { getAuth } = require('firebase-admin/auth');
 const { STRIPE_SECRET_KEY, getStripe } = require('./stripe.js');
 const { requireOrgOwner } = require('./org.js');
+const { checkRateLimit } = require('./rateLimit.js');
 
 const GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -13,6 +14,7 @@ const GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000;
 // of mind is still possible before anything is actually gone.
 const requestAccountDeletion = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const { orgRef, org } = await requireOrgOwner(request);
+  await checkRateLimit(request.auth.uid, 'requestAccountDeletion', { maxCalls: 3, windowMs: 60 * 1000 });
 
   // Idempotent — a second click (or a slow double-tap) just returns the
   // already-scheduled time instead of pushing the deadline further out.
@@ -54,6 +56,7 @@ const requestAccountDeletion = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (r
 
 const cancelAccountDeletion = onCall(async (request) => {
   const { orgRef, org } = await requireOrgOwner(request);
+  await checkRateLimit(request.auth.uid, 'cancelAccountDeletion', { maxCalls: 5, windowMs: 60 * 1000 });
   if (!org.scheduledDeletionAt) {
     throw new HttpsError('failed-precondition', 'No deletion is currently scheduled.');
   }

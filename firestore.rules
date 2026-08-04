@@ -18,13 +18,15 @@ service cloud.firestore {
       allow get: if request.auth != null
         && resource.data.members[request.auth.uid] != null;
 
-      // Non-anonymous users can run collection queries (required for the
-      // invite-code lookup: db.collection('orgs').where('inviteCode','==',code)).
-      // Note: this allows querying org metadata (name, members list) but NOT
-      // the data subcollection. Upgrade to Cloud Functions if org metadata
-      // must remain private.
-      allow list: if request.auth != null
-        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      // Deliberately no `allow list` — the invite-code lookup used to run as
+      // a direct client query (db.collection('orgs').where('inviteCode','==',
+      // code)), which required making the whole collection list-able to any
+      // authenticated user. That exposed every org's members/inviteCode/
+      // billing fields to bulk enumeration, not just the one org being
+      // looked up. That lookup (and the actual join) now goes through the
+      // lookupOrgByInviteCode / joinOrgByInviteCode Cloud Functions instead,
+      // which query via the Admin SDK and bypass these rules entirely
+      // (2026-08-04 security review).
 
       // Billing fields are written only by Cloud Functions via the Admin SDK
       // (which bypasses these rules entirely) — never by a client. Listed
@@ -82,20 +84,15 @@ service cloud.firestore {
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lifetimeInvoiceCount'])
             || request.resource.data.lifetimeInvoiceCount > resource.data.get('lifetimeInvoiceCount', 0));
 
-      // Self-join via invite code: a non-anonymous user may add only themselves
-      // to the members map when an inviteCode is present, without modifying
-      // any other field (including ownerId or inviteCode). The role written
-      // for their own entry is pinned to 'member' — otherwise a self-joining
-      // user could write role: 'owner' for themselves (the diff/removedKeys
-      // checks only constrain which key changes, not the value written to it).
-      allow update: if request.auth != null
-        && request.auth.token.firebase.sign_in_provider != 'anonymous'
-        && resource.data.inviteCode != null
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
-        && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
-        && request.resource.data.members.diff(resource.data.members).removedKeys().size() == 0
-        && request.resource.data.members[request.auth.uid].role == 'member'
-        && request.resource.data.ownerId == resource.data.ownerId;
+      // No client-side self-join rule here anymore — the old version only
+      // checked that the org HAD an inviteCode set, never that the caller
+      // actually supplied the correct one (resource.data.inviteCode != null
+      // says nothing about what code the client submitted). That meant
+      // anyone who learned or guessed an orgId could add themselves as a
+      // member with zero knowledge of the real invite code. Joining now
+      // only happens through the joinOrgByInviteCode Cloud Function, which
+      // verifies the code server-side via the Admin SDK before writing
+      // members (2026-08-04 security review).
 
       // Only the owner may delete the org.
       allow delete: if request.auth != null

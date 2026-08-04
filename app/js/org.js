@@ -97,36 +97,44 @@ export async function initOrg(user) {
   await userRef.set({ orgId, email: user.email || '', displayName: user.displayName || user.email || 'Vieras' }, { merge: true });
 }
 
+// Joining now goes through Cloud Functions rather than a direct client
+// query + write — firestore.rules can no longer let a client self-add to an
+// org's members map (that used to only check the org HAD an inviteCode, not
+// that the caller actually supplied the correct one), and can't let clients
+// query the orgs collection by inviteCode either, without also exposing
+// every org's members/billing fields to bulk enumeration (2026-08-04
+// security review). lookupOrgByInviteCode is read-only, used to show the
+// org's name in the confirm prompt before the user commits to joining;
+// joinOrgByInviteCode does the actual join.
 async function joinOrgByCode(user, code) {
-  const snap = await db.collection('orgs').where('inviteCode', '==', code).limit(1).get();
-  if (snap.empty) {
-    toast('Kutsukoodi ei kelpaa.');
+  try {
+    const fn = firebase.functions().httpsCallable('joinOrgByInviteCode');
+    const { data } = await fn({ inviteCode: code });
+    state.orgId = data.orgId;
+    toast('Liityit organisaatioon: ' + data.name);
+    return true;
+  } catch (e) {
+    toast(e.message || 'Kutsukoodi ei kelpaa.');
     return false;
   }
-  const orgDoc = snap.docs[0];
-  state.orgId = orgDoc.id;
+}
 
-  await orgDoc.ref.update({
-    [`members.${user.uid}`]: {
-      role: 'member',
-      email: user.email || '',
-      displayName: user.displayName || user.email || 'Vieras',
-    },
-  });
-  await db.collection('users').doc(user.uid).set(
-    { orgId: orgDoc.id, email: user.email || '', displayName: user.displayName || user.email || 'Vieras' },
-    { merge: true }
-  );
-  toast('Liityit organisaatioon: ' + orgDoc.data().name);
-  return true;
+async function lookupOrgByCode(code) {
+  const fn = firebase.functions().httpsCallable('lookupOrgByInviteCode');
+  const { data } = await fn({ inviteCode: code });
+  return data;
 }
 
 // Called when logged-in user opens a join link
 export async function handleJoinLink(user, code) {
-  const snap = await db.collection('orgs').where('inviteCode', '==', code).limit(1).get();
-  if (snap.empty) { toast('Kutsukoodi ei kelpaa.'); return; }
-  const orgData = snap.docs[0].data();
-  showJoinPrompt(orgData.name, async () => {
+  let org;
+  try {
+    org = await lookupOrgByCode(code);
+  } catch (e) {
+    toast(e.message || 'Kutsukoodi ei kelpaa.');
+    return;
+  }
+  showJoinPrompt(org.name, async () => {
     await joinOrgByCode(user, code);
     history.replaceState({}, '', location.pathname);
     await reloadOrgData();
@@ -139,12 +147,16 @@ export async function joinWithCodeUI() {
   const code = input.value.trim().toUpperCase();
   if (!code) { toast('Syötä kutsukoodi.'); return; }
 
-  const snap = await db.collection('orgs').where('inviteCode', '==', code).limit(1).get();
-  if (snap.empty) { toast('Kutsukoodi ei kelpaa.'); return; }
-  const orgData = snap.docs[0].data();
-  if (snap.docs[0].id === state.orgId) { toast('Olet jo tässä organisaatiossa.'); return; }
+  let org;
+  try {
+    org = await lookupOrgByCode(code);
+  } catch (e) {
+    toast(e.message || 'Kutsukoodi ei kelpaa.');
+    return;
+  }
+  if (org.orgId === state.orgId) { toast('Olet jo tässä organisaatiossa.'); return; }
 
-  showJoinPrompt(orgData.name, async () => {
+  showJoinPrompt(org.name, async () => {
     const user = auth.currentUser;
     await joinOrgByCode(user, code);
     input.value = '';

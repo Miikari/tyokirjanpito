@@ -1,6 +1,7 @@
 const { onCall } = require('firebase-functions/v2/https');
 const { getFirestore } = require('firebase-admin/firestore');
 const { requireOrgMember } = require('./org.js');
+const { checkRateLimit } = require('./rateLimit.js');
 
 function genCode() {
   return Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -15,6 +16,7 @@ function genCode() {
 const ensureReferralCode = onCall(async (request) => {
   const { orgRef, org } = await requireOrgMember(request);
   if (org.referralCode) return { referralCode: org.referralCode };
+  await checkRateLimit(request.auth.uid, 'ensureReferralCode', { maxCalls: 5, windowMs: 60 * 1000 });
 
   const db = getFirestore();
   for (let attempt = 0; attempt < 5; attempt++) {

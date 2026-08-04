@@ -4,9 +4,11 @@ const { FieldValue } = require('firebase-admin/firestore');
 const { STRIPE_SECRET_KEY, PRO_PRICE_IDS, APP_ORIGIN, getStripe, isCustomerValid } = require('./stripe.js');
 const { requireOrgMember, clearStaleBilling } = require('./org.js');
 const { isAtLeast } = require('./tiers.js');
+const { checkRateLimit } = require('./rateLimit.js');
 
 const createCheckoutSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (request) => {
   const { orgRef, org } = await requireOrgMember(request);
+  await checkRateLimit(request.auth.uid, 'createCheckoutSession', { maxCalls: 5, windowMs: 5 * 60 * 1000 });
   const stripe = getStripe();
 
   // Resolve whether the stored Stripe customer is still real BEFORE the
