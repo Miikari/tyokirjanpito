@@ -120,7 +120,7 @@ function renderCustomerSummary(invs) {
     <div class="rep-row">
       <span class="rep-dot" style="background:${PALETTE[i % PALETTE.length]}"></span>
       <div class="rep-info">
-        <div class="rep-name">${name}</div>
+        <div class="rep-name">${esc(name)}</div>
         <div class="rep-sub">${v.count} ${v.count !== 1 ? t('invoiceSuffix') : t('invoiceSuffix1')} · ${fmtShort(v.secs)} h</div>
       </div>
       <div class="rep-val-wrap">
@@ -195,7 +195,7 @@ function drawPie(invs) {
   legend.innerHTML = data.map(([name, val], i) => `
     <div class="pie-leg">
       <span class="pie-leg-dot" style="background:${PALETTE[i % PALETTE.length]}"></span>
-      <span class="pie-leg-name">${name}</span>
+      <span class="pie-leg-name">${esc(name)}</span>
       <span class="pie-leg-val">${fmtShort(val)} h</span>
     </div>
   `).join('');
