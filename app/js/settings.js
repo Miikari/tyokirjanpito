@@ -208,9 +208,23 @@ export function renderServiceSelects() {
 }
 
 function saveInvoiceSettings() {
-  state.cfg.showTilinumero = document.getElementById('inv-show-tilinumero').checked;
+  const tilinumeroBox = document.getElementById('inv-show-tilinumero');
+  const viitenumeroBox = document.getElementById('inv-show-viitenumero');
+  const hasTilinumero = !!(state.cfg.tilinumero && state.cfg.tilinumero.trim());
+
+  // Viitenumero is only meaningful alongside an actual account to pay into,
+  // and toggling "Tilinumero" on with nothing set would just show an empty line —
+  // so both require a saved tilinumero before they can be switched on.
+  if ((tilinumeroBox.checked || viitenumeroBox.checked) && !hasTilinumero) {
+    tilinumeroBox.checked = false;
+    viitenumeroBox.checked = false;
+    toast(t('bankAccountRequiredForToggle'));
+    return;
+  }
+
+  state.cfg.showTilinumero = tilinumeroBox.checked;
   state.cfg.showErapaiva = document.getElementById('inv-show-erapaiva').checked;
-  state.cfg.showViitenumero = document.getElementById('inv-show-viitenumero').checked;
+  state.cfg.showViitenumero = viitenumeroBox.checked;
   saveConfig();
 }
 

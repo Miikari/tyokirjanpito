@@ -115,6 +115,7 @@ const i18n = {
     invalidCompanyName: 'Tarkista yrityksen nimi', invalidAddress: 'Tarkista osoite',
     invalidPhone: 'Tarkista puhelinnumero', invalidEmailField: 'Tarkista sähköpostiosoite',
     invalidYtunnus: 'Tarkista Y-tunnus (muoto 1234567-8)', invalidIban: 'Tarkista tilinumero (IBAN)',
+    bankAccountRequiredForToggle: 'Lisää ensin tilinumero yritystietoihin',
     // Palvelut
     services: 'Palvelut', service: 'Palvelu', addService: '+',
     serviceNamePlaceholder: 'esim. Editointi', noServices: 'Ei palveluita.',
@@ -340,6 +341,7 @@ const i18n = {
     invalidCompanyName: 'Check the company name', invalidAddress: 'Check the address',
     invalidPhone: 'Check the phone number', invalidEmailField: 'Check the email address',
     invalidYtunnus: 'Check the business ID (format 1234567-8)', invalidIban: 'Check the bank account (IBAN)',
+    bankAccountRequiredForToggle: 'Add a bank account to your company info first',
     // Services
     services: 'Services', service: 'Service', addService: '+',
     serviceNamePlaceholder: 'e.g. Editing', noServices: 'No services.',

@@ -4,10 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hoyla — Työstä valmis lasku yhdellä napilla</title>
-<meta name="description" content="Kirjaa tunnit sekunneissa. Hoyla laskee ALV:n ja laskunumeron oikein ja koostaa valmiin laskun, jonka lähetät asiakkaalle yhdellä klikkauksella. Ilmainen aloittaa, Pro 14,90 €/kk.">
+<meta name="description" content="Kirjaa tunnit sekunneissa ja koosta valmis lasku yhdellä napilla — ALV ja laskunumero aina oikein. Ilmainen aloittaa, Pro 14,90 €/kk.">
 <meta property="og:title" content="Hoyla — Työstä valmis lasku yhdellä napilla">
 <meta property="og:description" content="Kirjaa tunnit, paina &quot;Luo lasku&quot;, lähetä eteenpäin. Ei enää Exceliä tai käsipeliä Wordissa.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://hoyla.fi/">
+<meta property="og:image" content="https://hoyla.fi/images/og-image.webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://hoyla.fi/images/og-image.webp">
+<link rel="canonical" href="https://hoyla.fi/">
 <link rel="icon" type="image/png" href="app/icons/icon-192.png">
 <link rel="apple-touch-icon" href="app/icons/icon-192.png">
 <link rel="manifest" href="app/manifest.json">
@@ -41,6 +48,92 @@
     if (ref) localStorage.setItem('referralCode', ref);
   })();
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Hoyla",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web, iOS, Android (PWA)",
+  "description": "Kirjaa työtunnit ja kulut, kokoa niistä valmis lasku yhdellä napilla — ALV ja laskunumero aina oikein.",
+  "offers": [
+    { "@type": "Offer", "price": "0", "priceCurrency": "EUR", "name": "Free" },
+    { "@type": "Offer", "price": "14.90", "priceCurrency": "EUR", "name": "Pro" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Kuinka teen laskun helposti?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Valitset vain asiakkaan ja klikkaat \"Kokoa lasku\" — lasku muodostuu lähetysvalmiiksi automaattisesti tekemiesi kirjausten mukaan."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Miten tämä on parempi kuin Excel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Kirjaukset tallentuvat automaattisesti, niitä on helppo tarkastella raportoinnista, ja saat muodostettua laskun kirjauksistasi yhtä nappia painamalla. Kaikki pysyy ajan tasalla ilman erillistä ylläpitoa."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Onko Hoyla ilmainen käyttää?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Free-taso on ilmainen: 50 merkintää tai 5 laskua, rajaton määrä asiakkaita ja kaikki ominaisuudet käytössä. Pro maksaa 14,90 €/kk ja poistaa rajat."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Tarvitsenko luottokorttia kokeilun aloittamiseen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Et. Kokeilun voi aloittaa ilman maksukortteja, ja sovelluksessa on myös demotila valmiiksi täytetyllä esimerkkidatalla."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Sopiiko Hoyla kevytyrittäjälle?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Kyllä. Hoyla sopii freelancereille, kevytyrittäjille ja pienyrittäjille — kunhan laskutat asiakkaita tehdystä työstä."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Osaako Hoyla laskea ALV:n ja kilometrikorvaukset oikein?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Kyllä. ALV ja laskunumero lasketaan automaattisesti oikein, ja voit lisätä myös kilometrikorvaukset ja päivärahat osaksi laskutusta."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Toimiiko Hoyla puhelimessa ja tietokoneella?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Kyllä. Hoylan voi asentaa puhelimeen tai koneelle, ja data synkronoituu pilveen automaattisesti kaikille laitteille."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Onko Hoyla myös kirjanpitäjälleni helppo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Kyllä on! Raportoinnissa on erillinen nappi juuri kirjanpitäjiä varten — klikkaat vain \"Lataa kirjanpitäjälle\" ja lähetät raportin kirjanpitäjällesi."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -49,6 +142,7 @@
     <a class="logo" href="#top"><img src="images/logo-hoyla.svg" alt="Hoyla"></a>
     <nav>
       <a class="nav-link" href="#hinnoittelu">Hinnoittelu</a>
+      <a class="nav-link" href="#ukk">UKK</a>
       <a class="btn-nav-cta" href="app/">Kirjaudu</a>
     </nav>
   </div>
@@ -196,6 +290,49 @@
         </ul>
         <a class="btn btn-primary" href="app/">Kirjaudu ja päivitä</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="ukk" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">UKK</span>
+      <h2>Usein kysytyt kysymykset</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>Kuinka teen laskun helposti?</summary>
+        <p>Valitset vain asiakkaan ja klikkaat &quot;Kokoa lasku&quot; — lasku muodostuu lähetysvalmiiksi automaattisesti tekemiesi kirjausten mukaan.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Miten tämä on parempi kuin Excel?</summary>
+        <p>Kirjaukset tallentuvat automaattisesti, niitä on helppo tarkastella raportoinnista, ja saat muodostettua laskun kirjauksistasi yhtä nappia painamalla. Kaikki pysyy ajan tasalla ilman erillistä ylläpitoa.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Onko Hoyla ilmainen käyttää?</summary>
+        <p>Free-taso on ilmainen: 50 merkintää tai 5 laskua, rajaton määrä asiakkaita ja kaikki ominaisuudet käytössä. Pro maksaa 14,90 €/kk ja poistaa rajat.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Tarvitsenko luottokorttia/maksutietoja kokeilun aloittamiseen?</summary>
+        <p>Et. Kokeilun voi aloittaa ilman maksukortteja, ja sovelluksessa on myös demotila valmiiksi täytetyllä esimerkkidatalla.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Sopiiko Hoyla kevytyrittäjälle?</summary>
+        <p>Kyllä. Hoyla sopii freelancereille, kevytyrittäjille ja pienyrittäjille — kunhan laskutat asiakkaita tehdystä työstä.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Osaako Hoyla laskea ALV:n ja kilometrikorvaukset oikein?</summary>
+        <p>Kyllä. ALV ja laskunumero lasketaan automaattisesti oikein, ja voit lisätä myös kilometrikorvaukset ja päivärahat osaksi laskutusta.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Toimiiko Hoyla puhelimessa ja tietokoneella?</summary>
+        <p>Kyllä. Hoylan voi asentaa puhelimeen tai koneelle, ja data synkronoituu pilveen automaattisesti kaikille laitteille.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Onko Hoyla myös kirjanpitäjälleni helppo?</summary>
+        <p>Kyllä on! Raportoinnissa on erillinen nappi juuri kirjanpitäjiä varten — klikkaat vain &quot;Lataa kirjanpitäjälle&quot; ja lähetät raportin kirjanpitäjällesi.</p>
+      </details>
     </div>
   </div>
 </section>

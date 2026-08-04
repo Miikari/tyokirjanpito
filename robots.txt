@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /app/
 
-Sitemap: https://hoyla.dev/sitemap.xml
+Sitemap: https://hoyla.fi/sitemap.xml
