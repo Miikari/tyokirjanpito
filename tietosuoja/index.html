@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tietosuojaseloste — Hoyla</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="../app/icons/icon-192.png">
+<link rel="stylesheet" href="../landing.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="logo" href="../"><img src="../images/logo-hoyla.svg" alt="Hoyla"></a>
+    <nav>
+      <a class="nav-link" href="../">Etusivu</a>
+    </nav>
+  </div>
+</header>
+
+<section class="legal-page">
+  <div class="wrap">
+    <div class="draft-banner">
+      <strong>LUONNOS — ei vielä julkaisukelpoinen.</strong>
+      Tässä selosteessa on kohtia merkitty <span class="fill-in">näin</span> — ne pitää täyttää oikeilla, tarkistetuilla
+      tiedoilla, ja koko sisältö kannattaa käydä läpi lakimiehen tai muun asiantuntijan kanssa ennen kuin sivu linkitetään
+      sivuston valikkoon tai julkaistaan asiakkaille.
+    </div>
+
+    <h1>Tietosuojaseloste</h1>
+    <p class="legal-updated">Päivitetty: <span class="fill-in">[TÄYTÄ: päivämäärä]</span></p>
+
+    <h2>1. Rekisterinpitäjä</h2>
+    <p>
+      <span class="fill-in">[TÄYTÄ: yrityksen/toiminimen virallinen nimi]</span><br>
+      Y-tunnus: <span class="fill-in">[TÄYTÄ: Y-tunnus]</span><br>
+      Osoite: <span class="fill-in">[TÄYTÄ: rekisteröity osoite]</span>
+    </p>
+
+    <h2>2. Yhteystiedot tietosuoja-asioissa</h2>
+    <p>
+      Sähköposti: <span class="fill-in">[TÄYTÄ: esim. tietosuoja@hoyla.fi tai asiakaspalvelu@hoyla.fi]</span>
+    </p>
+
+    <h2>3. Mitä henkilötietoja käsittelemme</h2>
+    <p>Hoylan kautta käsitellään seuraavia tietoja, siltä osin kuin käyttäjä ne sovellukseen syöttää:</p>
+    <ul>
+      <li><strong>Käyttäjän omat tiedot:</strong> nimi/yrityksen nimi, osoite, puhelin, sähköposti, Y-tunnus, tilinumero, Google-tilin tunniste (kirjautuminen)</li>
+      <li><strong>Asiakastiedot:</strong> asiakkaan nimi, yrityksen nimi, osoite, puhelinnumero, sähköposti, Y-tunnus, maksuehdot</li>
+      <li><strong>Tuntikirjaukset ja laskutus:</strong> kuka teki, milloin, mitä palvelua, kuinka kauan, kuvaus/muistiinpanot, laskutetut summat</li>
+      <li><strong>Laskutustiedot (Pro-tilaus):</strong> Stripen kautta käsiteltävät maksu- ja tilaustiedot — Hoyla ei itse tallenna korttitietoja, ne käsittelee Stripe</li>
+    </ul>
+    <p>
+      Osa näistä (esim. tuntikirjaukseen liitetty henkilön nimi ja tehty työ) on henkilötietoa, jos se yksilöi luonnollisen
+      henkilön. Hoylalla on tässä kaksi eri roolia riippuen siitä, kenen tiedosta on kyse:
+    </p>
+    <ul>
+      <li><strong>Rekisterinpitäjänä</strong> Hoyla toimii tilinhaltijan omien tietojen osalta (nimi, sähköposti, laskutustiedot) — näiden käsittelyn tarkoituksen ja perusteen määrittää Hoyla itse, Hoylan oman palvelusuhteen hoitamiseksi.</li>
+      <li><strong>Henkilötietojen käsittelijänä</strong> käyttäjän puolesta Hoyla toimii kaiken sen tiedon osalta, jonka käyttäjä itse syöttää palveluun omista asiakkaistaan tai muista kolmansista osapuolista (asiakasrekisteri, tuntikirjaukset). Näiden tietojen osalta <strong>käyttäjä itse on rekisterinpitäjä</strong> ja vastaa siitä, että hänellä on laillinen peruste kerätä ja käsitellä kyseisiä tietoja.</li>
+    </ul>
+
+    <h2>4. Käsittelyn tarkoitus ja oikeusperuste</h2>
+    <p>
+      Tietoja käsitellään Hoyla-palvelun tarjoamiseksi (sopimuksen täytäntöönpano käyttäjän kanssa) sekä laskutuksen ja
+      kirjanpidon mahdollistamiseksi. Tilastointiin/analytiikkaan liittyvä käsittely: <span class="fill-in">[TÄYTÄ: onko
+      käytössä analytiikkaa — tämän auditin aikana ei löytynyt yhtään seurantatyökalua sivustolta, joten tämä kohta voi
+      olla "ei sovelleta" toistaiseksi]</span>.
+    </p>
+
+    <h2>5. Kenelle tietoja luovutetaan</h2>
+    <p>Tietoja käsittelevät seuraavat alihankkijat osana palvelun tuottamista:</p>
+    <ul>
+      <li><strong>Google / Firebase (Google Cloud):</strong> tietokanta (Firestore), kirjautuminen (Authentication), palvelinlogiikka (Cloud Functions). Tietojen sijaintialue: <span class="fill-in">[TÄYTÄ: Firestore-tietokannan alue, esim. eur3]</span></li>
+      <li><strong>Stripe:</strong> Pro-tilausten maksujen ja laskutuksen käsittely</li>
+    </ul>
+    <p>Tietoja ei myydä eikä luovuteta muille kolmansille osapuolille markkinointitarkoituksiin.</p>
+
+    <h2>6. Tietojen säilytysaika</h2>
+    <p>
+      Tili ja siihen liittyvä data säilyvät niin kauan kuin käyttäjän tili on aktiivinen. Käyttäjä voi milloin tahansa
+      pyytää tilinsä ja kaiken datansa poistamista sovelluksen asetuksista — poisto toteutuu 7 vuorokauden harkinta-ajan
+      jälkeen ja on tämän jälkeen pysyvä. Kirjanpitolain (1336/1997) mukaan tositteet, kuten laskut, tulee säilyttää
+      vähintään kuusi vuotta tilikauden päättymisestä — tämä velvoite koskee käyttäjää itseään kirjanpitovelvollisena, ei
+      Hoylaa. Käyttäjän kannattaa viedä tietonsa talteen (Asetukset → varmuuskopio) ennen tilin poistamista, mikäli
+      säilytysaika ei ole vielä täyttynyt.
+    </p>
+
+    <h2>7. Rekisteröidyn oikeudet</h2>
+    <p>Käyttäjällä on oikeus:</p>
+    <ul>
+      <li>tarkastaa ja viedä omat tietonsa (Asetukset → varmuuskopio/tietojen vienti, sisältää kaiken tallennetun datan)</li>
+      <li>pyytää tietojensa oikaisua (muokkaamalla tietoja suoraan sovelluksessa)</li>
+      <li>pyytää tietojensa ja tilinsä poistamista (Asetukset → Poista tilisi ja tietosi)</li>
+      <li>vastustaa käsittelyä tai tehdä valitus valvontaviranomaiselle (Suomessa tietosuojavaltuutetun toimisto)</li>
+    </ul>
+
+    <h2>8. Evästeet ja paikallinen tallennus</h2>
+    <p>
+      Hoyla ei käytä seurantaevästeitä. Kirjautuminen perustuu Firebase Authenticationin tunnisteisiin, ei evästeisiin.
+      Selaimen paikalliseen tallennustilaan (localStorage) tallennetaan vain käyttöliittymän asetuksia (kieli, teema) sekä
+      mahdollinen kutsu-/suosittelukoodi — ei asiakas- tai laskudataa.
+    </p>
+
+    <h2>9. Tietoturva</h2>
+    <p>
+      Yhteydet on suojattu HTTPS:llä. Pääsy dataan on rajattu palvelinpuolella siihen organisaatioon johon käyttäjä
+      kuuluu — toisen organisaation dataa ei voi teknisesti nähdä. <span class="fill-in">[TÄYTÄ: mainitse muut tarvittavat
+      tietoturvatoimenpiteet, esim. varmuuskopiointikäytäntö, kun se on päätetty]</span>.
+    </p>
+
+    <h2>10. Muutokset tähän selosteeseen</h2>
+    <p>Tätä selostetta voidaan päivittää palvelun kehittyessä. Olennaisista muutoksista pyritään ilmoittamaan käyttäjille.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="logo"><img src="../images/logo-hoyla.svg" alt="Hoyla"></div>
+    <p>&copy; 2026 Hoyla</p>
+    <p>Ota yhteyttä: <a href="mailto:asiakaspalvelu@hoyla.fi">asiakaspalvelu@hoyla.fi</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
