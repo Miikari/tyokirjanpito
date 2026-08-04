@@ -178,6 +178,7 @@ const i18n = {
     upgradeCtaYearly: 'Tai vuosihintaan – 149,90 €/v',
     billingIntervalMonth: 'Kuukausi – 14,90 €/kk', billingIntervalYear: 'Vuosi – 149,90 €/v',
     checkoutError: 'Maksun aloitus epäonnistui. Yritä uudelleen.',
+    checkoutSuccessToast: 'Kiitos tilauksesta! Hoyla Pro on nyt käytössäsi.',
     demoNoCheckout: 'Luo oma tili tilausta varten. Vierastilillä ei voi tilata.',
     billedHoursTotal: 'Laskutettu yhteensä {hours} h',
     // Varmuuskopiointi
@@ -404,6 +405,7 @@ const i18n = {
     upgradeCtaYearly: 'Or pay yearly – €149.90/yr',
     billingIntervalMonth: 'Monthly – €14.90/mo', billingIntervalYear: 'Yearly – €149.90/yr',
     checkoutError: 'Could not start checkout. Please try again.',
+    checkoutSuccessToast: 'Thanks for subscribing! Hoyla Pro is now active.',
     demoNoCheckout: 'Create your own account to subscribe. Guest accounts cannot subscribe.',
     billedHoursTotal: 'Billed {hours} h total',
     // Backup

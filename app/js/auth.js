@@ -1,7 +1,7 @@
 import { state, defaultCfg } from './state.js';
 import { t } from './i18n.js';
 import { avatarInitial } from './utils.js';
-import { toast, applyLang } from './ui.js';
+import { toast, applyLang, showTab } from './ui.js';
 import { loadFromFirestore, listenActiveState, unlistenActiveState } from './storage.js';
 import { initOrg, handleJoinLink, renderOrgSettings } from './org.js';
 import { renderPills } from './clock.js';
@@ -200,6 +200,22 @@ auth.onAuthStateChanged(async user => {
         window.updateInvoiceBadge?.();
       }
       renderOrgSettings();
+
+      // Stripe (checkout success/cancel, or the billing portal's return_url)
+      // sends the browser back to the app with one of these — land on
+      // Asetukset either way, since that's where the purchase/subscription
+      // actually lives, and thank the user on a confirmed purchase rather
+      // than leaving them to notice the plan changed on their own.
+      const params = new URLSearchParams(location.search);
+      const checkoutResult = params.get('checkout');
+      if (checkoutResult === 'success') {
+        showTab('asetukset');
+        toast(t('checkoutSuccessToast'), 'success');
+        history.replaceState({}, '', location.pathname);
+      } else if (checkoutResult === 'cancel' || params.get('tab') === 'asetukset') {
+        showTab('asetukset');
+        history.replaceState({}, '', location.pathname);
+      }
     } finally {
       document.getElementById('login-screen').classList.remove('visible');
     }

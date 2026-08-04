@@ -22,7 +22,8 @@ const createPortalSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (requ
 
   const session = await stripe.billingPortal.sessions.create({
     customer: org.stripeCustomerId,
-    return_url: `${APP_ORIGIN}/?tab=asetukset`,
+    // Into the app's Asetukset tab, not the marketing root (2026-08-04 review).
+    return_url: `${APP_ORIGIN}/app/?tab=asetukset`,
   });
 
   return { url: session.url };

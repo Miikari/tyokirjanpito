@@ -112,8 +112,12 @@ const createCheckoutSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (re
       client_reference_id: orgRef.id,
       metadata: { orgId: orgRef.id },
       subscription_data: { metadata: { orgId: orgRef.id } },
-      success_url: `${APP_ORIGIN}/?checkout=success`,
-      cancel_url: `${APP_ORIGIN}/?checkout=cancel`,
+      // Back into the app itself, not the marketing root — APP_ORIGIN alone
+      // pointed here at the landing page with no code anywhere reading the
+      // checkout= param, so a paying customer just landed back on the
+      // marketing page with no confirmation at all (2026-08-04 review).
+      success_url: `${APP_ORIGIN}/app/?checkout=success`,
+      cancel_url: `${APP_ORIGIN}/app/?checkout=cancel`,
     });
 
     return { url: session.url };

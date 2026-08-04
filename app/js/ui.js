@@ -146,7 +146,7 @@ function shakeSettingsBanner() {
   banner.classList.add('shake');
 }
 
-function showTab(tab, btn) {
+export function showTab(tab, btn) {
   if (tab !== 'asetukset' && settingsHasUnsavedChanges()) {
     shakeSettingsBanner();
     return;
