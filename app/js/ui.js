@@ -127,7 +127,30 @@ export function toast(msg, type = null) {
 }
 
 // ── TABS ──
+// Blocks navigating away from Asetukset while the unsaved-changes banner is
+// showing, until the user explicitly hits Tallenna or Peru — a stray tab
+// switch (or the phone back button) would otherwise silently discard
+// whatever they'd just typed. Shakes the banner as a nudge instead of
+// failing silently.
+function settingsHasUnsavedChanges() {
+  return document.getElementById('panel-asetukset').classList.contains('active')
+    && document.getElementById('settings-save-banner').classList.contains('show');
+}
+
+function shakeSettingsBanner() {
+  const banner = document.getElementById('settings-save-banner');
+  banner.classList.remove('shake');
+  // Force reflow so re-adding the class restarts the animation even if a
+  // previous shake hasn't finished (e.g. two rapid tab-switch attempts).
+  void banner.offsetWidth;
+  banner.classList.add('shake');
+}
+
 function showTab(tab, btn) {
+  if (tab !== 'asetukset' && settingsHasUnsavedChanges()) {
+    shakeSettingsBanner();
+    return;
+  }
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
@@ -188,6 +211,13 @@ window.addEventListener('popstate', () => {
   });
   if (openModalId) {
     window[MODAL_CLOSERS[openModalId]]();
+    exitArmedAt = 0;
+    armBackTrap();
+    return;
+  }
+
+  if (settingsHasUnsavedChanges()) {
+    shakeSettingsBanner();
     exitArmedAt = 0;
     armBackTrap();
     return;

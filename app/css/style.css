@@ -564,6 +564,16 @@ html[data-theme="dark"] .toast.toast-success { background: var(--green); color: 
    surface stands out sharply against it instead. */
 html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(--navy-dk); }
 
+/* Nudge when the user tries to navigate away with unsaved changes still
+   showing — reuses the same banner, just briefly. */
+@keyframes settingsBannerShake {
+  10%, 90% { transform: translateY(0) translateX(-1px); }
+  20%, 80% { transform: translateY(0) translateX(2px); }
+  30%, 50%, 70% { transform: translateY(0) translateX(-4px); }
+  40%, 60% { transform: translateY(0) translateX(4px); }
+}
+.settings-save-banner.shake { animation: settingsBannerShake 0.5s ease; }
+
 /* ── LOGIN SCREEN ── */
 .login-screen {
   display: none; position: fixed; inset: 0;
