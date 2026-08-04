@@ -6,3 +6,7 @@ firebase-debug.log
 .firebase/
 .claude/
 .agents/
+*firebase-adminsdk*.json
+*serviceAccount*.json
+*.pem
+*.p12
