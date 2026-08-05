@@ -339,7 +339,9 @@ function renderInvoiceCard(inv, isOpen) {
       : `<button class="btn-mark-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">${t('markPaid')}</button>`;
     const editBtn = inv.paid ? '' : `<button class="btn-outline" style="flex:1;" onclick="openEditInvoice(${inv.id})">${t('edit')}</button>`;
     const reminderBtn = overdue
-      ? `<button class="btn-reminder" style="flex:1;" onclick="sendReminder(${inv.id})">${t('sendReminder')}</button>`
+      ? state.isDemo
+        ? `<button class="btn-reminder" style="flex:1;" disabled>${t('notAvailableGuest')}</button>`
+        : `<button class="btn-reminder" style="flex:1;" onclick="sendReminder(${inv.id})">${t('sendReminder')}</button>`
       : '';
     const sendBtn = state.isDemo
       ? `<button class="btn-email-inv" style="flex:1;" disabled>${t('sendInvoiceEmailDisabledGuest')}</button>`

@@ -273,6 +273,7 @@ body {
   transition: opacity 0.15s;
 }
 .btn-upgrade:active { opacity: 0.75; }
+.btn-upgrade:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-add:active { opacity: 0.75; }
 
 /* ── SUMMARY GRID ── */
@@ -814,6 +815,7 @@ html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(
   background: var(--red-bg); color: var(--red); border: 1.5px solid rgba(185,28,28,0.3);
   cursor: pointer;
 }
+.btn-reminder:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-email-inv {
   padding: 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 600;
   background: var(--blue); color: #fff; border: none; cursor: pointer;

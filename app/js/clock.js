@@ -190,7 +190,7 @@ export function renderMainBtns() {
   } else {
     const pauseLabel = state.clockState === 'paused' ? t('resume') : t('pause');
     r.innerHTML = `<button class="btn btn-pause" onclick="togglePause()">${pauseLabel}</button>
-                   <button class="btn btn-signout" onclick="clockOut()">${t('logout')}</button>`;
+                   <button class="btn btn-signout" onclick="clockOut()">${t('clockOut')}</button>`;
   }
 }
 

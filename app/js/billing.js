@@ -22,27 +22,45 @@ export function isPro() {
   return isAtLeast('pro');
 }
 
-export async function startCheckout(interval = 'month') {
+// Both createCheckoutSession/createPortalSession redirect the whole page to
+// Stripe on success, so there's no moment to reset the in-flight flag/button
+// there — only the error path resets them, letting the user retry.
+let checkoutInProgress = false;
+let portalInProgress = false;
+
+export async function startCheckout(interval = 'month', btn) {
+  if (checkoutInProgress) { toast('Odota hetki..'); return; }
   if (state.isDemo) {
     toast(t('demoNoCheckout'));
     return;
   }
+  checkoutInProgress = true;
+  const origLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Odota hetki..'; }
   try {
     const fn = firebase.functions().httpsCallable('createCheckoutSession');
     const { data } = await fn({ orgId: state.orgId, interval });
     window.location.href = data.url;
   } catch (e) {
     toast(e.message || t('checkoutError'));
+    checkoutInProgress = false;
+    if (btn) { btn.disabled = false; btn.textContent = origLabel; }
   }
 }
 
-export async function openBillingPortal() {
+export async function openBillingPortal(btn) {
+  if (portalInProgress) { toast('Odota hetki..'); return; }
+  portalInProgress = true;
+  const origLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Odota hetki..'; }
   try {
     const fn = firebase.functions().httpsCallable('createPortalSession');
     const { data } = await fn({ orgId: state.orgId });
     window.location.href = data.url;
   } catch (e) {
     toast(e.message || t('checkoutError'));
+    portalInProgress = false;
+    if (btn) { btn.disabled = false; btn.textContent = origLabel; }
     if (e.code === 'functions/failed-precondition') {
       // The server already resets a stale/deleted Stripe customer back to
       // Free before throwing this — reflect that locally right away instead
@@ -149,7 +167,7 @@ export function renderBillingSettings() {
     sub.textContent = parts.join(' · ');
     cta.style.display = '';
     cta.textContent = t('manageSubscriptionBtn');
-    cta.onclick = openBillingPortal;
+    cta.onclick = () => openBillingPortal(cta);
     if (intervalRow) intervalRow.style.display = 'none';
   } else {
     label.textContent = t('planFree');
@@ -158,7 +176,7 @@ export function renderBillingSettings() {
       .replace('{invoices}', state.orgLifetimeInvoiceCount);
     cta.style.display = '';
     cta.textContent = t('upgradeToProBtn');
-    cta.onclick = () => startCheckout(billingInterval);
+    cta.onclick = () => startCheckout(billingInterval, cta);
     if (intervalRow) intervalRow.style.display = '';
     renderIntervalToggle();
   }
