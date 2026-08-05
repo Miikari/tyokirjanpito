@@ -797,12 +797,8 @@ html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(
 }
 
 /* ── INVOICE PAYMENT STATUS ── */
-.inv-tag-unpaid { background: var(--surface2); color: var(--text2); }
-.inv-tag-paid   { background: var(--green-bg); color: var(--green); }
-.inv-overdue-text {
-  font-size: 12px; font-weight: 700; color: var(--red);
-  margin-top: 3px;
-}
+.inv-tag-overdue { background: var(--red-bg); color: var(--red); }
+.inv-tag-paid    { background: var(--green-bg); color: var(--green); }
 .btn-mark-paid {
   flex: 1; padding: 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 600;
   background: var(--blue-bg); color: var(--blue-txt); border: none; cursor: pointer;

@@ -329,11 +329,8 @@ function renderInvoiceCard(inv, isOpen) {
     const statusTag = inv.paid
       ? `<div class="inv-tag inv-tag-paid">${t('paid')}</div>`
       : overdue
-        ? `<div class="inv-tag inv-tag-unpaid">${t('unpaid')}</div>`
+        ? `<div class="inv-tag inv-tag-overdue">${t('unpaid')}</div>`
         : '';
-    const overdueText = overdue
-      ? `<div class="inv-overdue-text">${t('invoiceOverdue')}</div>`
-      : '';
     const paidBtn = inv.paid
       ? `<button class="btn-mark-paid is-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">${t('markUnpaid')}</button>`
       : `<button class="btn-mark-paid" style="flex:1;" onclick="markInvoicePaid(${inv.id})">${t('markPaid')}</button>`;
@@ -352,7 +349,6 @@ function renderInvoiceCard(inv, isOpen) {
           <div>
             <div class="inv-num">${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</div>
             <div class="inv-sub">${fmtDate(inv.date)}${custs.length ? ' · ' + custs.map(esc).join(', ') : ''}</div>
-            ${overdueText}
           </div>
           <div class="inv-right">
             <div class="inv-total">${fmtEur(inv.total)}</div>

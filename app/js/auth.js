@@ -186,6 +186,13 @@ auth.onAuthStateChanged(async user => {
       window.updateInvoiceBadge?.();
     }
     state.uid = user.uid;
+    // Re-derived from the real auth flag on every resolution rather than
+    // left as a one-way switch flipped on inside loadDemoData() — otherwise
+    // it can outlive the anonymous session it came from (stuck true after
+    // converting to a real account in the same tab) or fail to come back
+    // true after a refresh finds this guest's own real Firestore data from
+    // an earlier composed invoice (see project memory on this).
+    state.isDemo = !!user.isAnonymous;
     state.accountName = user.isAnonymous ? 'Vieras' : (user.displayName || user.email);
     state.accountPhotoURL = user.photoURL || '';
     updateUserNameDisplay();
@@ -254,6 +261,7 @@ auth.onAuthStateChanged(async user => {
     showLoginView('main');
     resetAnonButton();
     state.uid = null; state.orgId = null; state.accountName = ''; state.accountPhotoURL = '';
+    state.isDemo = false;
     state.entries = []; state.invoices = []; state.expenses = []; state.customers = [];
     state.eId = 0; state.iId = 0; state.eExpId = 0; state.cId = 0;
     state.cfg = defaultCfg();

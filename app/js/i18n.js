@@ -66,7 +66,7 @@ const i18n = {
     printPdf: 'Tulosta / PDF', printAttachment: 'Tulosta ilman maksutietoja', edit: 'Muokkaa',
     invoiceUpdated: 'Lasku päivitetty', editInvoice: 'Muokkaa laskua',
     // Maksustatukset
-    paid: 'Maksettu', unpaid: 'Maksamatta', invoiceOverdue: 'Lasku maksamatta',
+    paid: 'Maksettu', unpaid: 'Maksamatta',
     markPaid: 'Merkitse maksetuksi', markUnpaid: 'Merkitse maksamattomaksi', markedPaid: 'Lasku merkitty maksetuksi',
     paidRemoved: 'Maksettu-merkintä poistettu', invoicePaidNoEdit: 'Maksettua laskua ei voi muokata.',
     sendReminder: 'Lähetä maksumuistutus', sendInvoiceEmail: '✉ Lähetä lasku',
@@ -296,7 +296,7 @@ const i18n = {
     printPdf: 'Print / PDF', printAttachment: 'Print without details', edit: 'Edit',
     invoiceUpdated: 'Invoice updated', editInvoice: 'Edit invoice',
     // Payment status
-    paid: 'Paid', unpaid: 'Unpaid', invoiceOverdue: 'Invoice unpaid',
+    paid: 'Paid', unpaid: 'Unpaid',
     markPaid: 'Mark as paid', markUnpaid: 'Mark as unpaid', markedPaid: 'Invoice marked as paid',
     paidRemoved: 'Payment status removed', invoicePaidNoEdit: 'A paid invoice cannot be edited.',
     sendReminder: 'Send payment reminder', sendInvoiceEmail: '✉ Send invoice',
