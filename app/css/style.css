@@ -551,13 +551,32 @@ body {
   padding: 14px 28px; border-radius: 99px;
   font-size: 16px; font-weight: 500;
   opacity: 0; transition: opacity 0.2s;
-  pointer-events: none; white-space: nowrap; z-index: 200;
+  pointer-events: none; white-space: nowrap; z-index: 350;
   box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 .toast.show { opacity: 1; }
 .toast.toast-success { background: var(--green); }
 html[data-theme="dark"] .toast { background: #f2f2f2; color: #14181d; }
 html[data-theme="dark"] .toast.toast-success { background: var(--green); color: #14181d; }
+
+/* ── CENTER NOTICE ── */
+.center-notice {
+  position: fixed; top: 50%; left: 50%; z-index: 340;
+  transform: translate(-50%, -50%) scale(0.92); opacity: 0;
+  pointer-events: none; transition: opacity 0.22s, transform 0.22s;
+  background: var(--surface); color: var(--text);
+  border-radius: var(--r); box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+  padding: 26px 34px; max-width: min(84vw, 380px);
+  display: flex; align-items: center; gap: 14px;
+}
+.center-notice.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.center-notice-icon {
+  flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--green-bg); color: var(--green);
+  display: flex; align-items: center; justify-content: center;
+}
+.center-notice-icon svg { width: 22px; height: 22px; }
+.center-notice-text { font-size: 17px; font-weight: 600; line-height: 1.35; }
 
 /* ── SETTINGS SAVE BANNER ── */
 .settings-save-banner {
@@ -615,6 +634,7 @@ html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(
   width: 100%; justify-content: center; box-sizing: border-box;
 }
 .btn-google:active { transform: scale(0.97); opacity: 0.9; }
+.btn-google.btn-busy { opacity: 0.5; cursor: not-allowed; }
 .btn-google svg { flex-shrink: 0; }
 .btn-email {
   display: block; width: 100%; box-sizing: border-box;
@@ -624,6 +644,7 @@ html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(
   cursor: pointer; transition: all 0.15s; text-align: center;
 }
 .btn-email:active { transform: scale(0.97); opacity: 0.9; }
+.btn-email:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-email-outline { background: transparent; border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); }
 .btn-anon {
   display: block; width: 100%; box-sizing: border-box;
@@ -633,6 +654,7 @@ html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(
   cursor: pointer; transition: all 0.15s; text-align: center;
 }
 .btn-anon:active { opacity: 0.7; }
+.btn-anon:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-link {
   display: block; width: 100%; background: none; border: none;
   color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer;
@@ -797,6 +819,7 @@ html[data-theme="dark"] .settings-save-banner { background: #eaeaea; color: var(
   background: var(--blue); color: #fff; border: none; cursor: pointer;
   box-shadow: 0 2px 6px rgba(25,118,210,0.2);
 }
+.btn-email-inv:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
 /* ── REPORTS ── */
 .rep-row:nth-last-child(2) { border-bottom:none; }

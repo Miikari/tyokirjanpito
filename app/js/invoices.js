@@ -328,7 +328,9 @@ function renderInvoiceCard(inv, isOpen) {
     const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
     const statusTag = inv.paid
       ? `<div class="inv-tag inv-tag-paid">${t('paid')}</div>`
-      : `<div class="inv-tag inv-tag-unpaid">${t('unpaid')}</div>`;
+      : overdue
+        ? `<div class="inv-tag inv-tag-unpaid">${t('unpaid')}</div>`
+        : '';
     const overdueText = overdue
       ? `<div class="inv-overdue-text">${t('invoiceOverdue')}</div>`
       : '';
@@ -339,6 +341,9 @@ function renderInvoiceCard(inv, isOpen) {
     const reminderBtn = overdue
       ? `<button class="btn-reminder" style="flex:1;" onclick="sendReminder(${inv.id})">${t('sendReminder')}</button>`
       : '';
+    const sendBtn = state.isDemo
+      ? `<button class="btn-email-inv" style="flex:1;" disabled>${t('sendInvoiceEmailDisabledGuest')}</button>`
+      : `<button class="btn-email-inv" style="flex:1;" onclick="sendInvoiceEmail(${inv.id})">${t('sendInvoiceEmail')}</button>`;
     return `
       <div class="inv-card">
         <div class="inv-header" onclick="this.nextElementSibling.classList.toggle('open')">
@@ -378,7 +383,7 @@ function renderInvoiceCard(inv, isOpen) {
             ${editBtn}
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;">
-            <button class="btn-email-inv" style="flex:1;" onclick="sendInvoiceEmail(${inv.id})">${t('sendInvoiceEmail')}</button>
+            ${sendBtn}
           </div>
           <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             ${paidBtn}

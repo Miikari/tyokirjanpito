@@ -64,42 +64,55 @@ function clearLoginErrors() {
   });
 }
 
-// Guards against a fast double-tap firing two concurrent sign-in attempts
-// (e.g. two Google popups, or two signInAnonymously() calls racing to
-// create separate accounts) — checked at the top of every sign-in function
-// below and released once that attempt settles either way.
-let authActionInProgress = false;
+// Guards against a fast double-tap firing two concurrent attempts of the
+// SAME sign-in method (e.g. two Google popups, or two signInAnonymously()
+// calls racing to create separate accounts). Kept per-method rather than
+// one shared flag — Firebase can take several seconds to detect a closed
+// Google popup, and a shared flag left every other login button (email,
+// anon) unresponsive for that whole window, punishing a stray click hard.
+let googleInProgress = false;
+let emailSigninInProgress = false;
+let signupInProgress = false;
+let anonInProgress = false;
 
-function signInWithGoogle() {
-  if (authActionInProgress) return;
-  authActionInProgress = true;
+function signInWithGoogle(btn) {
+  // A real disabled attribute would swallow the click outright, so a stray
+  // re-click during the pending window couldn't even show the "wait" toast.
+  // A CSS-only busy class keeps the button clickable so the guard above runs.
+  if (googleInProgress) { toast('Odota hetki..'); return; }
+  googleInProgress = true;
+  if (btn) btn.classList.add('btn-busy');
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch(err => {
-    if (err.code === 'auth/popup-blocked' ||
-        err.code === 'auth/popup-closed-by-user' ||
-        err.code === 'auth/cancelled-popup-request') {
+    if (err.code === 'auth/popup-blocked') {
+      // Browser blocked the popup outright — redirect is the only way forward.
       auth.signInWithRedirect(provider);
-    } else {
+    } else if (err.code !== 'auth/popup-closed-by-user' &&
+               err.code !== 'auth/cancelled-popup-request') {
+      // User closing the popup or cancelling isn't an error — don't force
+      // them into a redirect they didn't ask for.
       toast(t('loginFail') + err.code);
     }
-  }).finally(() => { authActionInProgress = false; });
+  }).finally(() => { googleInProgress = false; if (btn) btn.classList.remove('btn-busy'); });
 }
 
-function signInWithEmail() {
-  if (authActionInProgress) return;
+function signInWithEmail(btn) {
+  if (emailSigninInProgress) { toast('Odota hetki..'); return; }
   const email = document.getElementById('signin-email').value.trim();
   const password = document.getElementById('signin-password').value;
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
   if (!email || !password) { errEl.textContent = 'Täytä kaikki kentät.'; return; }
-  authActionInProgress = true;
+  emailSigninInProgress = true;
+  const origLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Kirjaudutaan…'; }
   auth.signInWithEmailAndPassword(email, password).catch(err => {
     errEl.textContent = EMAIL_ERRORS[err.code] || 'Kirjautuminen epäonnistui.';
-  }).finally(() => { authActionInProgress = false; });
+  }).finally(() => { emailSigninInProgress = false; if (btn) { btn.disabled = false; btn.textContent = origLabel; } });
 }
 
-function signUpWithEmail() {
-  if (authActionInProgress) return;
+function signUpWithEmail(btn) {
+  if (signupInProgress) { toast('Odota hetki..'); return; }
   const email = document.getElementById('signup-email').value.trim();
   const pw1 = document.getElementById('signup-password').value;
   const pw2 = document.getElementById('signup-password2').value;
@@ -107,10 +120,12 @@ function signUpWithEmail() {
   errEl.textContent = '';
   if (!email || !pw1 || !pw2) { errEl.textContent = 'Täytä kaikki kentät.'; return; }
   if (pw1 !== pw2) { errEl.textContent = 'Salasanat eivät täsmää.'; return; }
-  authActionInProgress = true;
+  signupInProgress = true;
+  const origLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Luodaan tunnusta…'; }
   auth.createUserWithEmailAndPassword(email, pw1).catch(err => {
     errEl.textContent = EMAIL_ERRORS[err.code] || 'Tunnuksen luonti epäonnistui.';
-  }).finally(() => { authActionInProgress = false; });
+  }).finally(() => { signupInProgress = false; if (btn) { btn.disabled = false; btn.textContent = origLabel; } });
 }
 
 function sendPasswordReset() {
@@ -129,10 +144,22 @@ function sendPasswordReset() {
     });
 }
 
+// Only resets the button on failure — on success the login screen stays up
+// for another moment while onAuthStateChanged loads the account, and
+// flipping the button back to normal before that finishes reads as the
+// login having silently given up.
+function resetAnonButton() {
+  anonInProgress = false;
+  const btn = document.getElementById('btn-anon');
+  if (btn) { btn.disabled = false; btn.textContent = 'Kokeile ilman tunnusta'; }
+}
+
 function signInAnonymously() {
-  if (authActionInProgress) return;
-  authActionInProgress = true;
-  auth.signInAnonymously().catch(() => toast('Anonyymi kirjautuminen epäonnistui.')).finally(() => { authActionInProgress = false; });
+  if (anonInProgress) { toast('Odota hetki..'); return; }
+  anonInProgress = true;
+  const btn = document.getElementById('btn-anon');
+  if (btn) { btn.disabled = true; btn.textContent = 'Kirjaudutaan…'; }
+  auth.signInAnonymously().catch(() => { toast('Anonyymi kirjautuminen epäonnistui.'); resetAnonButton(); });
 }
 
 function signOut() {
@@ -225,6 +252,7 @@ auth.onAuthStateChanged(async user => {
     unlistenOrgState();
     document.getElementById('login-screen').classList.add('visible');
     showLoginView('main');
+    resetAnonButton();
     state.uid = null; state.orgId = null; state.accountName = ''; state.accountPhotoURL = '';
     state.entries = []; state.invoices = []; state.expenses = []; state.customers = [];
     state.eId = 0; state.iId = 0; state.eExpId = 0; state.cId = 0;

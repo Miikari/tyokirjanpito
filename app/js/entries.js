@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration, localDateStr } from './utils.js';
-import { toast, showConfirm } from './ui.js';
+import { toast, centerNotice, showConfirm } from './ui.js';
 import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
 import { customerName, customerById, ADD_NEW_VALUE } from './customers.js';
@@ -62,7 +62,7 @@ async function saveManualEntry(btn, d, total, customerId, notes, rate, svc) {
     document.getElementById('m-h').value = '';
     document.getElementById('m-m').value = '';
     document.getElementById('m-notes').value = '';
-    renderEntries(); toast(t('entryAdded'), 'success');
+    renderEntries(); centerNotice(t('entryAddedForCustomer') + customerName(customerId));
   } finally {
     btn.disabled = false; btn.textContent = origLabel;
   }
@@ -495,7 +495,9 @@ export async function addExpense() {
       document.getElementById('exp-kind').value = 'general';
       onExpenseKindChange();
       renderExpenses();
-      toast(rows.length > 1 ? `${t('expenseAdded')} (${rows.length})` : t('expenseAdded'));
+      const kindLabel = kind === 'km' ? t('kmReimbursement') : kind === 'perdiem' ? t('expenseTypePerdiem') : t('expenseTypeGeneral');
+      const countSuffix = rows.length > 1 ? ` (${rows.length})` : '';
+      centerNotice(kindLabel + t('addedForCustomer') + customerName(customerId) + countSuffix);
     } finally {
       btn.disabled = false; btn.textContent = origLabel;
     }
@@ -522,7 +524,7 @@ async function deleteExpense(id) {
 export function renderExpenses() {
   const kirjEl = document.getElementById('kirjanpito-expenses');
   if (!kirjEl) return;
-  const uninv = state.expenses.filter(e => !e.invoiced);
+  const uninv = state.expenses.filter(e => !e.invoiced && matchesFilter(e));
   if (!uninv.length) { kirjEl.innerHTML = ''; return; }
   kirjEl.innerHTML = `<div class="card-label" style="margin-top:6px;margin-bottom:10px;">${t('expenses')}</div>` +
     uninv.map(e => `

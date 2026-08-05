@@ -126,6 +126,15 @@ export function toast(msg, type = null) {
   toast._t = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
+// ── CENTER NOTICE ──
+export function centerNotice(msg) {
+  const el = document.getElementById('center-notice');
+  const textEl = document.getElementById('center-notice-text');
+  clearTimeout(centerNotice._t);
+  textEl.textContent = msg; el.classList.add('show');
+  centerNotice._t = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
 // ── TABS ──
 // Blocks navigating away from Asetukset while the unsaved-changes banner is
 // showing, until the user explicitly hits Tallenna or Peru — a stray tab

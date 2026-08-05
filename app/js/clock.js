@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDur, fmtDate, esc, roundDuration } from './utils.js';
-import { toast, updateClockBg } from './ui.js';
+import { toast, centerNotice, updateClockBg } from './ui.js';
 import { addEntry } from './entries.js';
 import { saveConfig } from './storage.js';
 import { customerName, ADD_NEW_VALUE } from './customers.js';
@@ -168,7 +168,7 @@ async function clockOut() {
   setBadge('idle', t('idle')); renderMainBtns(); renderPills();
   if (state.uid) db.collection('users').doc(state.uid).collection('data').doc('active').delete();
   initClockRate();
-  toast(t('kirjattu') + fmtDur(secs));
+  centerNotice(t('entryAddedForCustomer') + customerName(state.activeCustomerId));
   updateClockBg();
 }
 

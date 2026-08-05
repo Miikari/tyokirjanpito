@@ -206,6 +206,23 @@ section { padding: 72px 0; }
 .footer-cta h2 { font-size: clamp(22px, 3.5vw, 30px); font-weight: 800; margin-bottom: 14px; }
 .footer-cta p { color: rgba(255, 255, 255, 0.65); margin-bottom: 28px; }
 
+/* ── LEGAL / TIETOSUOJA ── */
+.legal-page { padding: 56px 0 80px; }
+.legal-page .wrap { max-width: 720px; }
+.legal-page h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 800; color: var(--navy); margin: 0 0 6px; }
+.legal-page .legal-updated { color: var(--text3); font-size: 13px; margin-bottom: 32px; }
+.legal-page h2 { font-size: 18px; font-weight: 800; color: var(--navy); margin: 34px 0 10px; }
+.legal-page p { color: var(--text2); font-size: 14.5px; line-height: 1.7; margin-bottom: 12px; }
+.legal-page ul { color: var(--text2); font-size: 14.5px; line-height: 1.7; margin: 0 0 12px 20px; }
+.legal-page li { margin-bottom: 4px; }
+.draft-banner {
+  background: #fff4e0; border: 1.5px solid #f0b95c; border-radius: var(--r-sm);
+  padding: 16px 18px; font-size: 13.5px; color: #6b4a10; line-height: 1.6; margin-bottom: 32px;
+}
+.fill-in {
+  background: #ffe3e3; color: #a11; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+}
+
 /* ── FOOTER ── */
 footer.site-footer {
   padding: 28px 0; text-align: center; font-size: 13px; color: var(--text3);
