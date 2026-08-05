@@ -11,7 +11,7 @@ import { customerName, customerById, ADD_NEW_VALUE } from './customers.js';
 // limit — callers must check this, since a caller mid-flow (e.g. clocking
 // out of a running timer) must not discard already-tracked time on a block.
 export async function addEntry(date, secs, customerId, src, notes = '', rate = null, km = 0, service = null) {
-  if (!isPro() && state.orgLifetimeEntryCount >= 50) {
+  if (!isPro() && state.orgLifetimeEntryCount >= 100) {
     toast(t('freeLimitEntries'));
     showUpgradeModal();
     return false;
@@ -162,6 +162,7 @@ export function renderEntries() {
   if (!active.length) {
     const filterLabel = [...state.filterCustomers].map(id => customerName(id) || '—').join(', ');
     list.innerHTML = `<div class="empty">${state.filterCustomers.size ? t('noEntriesFor') + ' ' + esc(filterLabel) : t('noEntries')}<br><br>${!state.filterCustomers.size ? t('loginFirst') : ''}</div>`;
+    renderExpenses();
     return;
   }
   list.innerHTML = active.map(e => `

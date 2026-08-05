@@ -171,9 +171,9 @@ const i18n = {
     // Tilaus (Stripe)
     billingSection: '💳 Tilaus', planFree: 'Ilmainen', planPro: 'Hoyla Pro',
     menuPlanFree: 'Ilmainen taso', menuPlanPro: 'Hoyla Pro -tilaus',
-    planFreeHint: '{entries}/50 kirjausta, {invoices}/5 laskua · Pro 14,90 €/kk (early adopter -hinta)',
+    planFreeHint: '{entries}/100 kirjausta, {invoices}/5 laskua · Pro 14,90 €/kk (early adopter -hinta)',
     planProRenews: 'Uusiutuu', upgradeToProBtn: 'Päivitä Prohon', manageSubscriptionBtn: 'Hallitse tilausta',
-    freeLimitEntries: 'Ilmaisen tason kirjausraja (50) täynnä. Päivitä Prohon jatkaaksesi.',
+    freeLimitEntries: 'Ilmaisen tason kirjausraja (100) täynnä. Päivitä Prohon jatkaaksesi.',
     freeLimitInvoices: 'Ilmaisen tason laskuraja (5) täynnä. Päivitä Prohon jatkaaksesi.',
     upgradeModalTitle: 'Ilmaisen tason raja täynnä',
     upgradeModalBody: 'Päivitä Prohon (14,90 €/kk, early adopter -hinta) poistaaksesi rajan kokonaan.',
@@ -401,9 +401,9 @@ const i18n = {
     // Subscription (Stripe)
     billingSection: '💳 Subscription', planFree: 'Free', planPro: 'Hoyla Pro',
     menuPlanFree: 'Free plan', menuPlanPro: 'Hoyla Pro subscription',
-    planFreeHint: '{entries}/50 entries, {invoices}/5 invoices · Pro €14.90/mo (early adopter price)',
+    planFreeHint: '{entries}/100 entries, {invoices}/5 invoices · Pro €14.90/mo (early adopter price)',
     planProRenews: 'Renews', upgradeToProBtn: 'Upgrade to Pro', manageSubscriptionBtn: 'Manage subscription',
-    freeLimitEntries: 'Free tier entry limit (50) reached. Upgrade to Pro to continue.',
+    freeLimitEntries: 'Free tier entry limit (100) reached. Upgrade to Pro to continue.',
     freeLimitInvoices: 'Free tier invoice limit (5) reached. Upgrade to Pro to continue.',
     upgradeModalTitle: 'Free tier limit reached',
     upgradeModalBody: 'Upgrade to Pro (€14.90/mo, early adopter price) to remove the limit entirely.',

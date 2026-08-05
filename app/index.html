@@ -639,7 +639,8 @@
 
 <!-- ── EDIT INVOICE MODAL ── -->
 <div class="modal-wrap" id="modal-edit-inv">
-  <div class="modal">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close-x" onclick="closeEditInvModal()" aria-label="Sulje">&times;</button>
     <div class="modal-handle"></div>
     <h2 data-i18n="editInvoice">Muokkaa laskua</h2>
     <div id="edit-inv-entries"></div>

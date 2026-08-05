@@ -225,11 +225,18 @@ auth.onAuthStateChanged(async user => {
       listenActiveState();
       listenOrgState();
       if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
+        // demo.js is never imported anywhere else, so this await is a real
+        // network fetch — if the user signs out and into a different
+        // (real) account while it's in flight, applying demo data here
+        // would clobber that account's just-loaded real state. Bail if the
+        // session has moved on since this branch was entered.
         const { loadDemoData } = await import('./demo.js');
+        if (state.uid !== user.uid) return;
         loadDemoData();
         const { renderAllSelects, renderCustChips } = await import('./customers.js');
         const { renderEntries } = await import('./entries.js');
         const { renderPills } = await import('./clock.js');
+        if (state.uid !== user.uid) return;
         renderAllSelects(); renderCustChips(); renderServiceSelects(); renderPills(); renderEntries();
         window.updateExpenseKindOptions?.();
         window.updateInvoiceBadge?.();

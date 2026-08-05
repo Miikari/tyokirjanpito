@@ -607,13 +607,24 @@ function printInvoice(id, asAttachment) {
 }
 
 // ── EDIT INVOICE ──
+// Tracks whether edit was entered from the invoice preview popup, so
+// closing/saving the edit can return there instead of just closing —
+// otherwise "Muokkaa" from the just-composed invoice's preview would drop
+// the user straight back to the archive list instead of that preview.
+let editedFromPopup = false;
+
 function openEditInvoice(id) {
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
   if (inv.paid) { toast(t('invoicePaidNoEdit')); return; }
+  editedFromPopup = document.getElementById('modal-invoice-view').classList.contains('open');
+  // Editing can be triggered from inside the just-composed invoice's
+  // preview popup — close it first so it doesn't stay stacked underneath
+  // the edit modal.
+  closeInvoicePopup();
   state.editingInvId = id;
   const el = document.getElementById('edit-inv-entries');
-  el.innerHTML = inv.entries.map((e, i) => `
+  const entriesHtml = inv.entries.map((e, i) => `
     <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px;margin-bottom:10px;">
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">${fmtDate(e.date)} · ${esc(e.customer || '—')}</div>
       <div style="display:flex;gap:8px;margin-bottom:6px;">
@@ -623,6 +634,18 @@ function openEditInvoice(id) {
       <div class="fg" style="margin:0;"><label>Merkintöjä</label><input type="text" id="einv-notes-${i}" value="${esc(e.notes || '')}" placeholder="Merkintä..."></div>
     </div>
   `).join('');
+  const expenses = inv.expenses || [];
+  const expensesHtml = expenses.length ? `
+    <div class="card-label" style="margin:14px 0 10px;">${t('expenses')}</div>
+    ${expenses.map((e, i) => `
+      <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">${fmtDate(e.date)} · ${esc(e.customer || '—')}</div>
+        <div class="fg" style="margin:0 0 6px;"><label>${t('expenseDesc')}</label><input type="text" id="einv-exp-desc-${i}" value="${esc(e.description || '')}"></div>
+        <div class="fg" style="margin:0;"><label>${t('expenseAmount')}</label><input type="number" id="einv-exp-amount-${i}" value="${e.amount}" step="0.01"></div>
+      </div>
+    `).join('')}
+  ` : '';
+  el.innerHTML = entriesHtml + expensesHtml;
   document.getElementById('modal-edit-inv').classList.add('open');
 }
 
@@ -635,23 +658,35 @@ async function saveEditInvoice() {
     e.secs = h * 3600 + m * 60;
     e.notes = document.getElementById(`einv-notes-${i}`).value.trim();
   });
+  (inv.expenses || []).forEach((e, i) => {
+    e.description = document.getElementById(`einv-exp-desc-${i}`).value.trim();
+    const amount = parseFloat(document.getElementById(`einv-exp-amount-${i}`).value);
+    e.amount = isNaN(amount) ? 0 : amount;
+  });
   const totalSecs = inv.entries.reduce((a, e) => a + e.secs, 0);
   const hourly = inv.entries.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0);
-  const subtotal = hourly + inv.monthly;
+  const expenseTotal = (inv.expenses || []).reduce((a, e) => a + e.amount, 0);
+  const subtotal = hourly + expenseTotal + inv.monthly;
   const vatAmount = subtotal * (inv.vat || 0) / 100;
   inv.totalSecs = totalSecs;
   inv.hourly = hourly;
+  inv.expenseTotal = expenseTotal;
   inv.subtotal = subtotal;
   inv.vatAmount = vatAmount;
   inv.total = subtotal + vatAmount;
   closeEditInvModal();
-  await updateInvoiceDoc(inv.id, { entries: inv.entries, totalSecs, hourly, subtotal, vatAmount, total: inv.total });
+  await updateInvoiceDoc(inv.id, { entries: inv.entries, expenses: inv.expenses, totalSecs, hourly, expenseTotal, subtotal, vatAmount, total: inv.total });
   renderArchive(); toast(t('invoiceUpdated'));
 }
 
 function closeEditInvModal() {
+  const id = state.editingInvId;
   document.getElementById('modal-edit-inv').classList.remove('open');
   state.editingInvId = null;
+  if (editedFromPopup) {
+    editedFromPopup = false;
+    showInvoicePopup(id);
+  }
 }
 
 window.printInvoice = printInvoice;

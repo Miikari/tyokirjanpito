@@ -4,7 +4,7 @@
 
 ## Keskeistä
 
-- Hinnoittelu: Free 0 €/kk (50 merkintää tai 5 laskua, rajaton asiakasmäärä), Pro 14,90 €/kk (rajattomasti merkintöjä ja laskuja)
+- Hinnoittelu: Free 0 €/kk (100 merkintää tai 5 laskua, rajaton asiakasmäärä), Pro 14,90 €/kk (rajattomasti merkintöjä ja laskuja)
 - Toimii selaimessa ja asennettavana PWA-sovelluksena (Web, iOS, Android)
 - Kohderyhmä: freelancerit, kevytyrittäjät ja pienyrittäjät Suomessa
 
