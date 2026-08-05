@@ -30,6 +30,17 @@ window.addEventListener('appinstalled', () => { dismissInstall(); toast(t('appIn
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+
+  // A new SW can take control (skipWaiting + clients.claim in sw.js) mid-
+  // session, after the page's own CSS/JS requests already raced against the
+  // old cache — reload once so the page picks up a fully consistent set of
+  // assets instead of running with fresh HTML against stale CSS/JS.
+  let swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swRefreshing) return;
+    swRefreshing = true;
+    window.location.reload();
+  });
 }
 
 window.installApp = installApp;
