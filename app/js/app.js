@@ -43,6 +43,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Returning from an external redirect (Stripe checkout/portal) via the
+// browser's back button restores the page from bfcache instead of loading it
+// fresh — billing.js's checkoutInProgress/portalInProgress flags (and the
+// button they disabled) are frozen mid-flight from before the redirect and
+// never get a chance to reset. Reloading is simpler and more robust than
+// trying to manually resync every affected flag/button.
+window.addEventListener('pageshow', e => { if (e.persisted) window.location.reload(); });
+
 window.installApp = installApp;
 window.dismissInstall = dismissInstall;
 window.snoozeInstallBanner = snoozeInstallBanner;
