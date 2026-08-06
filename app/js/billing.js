@@ -35,6 +35,7 @@ export async function startCheckout(interval = 'month', btn) {
     return;
   }
   checkoutInProgress = true;
+  toast('Odota hetki..');
   const origLabel = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Odota hetki..'; }
   try {
@@ -49,10 +50,11 @@ export async function startCheckout(interval = 'month', btn) {
 }
 
 export async function openBillingPortal(btn) {
-  if (portalInProgress) { toast('Odota hetki..'); return; }
+  if (portalInProgress) { toast('Siirrytään tilauksen hallintaan..'); return; }
   portalInProgress = true;
+  toast('Siirrytään tilauksen hallintaan..');
   const origLabel = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = 'Odota hetki..'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Siirrytään tilauksen hallintaan..'; }
   try {
     const fn = firebase.functions().httpsCallable('createPortalSession');
     const { data } = await fn({ orgId: state.orgId });
