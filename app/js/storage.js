@@ -138,6 +138,8 @@ export async function loadFromFirestore() {
   renderServiceSelects();
   document.getElementById('m-date').value = todayLocalStr();
   document.getElementById('exp-date').value = todayLocalStr();
+  document.getElementById('exp-perdiem-start-date').value = todayLocalStr();
+  document.getElementById('exp-perdiem-end-date').value = todayLocalStr();
   window.updateExpenseKindOptions?.();
   renderAllSelects(); renderCustChips(); renderPills(); renderEntries();
   window.updateInvoiceBadge?.();

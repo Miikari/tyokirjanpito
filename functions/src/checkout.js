@@ -116,7 +116,10 @@ const createCheckoutSession = onCall({ secrets: [STRIPE_SECRET_KEY] }, async (re
       // pointed here at the landing page with no code anywhere reading the
       // checkout= param, so a paying customer just landed back on the
       // marketing page with no confirmation at all (2026-08-04 review).
-      success_url: `${APP_ORIGIN}/app/?checkout=success`,
+      // interval rides along so the client can report the right value for
+      // the ad-conversion Purchase event without re-deriving/trusting a
+      // client-supplied price — it's just the same keyword already chosen.
+      success_url: `${APP_ORIGIN}/app/?checkout=success&interval=${interval}`,
       cancel_url: `${APP_ORIGIN}/app/?checkout=cancel`,
     });
 

@@ -56,7 +56,9 @@
     <h2>4. Käsittelyn tarkoitus ja oikeusperuste</h2>
     <p>
       Tietoja käsitellään Hoyla-palvelun tarjoamiseksi (sopimuksen täytäntöönpano käyttäjän kanssa) sekä laskutuksen ja
-      kirjanpidon mahdollistamiseksi. Tilastointiin/analytiikkaan liittyvä käsittely: <span class="fill-in">Ei sovelleta.</span>.
+      kirjanpidon mahdollistamiseksi. Tilastointiin/analytiikkaan liittyvä käsittely: mainonnan tehokkuuden mittaus ja
+      sivuston käytön tilastointi Meta Pixelin ja Google Analytics 4:n avulla, vain kävijän suostumuksella
+      (ks. kohta 8).
     </p>
 
     <h2>5. Kenelle tietoja luovutetaan</h2>
@@ -64,6 +66,8 @@
     <ul>
       <li><strong>Google / Firebase (Google Cloud):</strong> tietokanta (Firestore), kirjautuminen (Authentication), palvelinlogiikka (Cloud Functions). Tietojen sijaintialue: <span class="fill-in">eur3 (Eurooppa)</span></li>
       <li><strong>Stripe:</strong> Pro-tilausten maksujen ja laskutuksen käsittely</li>
+      <li><strong>Meta (Meta Pixel):</strong> mainonnan tehokkuuden mittaus hoyla.fi-sivustolla ja sovelluksessa, vain kävijän suostumuksella</li>
+      <li><strong>Google (Google Analytics 4):</strong> sivuston ja sovelluksen käytön tilastointi, vain kävijän suostumuksella</li>
     </ul>
     <p>Tietoja ei myydä eikä luovuteta muille kolmansille osapuolille markkinointitarkoituksiin.</p>
 
@@ -87,9 +91,21 @@
 
     <h2>8. Evästeet ja paikallinen tallennus</h2>
     <p>
-      Hoyla ei käytä seurantaevästeitä. Kirjautuminen perustuu Firebase Authenticationin tunnisteisiin, ei evästeisiin.
-      Selaimen paikalliseen tallennustilaan (localStorage) tallennetaan vain käyttöliittymän asetuksia (kieli, teema) sekä
-      mahdollinen kutsu-/suosittelukoodi — ei asiakas- tai laskudataa.
+      Kirjautuminen perustuu Firebase Authenticationin tunnisteisiin, ei evästeisiin. Selaimen paikalliseen
+      tallennustilaan (localStorage) tallennetaan käyttöliittymän asetuksia (kieli, teema), mahdollinen
+      kutsu-/suosittelukoodi ja evästesuostumuksesi tila — ei asiakas- tai laskudataa.
+    </p>
+    <p>
+      Hoyla.fi-sivustolla sekä sovelluksessa näytetään evästebanneri, jossa voit hyväksyä markkinointi- ja
+      tilastointievästeet tai kieltäytyä niistä ("Vain välttämättömät"). Vain jos hyväksyt, selaimeesi ladataan:
+    </p>
+    <ul>
+      <li><strong>Meta Pixel:</strong> mittaa sivustokäyntejä ja rekisteröitymisiä Meta-mainonnan optimointia varten</li>
+      <li><strong>Google Analytics 4:</strong> sivuston ja sovelluksen käytön tilastointi</li>
+    </ul>
+    <p>
+      Kieltäytyminen ei estä Hoylan käyttöä. Voit muuttaa valintaasi tyhjentämällä selaimesi paikallisen
+      tallennustilan (localStorage) kyseiselle sivustolle, jolloin evästebanneri näytetään uudelleen.
     </p>
 
     <h2>9. Tietoturva</h2>

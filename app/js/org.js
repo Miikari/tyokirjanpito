@@ -62,7 +62,7 @@ export async function initOrg(user) {
 
   if (userDoc.exists && userDoc.data().orgId) {
     state.orgId = userDoc.data().orgId;
-    return;
+    return false; // returning user — not a signup
   }
 
   // Check for pending join code from URL
@@ -70,7 +70,7 @@ export async function initOrg(user) {
   if (joinCode) {
     localStorage.removeItem('pendingJoinCode');
     const joined = await joinOrgByCode(user, joinCode);
-    if (joined) return;
+    if (joined) return true; // first time this uid has ever been set up — counts as a signup too
   }
 
   // Create new org for this user
@@ -106,6 +106,7 @@ export async function initOrg(user) {
   } catch (_) {}
 
   await userRef.set({ orgId, email: user.email || '', displayName: user.displayName || user.email || 'Vieras' }, { merge: true });
+  return true; // brand-new org just created — this uid's first-ever signup
 }
 
 // Joining now goes through Cloud Functions rather than a direct client

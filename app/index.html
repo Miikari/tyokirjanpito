@@ -27,8 +27,9 @@
   })();
 </script>
 <link rel="stylesheet" href="css/style.css">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.gstatic.com https://apis.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://www.googleapis.com wss://*.firebaseio.com https://us-central1-tyoaikakirjanpito.cloudfunctions.net; frame-src https://tyoaikakirjanpito.firebaseapp.com https://accounts.google.com; object-src 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.googletagmanager.com https://connect.facebook.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.gstatic.com https://apis.google.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://www.googleapis.com wss://*.firebaseio.com https://us-central1-tyoaikakirjanpito.cloudfunctions.net https://www.google-analytics.com https://analytics.google.com https://www.facebook.com; frame-src https://tyoaikakirjanpito.firebaseapp.com https://accounts.google.com; object-src 'none';">
 <title>Työtunnit</title>
+<script src="../analytics.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -223,19 +224,19 @@
       <button class="btn-add" id="manual-add-btn" onclick="addManual()" data-i18n="addEntry">+ Lisää kirjaus</button>
     </div>
 
-    <div class="card card-form">
+    <div class="card card-form" style="display:flex;flex-direction:column;">
       <div class="card-label" data-i18n="expenses">Kulukorvaukset</div>
-      <div class="m-exp-row" style="display:flex;gap:10px;">
+      <div class="m-exp-row" id="exp-date-row" style="display:flex;gap:10px;order:10;">
         <div class="fg" style="flex:1;min-width:0;"><label data-i18n="date">Päivämäärä</label><input type="date" id="exp-date" autocomplete="off" style="width:100%;" onchange="refreshExpensePerdiemPreview()"></div>
         <div class="fg" id="exp-end-date-row" style="flex:1;min-width:0;display:none;"><label data-i18n="expEndDate">Loppupäivä</label><input type="date" id="exp-end-date" autocomplete="off" style="width:100%;" onchange="refreshExpensePerdiemPreview()"></div>
       </div>
-      <div class="fg" id="exp-multi-day-row" style="display:none;">
+      <div class="fg" id="exp-multi-day-row" style="display:none;order:20;">
         <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;">
           <input type="checkbox" id="exp-multi-day" onchange="onExpenseMultiDayChange()">
           <span data-i18n="markMultipleDays">Merkkaa useita kerralla</span>
         </label>
       </div>
-      <div class="m-exp-row" style="display:flex;gap:10px;">
+      <div class="m-exp-row" style="display:flex;gap:10px;order:30;">
         <div class="fg" style="flex:1;min-width:0;"><label data-i18n="customer">Asiakas</label><select id="exp-customer" style="width:100%;" onchange="handleCustomerSelectChange(this)"></select></div>
         <div class="fg" style="flex:1;min-width:0;"><label data-i18n="expenseType">Kulun tyyppi</label>
           <select id="exp-kind" onchange="onExpenseKindChange()" style="width:100%;">
@@ -245,15 +246,35 @@
           </select>
         </div>
       </div>
-      <div class="m-exp-row" style="display:flex;gap:10px;">
+      <div class="m-exp-row" style="display:flex;gap:10px;order:40;">
         <div class="fg" style="flex:1;min-width:0;"><label id="exp-desc-label" data-i18n="expenseDesc">Kuvaus</label><input type="text" id="exp-desc" placeholder="esim. Matkakulut, materiaali..." style="width:100%;" autocomplete="off"></div>
-        <div class="fg" style="flex:1;min-width:0;"><label id="exp-amount-label" data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
+        <div class="fg" id="exp-amount-fg" style="flex:1;min-width:0;"><label id="exp-amount-label" data-i18n="expenseAmount">Summa (€)</label><input type="number" id="exp-amount" step="0.01" placeholder="0,00" style="width:100%;" autocomplete="off"></div>
       </div>
-      <div id="exp-perdiem-time-row" class="m-exp-row" style="display:none;gap:10px;margin-bottom:10px;">
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="departureTime">Lähtöaika</label><input type="time" id="exp-departure-time" style="width:100%;" autocomplete="off" onchange="refreshExpensePerdiemPreview()"></div>
-        <div class="fg" style="flex:1;min-width:0;margin:0;"><label data-i18n="returnTime">Paluuaika</label><input type="time" id="exp-return-time" style="width:100%;" autocomplete="off" onchange="refreshExpensePerdiemPreview()"></div>
+      <div id="exp-perdiem-total-row" style="display:none;gap:10px;order:50;">
+        <div class="fg" style="flex:1;min-width:0;"><label data-i18n="perdiemDaysCountLabel">Vuorokausien määrä</label><div id="exp-perdiem-days-display" style="font-size:16px;font-weight:600;padding:12px 0;"></div></div>
+        <div class="fg" style="flex:1;min-width:0;"><label data-i18n="expenseAmount">Summa (€)</label><div id="exp-perdiem-total-display" style="font-size:16px;font-weight:600;padding:12px 0;"></div></div>
       </div>
-      <button class="btn-add" id="exp-add-btn" onclick="addExpense()" data-i18n="addExpense">+ Lisää kulu</button>
+      <div id="exp-perdiem-date-time" class="m-exp-row" style="display:none;gap:10px;margin-bottom:10px;order:5;">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;">
+          <div class="fg" style="margin:0;"><label data-i18n="departureDate">Lähtöpäivä</label><input type="date" id="exp-perdiem-start-date" autocomplete="off" style="width:100%;" onchange="refreshExpensePerdiemPreview()"></div>
+          <div class="fg" style="margin:0;"><label data-i18n="departureTime">Lähtöaika</label>
+            <div style="display:flex;gap:6px;">
+              <select id="exp-departure-hour" style="flex:1;min-width:0;" onchange="refreshExpensePerdiemPreview()"><option value="">--</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option></select>
+              <select id="exp-departure-minute" style="flex:1;min-width:0;" onchange="refreshExpensePerdiemPreview()"><option value="">--</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;">
+          <div class="fg" style="margin:0;"><label data-i18n="returnDate">Paluupäivä</label><input type="date" id="exp-perdiem-end-date" autocomplete="off" style="width:100%;" onchange="refreshExpensePerdiemPreview()"></div>
+          <div class="fg" style="margin:0;"><label data-i18n="returnTime">Paluuaika</label>
+            <div style="display:flex;gap:6px;">
+              <select id="exp-return-hour" style="flex:1;min-width:0;" onchange="refreshExpensePerdiemPreview()"><option value="">--</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option></select>
+              <select id="exp-return-minute" style="flex:1;min-width:0;" onchange="refreshExpensePerdiemPreview()"><option value="">--</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add" id="exp-add-btn" onclick="addExpense()" data-i18n="addExpense" style="order:60;">+ Lisää kulu</button>
     </div>
     </div><!-- /subpanel-kirjaa -->
 

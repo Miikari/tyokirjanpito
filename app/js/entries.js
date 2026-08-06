@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration, localDateStr } from './utils.js';
+import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration, localDateStr, todayLocalStr } from './utils.js';
 import { toast, centerNotice, showConfirm } from './ui.js';
 import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
@@ -278,13 +278,28 @@ function onExpenseKindChange() {
   const descLabel = document.getElementById('exp-desc-label');
   const amountInput = document.getElementById('exp-amount');
   const amountLabel = document.getElementById('exp-amount-label');
+  const amountFg = document.getElementById('exp-amount-fg');
   const multiDayRow = document.getElementById('exp-multi-day-row');
   const multiDayCheckbox = document.getElementById('exp-multi-day');
-  const perdiemTimeRow = document.getElementById('exp-perdiem-time-row');
+  const dateRow = document.getElementById('exp-date-row');
+  const perdiemDateTimeRow = document.getElementById('exp-perdiem-date-time');
+  const perdiemTotalRow = document.getElementById('exp-perdiem-total-row');
   descInput.value = '';
-  multiDayRow.style.display = (kind === 'km' || kind === 'perdiem') ? '' : 'none';
+  // Per diem has its own always-visible lähtöpäivä/paluupäivä pair instead
+  // of the km/general "mark several at once" checkbox — a trip's date range
+  // is just whatever the two dates say, no separate toggle needed for it.
+  multiDayRow.style.display = kind === 'km' ? '' : 'none';
   multiDayCheckbox.checked = false;
-  perdiemTimeRow.style.display = kind === 'perdiem' ? 'flex' : 'none';
+  dateRow.style.display = kind === 'perdiem' ? 'none' : '';
+  // Lähtö-/paluupäivä+aika reads above the Asiakas/Kulun tyyppi row for per
+  // diem even though it's later in the DOM (needed so the still-visible
+  // Kulun tyyppi selector that reveals this block stays in its normal spot)
+  // — .card-form is a column flex container with every row given a fixed
+  // `order` (see index.html) precisely so this one can sit earlier visually
+  // without actually moving in the DOM.
+  perdiemDateTimeRow.style.display = kind === 'perdiem' ? 'flex' : 'none';
+  perdiemTotalRow.style.display = kind === 'perdiem' ? 'flex' : 'none';
+  amountFg.style.display = kind === 'perdiem' ? 'none' : '';
   onExpenseMultiDayChange();
   if (kind === 'km') {
     descLabel.textContent = t('kmCount');
@@ -300,9 +315,10 @@ function onExpenseKindChange() {
     descInput.type = 'text';
     descInput.removeAttribute('min'); descInput.removeAttribute('step');
     descInput.placeholder = t('expenseDescPlaceholder');
-    amountLabel.textContent = t('perdiemDaysCountLabel');
-    amountInput.type = 'text';
-    amountInput.readOnly = true;
+    const startDateEl = document.getElementById('exp-perdiem-start-date');
+    const endDateEl = document.getElementById('exp-perdiem-end-date');
+    if (!startDateEl.value) startDateEl.value = todayLocalStr();
+    if (!endDateEl.value) endDateEl.value = startDateEl.value;
     refreshExpensePerdiemPreview();
   } else {
     descLabel.textContent = t('expenseDesc');
@@ -314,6 +330,24 @@ function onExpenseKindChange() {
     amountInput.readOnly = false;
     amountInput.value = '';
   }
+}
+
+// Departure/return time are two <select>s (hour + minute) rather than a
+// native <input type="time"> — Android Chrome's native time picker has a
+// known bug where its "Aseta"/OK button can render clipped off-screen
+// (https://support.google.com/chrome/thread/204014263), which plain
+// <select> dropdowns don't suffer from since there's no separate confirm
+// step. Returns '' (not a fallback time) unless both hour and minute have
+// been picked, so callers can tell "not set" apart from a real 00:00/00:05.
+function getExpenseTimeSelect(prefix) {
+  const hour = document.getElementById(`exp-${prefix}-hour`).value;
+  const minute = document.getElementById(`exp-${prefix}-minute`).value;
+  return (hour && minute) ? `${hour}:${minute}` : '';
+}
+
+function resetExpenseTimeSelect(prefix) {
+  document.getElementById(`exp-${prefix}-hour`).value = '';
+  document.getElementById(`exp-${prefix}-minute`).value = '';
 }
 
 // The end-date field only makes sense once "mark several at once" is
@@ -332,14 +366,24 @@ function onExpenseMultiDayChange() {
 // configured full/half rates apply), so this just previews how many
 // matkavuorokausia the current date/time inputs will produce.
 function refreshExpensePerdiemPreview() {
-  const amountInput = document.getElementById('exp-amount');
+  const daysDisplay = document.getElementById('exp-perdiem-days-display');
+  const totalDisplay = document.getElementById('exp-perdiem-total-display');
   if (document.getElementById('exp-kind').value !== 'perdiem') return;
-  const dateVal = document.getElementById('exp-date').value;
-  const endDateVal = document.getElementById('exp-end-date').value || dateVal;
-  if (!dateVal || endDateVal < dateVal) { amountInput.value = ''; return; }
-  const departureTime = document.getElementById('exp-departure-time').value || '00:00';
-  const returnTime = document.getElementById('exp-return-time').value || '23:59';
-  amountInput.value = classifyPerdiemDays(dateVal, departureTime, endDateVal, returnTime).length;
+  const dateVal = document.getElementById('exp-perdiem-start-date').value;
+  const endDateVal = document.getElementById('exp-perdiem-end-date').value || dateVal;
+  if (!dateVal || endDateVal < dateVal) { daysDisplay.textContent = ''; totalDisplay.textContent = ''; return; }
+  const departureTime = getExpenseTimeSelect('departure') || '00:00';
+  const returnTime = getExpenseTimeSelect('return') || '23:59';
+  const classified = classifyPerdiemDays(dateVal, departureTime, endDateVal, returnTime);
+  // Sum by weight, not day count — a half day (e.g. only the first or last
+  // day of a trip) must contribute 0.5 vrk, not 1, and this must hold even
+  // when full and half days are mixed (half...full...half still adds up
+  // correctly instead of counting every classified day as a whole vrk).
+  const days = classified.reduce((sum, d) => sum + (d.type === 'full' ? 1 : 0.5), 0);
+  const total = classified.reduce((sum, d) =>
+    sum + (d.type === 'full' ? (state.cfg.perdiemFullRate || 0) : (state.cfg.perdiemHalfRate || 0)), 0);
+  daysDisplay.textContent = days.toString().replace('.', ',');
+  totalDisplay.textContent = fmtEur(total);
 }
 
 // Hides the km/perdiem <option>s in the kind select for orgs that haven't
@@ -408,8 +452,12 @@ export async function addExpense() {
   const descVal = document.getElementById('exp-desc').value.trim();
   const amountFieldVal = parseFloat(document.getElementById('exp-amount').value);
   const custVal = document.getElementById('exp-customer').value;
-  const dateVal = document.getElementById('exp-date').value;
-  const endDateVal = document.getElementById('exp-end-date').value || dateVal;
+  const dateVal = kind === 'perdiem'
+    ? document.getElementById('exp-perdiem-start-date').value
+    : document.getElementById('exp-date').value;
+  const endDateVal = kind === 'perdiem'
+    ? (document.getElementById('exp-perdiem-end-date').value || dateVal)
+    : (document.getElementById('exp-end-date').value || dateVal);
   if (!custVal || custVal === '—') { toast(t('selectCustomer')); return; }
   if (endDateVal < dateVal) { toast(t('invalidDateRange')); return; }
 
@@ -441,8 +489,16 @@ export async function addExpense() {
       toast(t('perdiemRatesMissing'));
       return;
     }
-    const departureTime = document.getElementById('exp-departure-time').value || '00:00';
-    const returnTime = document.getElementById('exp-return-time').value || '23:59';
+    const departureTime = getExpenseTimeSelect('departure') || '00:00';
+    const returnTime = getExpenseTimeSelect('return') || '23:59';
+    // Only checkable when it's a same-day trip — once lähtöpäivä/paluupäivä
+    // differ, any time-of-day combination is chronologically fine (a late
+    // departure on day 1 and an early return on day 2 is still forward in
+    // time), so the ordering only needs policing within a single day.
+    if (dateVal === endDateVal && departureTime >= returnTime) {
+      toast(t('perdiemDepartureAfterReturn'));
+      return;
+    }
     const classified = classifyPerdiemDays(dateVal, departureTime, endDateVal, returnTime).filter(d => d.type !== 'none');
     if (!classified.length) { toast(t('perdiemNoEligibleDays')); return; }
     rows = classified.map(d => {
@@ -491,8 +547,9 @@ export async function addExpense() {
       }
       document.getElementById('exp-amount').value = '';
       document.getElementById('exp-end-date').value = '';
-      document.getElementById('exp-departure-time').value = '';
-      document.getElementById('exp-return-time').value = '';
+      document.getElementById('exp-perdiem-end-date').value = '';
+      resetExpenseTimeSelect('departure');
+      resetExpenseTimeSelect('return');
       document.getElementById('exp-kind').value = 'general';
       onExpenseKindChange();
       renderExpenses();

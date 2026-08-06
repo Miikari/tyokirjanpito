@@ -218,7 +218,12 @@ auth.onAuthStateChanged(async user => {
         }
       }
 
-      await initOrg(user);
+      const isNewSignup = await initOrg(user);
+      // Anonymous demo sessions aren't a real ad-funnel conversion — only
+      // fire the event for an actual new account (initOrg only returns true
+      // the first time this uid is ever set up, so a page reload later
+      // doesn't re-fire it).
+      if (isNewSignup && !user.isAnonymous) window.hoylaAnalytics?.trackSignup();
       await loadFromFirestore();
       updateUserNameDisplay();
       applyLang();
@@ -253,6 +258,10 @@ auth.onAuthStateChanged(async user => {
       if (checkoutResult === 'success') {
         showTab('asetukset');
         toast(t('checkoutSuccessToast'), 'success');
+        // Same prices as shown in the upgrade modal/pricing page (app/index.html) —
+        // there's no single source of truth for these, so keep in sync by hand.
+        const value = params.get('interval') === 'year' ? 149.90 : 14.90;
+        window.hoylaAnalytics?.trackPurchase(value, 'EUR');
         history.replaceState({}, '', location.pathname);
       } else if (checkoutResult === 'cancel' || params.get('tab') === 'asetukset') {
         showTab('asetukset');
