@@ -71,7 +71,6 @@ async function saveManualEntry(btn, d, total, customerId, notes, rate, svc) {
 function toggleEntry(id) {
   const e = state.entries.find(x => x.id === id);
   if (e && !e.invoiced) e.selected = !e.selected;
-  document.getElementById('s-sel').textContent = state.entries.filter(e => !e.invoiced && e.selected).length;
   updateSelectionBar();
 }
 
@@ -85,6 +84,7 @@ function matchesFilter(e) {
 function updateSelectionBar() {
   const count = state.entries.filter(e => !e.invoiced && e.selected).length
     + state.expenses.filter(e => !e.invoiced && e.selected).length;
+  document.getElementById('s-sel').textContent = count;
   const bar = document.getElementById('selection-bar');
   if (bar) bar.style.display = count ? 'flex' : 'none';
   document.querySelector('.scroll')?.classList.toggle('has-selection-bar', !!count);
@@ -205,10 +205,8 @@ export function renderEntries() {
   const list = document.getElementById('entries-list');
   const active = state.entries.filter(e => !e.invoiced && matchesFilter(e));
   const all = state.entries.filter(e => !e.invoiced);
-  const sel = all.filter(e => e.selected);
   const activeExpenses = state.expenses.filter(e => !e.invoiced && matchesFilter(e));
   document.getElementById('s-count').textContent = active.length + activeExpenses.length;
-  document.getElementById('s-sel').textContent = sel.length;
   document.getElementById('s-total').textContent = fmtShort(all.reduce((a, e) => a + e.secs, 0));
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0));
   renderFilterPills();
