@@ -6,7 +6,8 @@ function detectLang() {
 }
 
 function detectTheme() {
-  return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+  const stored = localStorage.getItem('theme');
+  return stored || 'dark';
 }
 
 const DEFAULT_SERVICE_NAME = detectLang() === 'en' ? 'Hourly work' : 'Tuntityö';
