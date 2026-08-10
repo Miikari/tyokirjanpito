@@ -87,8 +87,6 @@ export function applyLang() {
   document.querySelectorAll('.sum-label')[1].textContent = t('selected');
   document.querySelectorAll('.sum-label')[2].textContent = t('total');
   document.querySelectorAll('.sum-label')[3].textContent = t('value');
-  document.querySelector('.btn-outline').textContent = t('selectAll');
-  document.querySelector('.btn-invoice').textContent = t('buildInvoice');
 
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');

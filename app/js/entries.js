@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, fmtDur, fmtEur, fmtShort, esc, roundDuration, localDateStr, todayLocalStr } from './utils.js';
 import { toast, centerNotice, showConfirm } from './ui.js';
-import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc } from './storage.js';
+import { nextId, createEntry, updateEntry, deleteEntryDoc, createExpense, deleteExpenseDoc, deleteSelectedBatch } from './storage.js';
 import { isPro, showUpgradeModal, incrementEntryCount } from './billing.js';
 import { customerName, customerById, ADD_NEW_VALUE } from './customers.js';
 
@@ -71,21 +71,73 @@ async function saveManualEntry(btn, d, total, customerId, notes, rate, svc) {
 function toggleEntry(id) {
   const e = state.entries.find(x => x.id === id);
   if (e && !e.invoiced) e.selected = !e.selected;
-  const all = state.entries.filter(e => !e.invoiced);
-  const sel = all.filter(e => e.selected);
-  document.getElementById('s-sel').textContent = sel.length;
+  document.getElementById('s-sel').textContent = state.entries.filter(e => !e.invoiced && e.selected).length;
+  updateSelectionBar();
 }
 
 function matchesFilter(e) {
   return !state.filterCustomers.size || (e.customerId != null && state.filterCustomers.has(e.customerId));
 }
 
-function selectAll() {
-  const u = state.entries.filter(e => !e.invoiced && matchesFilter(e));
-  const all = u.length && u.every(e => e.selected);
-  u.forEach(e => e.selected = !all);
-  state.expenses.filter(e => !e.invoiced && matchesFilter(e)).forEach(e => e.selected = !all);
+// Selection bar (id="selection-bar") only appears once ≥1 row is checked —
+// "Valitse kaikki" lives inside its count-dropdown as a shortcut to grab the
+// rest of the (filtered) list, rather than being the way to start a selection.
+function updateSelectionBar() {
+  const count = state.entries.filter(e => !e.invoiced && e.selected).length
+    + state.expenses.filter(e => !e.invoiced && e.selected).length;
+  const bar = document.getElementById('selection-bar');
+  if (bar) bar.style.display = count ? 'flex' : 'none';
+  document.querySelector('.scroll')?.classList.toggle('has-selection-bar', !!count);
+  const countText = document.getElementById('sel-count-text');
+  if (countText) countText.textContent = count + ' ' + t('selectedLabel');
+}
+
+function selectAllEntries() {
+  state.entries.filter(e => !e.invoiced && matchesFilter(e)).forEach(e => e.selected = true);
+  state.expenses.filter(e => !e.invoiced && matchesFilter(e)).forEach(e => e.selected = true);
   renderEntries();
+}
+
+function clearSelection() {
+  state.entries.forEach(e => { if (!e.invoiced) e.selected = false; });
+  state.expenses.forEach(e => { if (!e.invoiced) e.selected = false; });
+  renderEntries();
+}
+
+// Toiminnot/count dropdowns: only one open at a time, closed on an outside
+// click — same pattern as .user-menu / .info-tip elsewhere in ui.js.
+function toggleSelDropdown(btn, e) {
+  e.stopPropagation();
+  const dd = btn.closest('.sel-dropdown');
+  const wasOpen = dd.classList.contains('open');
+  closeSelDropdowns();
+  if (!wasOpen) dd.classList.add('open');
+}
+
+function closeSelDropdowns() {
+  document.querySelectorAll('.sel-dropdown.open').forEach(el => el.classList.remove('open'));
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.sel-dropdown')) closeSelDropdowns();
+});
+
+function deleteSelected() {
+  const entries = state.entries.filter(e => !e.invoiced && e.selected);
+  const expenses = state.expenses.filter(e => !e.invoiced && e.selected);
+  if (!entries.length && !expenses.length) { toast(t('noSelection')); return; }
+  showConfirm(
+    t('deleteSelected'),
+    t('deleteSelectedConfirm').replace('%d', entries.length + expenses.length),
+    async () => {
+      const entryIds = entries.map(e => e.id);
+      const expenseIds = expenses.map(e => e.id);
+      state.entries = state.entries.filter(e => !entryIds.includes(e.id));
+      state.expenses = state.expenses.filter(e => !expenseIds.includes(e.id));
+      await deleteSelectedBatch(entryIds, expenseIds);
+      renderEntries(); toast(t('selectionRemoved'));
+    }
+  );
 }
 
 // Customer filter is exclusive, not multi-select: picking a customer always
@@ -159,6 +211,7 @@ export function renderEntries() {
   document.getElementById('s-total').textContent = fmtShort(all.reduce((a, e) => a + e.secs, 0));
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0));
   renderFilterPills();
+  updateSelectionBar();
   if (!active.length) {
     const filterLabel = [...state.filterCustomers].map(id => customerName(id) || '—').join(', ');
     list.innerHTML = `<div class="empty">${state.filterCustomers.size ? t('noEntriesFor') + ' ' + esc(filterLabel) : t('noEntries')}<br><br>${!state.filterCustomers.size ? t('loginFirst') : ''}</div>`;
@@ -571,6 +624,7 @@ export async function addExpense() {
 export function toggleExpense(id) {
   const e = state.expenses.find(x => x.id === id);
   if (e && !e.invoiced) e.selected = !e.selected;
+  updateSelectionBar();
 }
 
 async function deleteExpense(id) {
@@ -637,7 +691,11 @@ window.confirm24hProceed = confirm24hProceed;
 
 window.addManual = addManual;
 window.selManualService = selManualService;
-window.selectAll = selectAll;
+window.selectAllEntries = selectAllEntries;
+window.clearSelection = clearSelection;
+window.toggleSelDropdown = toggleSelDropdown;
+window.closeSelDropdowns = closeSelDropdowns;
+window.deleteSelected = deleteSelected;
 window.setFilter = setFilter;
 window.setFilterFromSelect = setFilterFromSelect;
 window.openEditEntry = openEditEntry;

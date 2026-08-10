@@ -410,6 +410,19 @@ function drawBarsHorizontal(W, monthlyNet, monthlyVat, monthlyTotals, axisTop, s
   const pl = Math.ceil(monthLabelWidth) + 12, pr = 8;
   const cW = W - pl - pr;
 
+  // Widen the axis ceiling (beyond the "nice round number" from niceStep)
+  // whenever the peak month's bar would otherwise leave less pixel room
+  // than its own value label needs — without this, the tallest bar's label
+  // has nowhere to sit after the bar and falls back to squeezed-in white
+  // text on top of it.
+  const valueLabelWidth = Math.max(0, ...monthlyTotals.map((v, i) => v > 0 ? ctx.measureText(barValueLabel(v, monthlyVat[i])).width : 0));
+  const gapPx = valueLabelWidth > 0 ? valueLabelWidth + 12 : 0;
+  const maxVal = Math.max(...monthlyTotals, 0);
+  while (gapPx > 0 && cW > gapPx && (1 - maxVal / axisTop) * cW < gapPx) {
+    axisTop += step;
+  }
+  numSteps = axisTop / step;
+
   // Money axis gridlines + labels along the top, reading left-to-right.
   for (let i = 0; i <= numSteps; i++) {
     const val = i * step;

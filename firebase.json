@@ -21,8 +21,7 @@
       ".agents/**",
       "keys",
       "skills-lock.json",
-      "README.md",
-      "tietosuoja/**"
+      "README.md"
     ]
   }
 }

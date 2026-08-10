@@ -25,8 +25,18 @@ function configRef()    { return orgRef().collection('settings').doc('config'); 
 // two devices create an entry/invoice/expense/customer at the same time.
 const COUNTER_FIELD = { entry: 'eId', invoice: 'iId', expense: 'eExpId', customer: 'cId' };
 
+// Guest/demo sessions are a sandbox, not real storage (see loadDemoData()
+// callers in auth.js) — every write function below no-ops under
+// state.isDemo so nothing a guest does ever lands in Firestore. Without
+// this, entries/customers added while poking around got persisted for
+// real against the guest's anonymous org, but since the demo customer
+// list itself is only ever an in-memory fixture (never written), any
+// entry referencing one of those customer IDs came back as a permanently
+// orphaned real doc on the next reload — customer name lookup failing
+// with no customer ever having existed in Firestore to find.
 export async function nextId(kind) {
   const field = COUNTER_FIELD[kind];
+  if (state.isDemo) return ++state[field];
   const value = await db.runTransaction(async tx => {
     const snap = await tx.get(configRef());
     const current = (snap.exists && snap.data()[field]) || 0;
@@ -40,33 +50,52 @@ export async function nextId(kind) {
 
 // ── Entries ──────────────────────────────────────────────────────────────
 export async function createEntry(entry) {
+  if (state.isDemo) return;
   await entriesCol().doc(String(entry.id)).set(entry);
 }
 export async function updateEntry(id, patch) {
+  if (state.isDemo) return;
   await entriesCol().doc(String(id)).set(patch, { merge: true });
 }
 export async function deleteEntryDoc(id) {
+  if (state.isDemo) return;
   await entriesCol().doc(String(id)).delete();
+}
+
+// Bulk delete for the "Poista valitut" action — bundled into one batch
+// (mirrors deleteCustomerBatch/finalizeInvoiceBatch) so a large selection
+// doesn't leave a partial delete behind if one write fails mid-flight.
+export async function deleteSelectedBatch(entryIds, expenseIds) {
+  if (state.isDemo) return;
+  const batch = db.batch();
+  entryIds.forEach(id => batch.delete(entriesCol().doc(String(id))));
+  expenseIds.forEach(id => batch.delete(expensesCol().doc(String(id))));
+  await batch.commit();
 }
 
 // ── Expenses ─────────────────────────────────────────────────────────────
 export async function createExpense(expense) {
+  if (state.isDemo) return;
   await expensesCol().doc(String(expense.id)).set(expense);
 }
 export async function deleteExpenseDoc(id) {
+  if (state.isDemo) return;
   await expensesCol().doc(String(id)).delete();
 }
 
 // ── Customers ────────────────────────────────────────────────────────────
 export async function createCustomer(customer) {
+  if (state.isDemo) return;
   await customersCol().doc(String(customer.id)).set(customer);
 }
 export async function updateCustomer(id, patch) {
+  if (state.isDemo) return;
   await customersCol().doc(String(id)).set(patch, { merge: true });
 }
 
 // ── Invoices ─────────────────────────────────────────────────────────────
 export async function updateInvoiceDoc(id, patch) {
+  if (state.isDemo) return;
   await invoicesCol().doc(String(id)).set(patch, { merge: true });
 }
 
@@ -75,6 +104,7 @@ export async function updateInvoiceDoc(id, patch) {
 // can never leave entries marked invoiced without the invoice existing (or
 // vice versa).
 export async function finalizeInvoiceBatch(invoice, entryIds, expenseIds) {
+  if (state.isDemo) return;
   const batch = db.batch();
   batch.set(invoicesCol().doc(String(invoice.id)), invoice);
   entryIds.forEach(id => batch.set(entriesCol().doc(String(id)), { invoiced: true, selected: false }, { merge: true }));
@@ -85,6 +115,7 @@ export async function finalizeInvoiceBatch(invoice, entryIds, expenseIds) {
 // Deleting a customer also deletes their still-open (not yet invoiced)
 // entries, matching the pre-migration behaviour in customers.js.
 export async function deleteCustomerBatch(customerId, openEntryIds) {
+  if (state.isDemo) return;
   const batch = db.batch();
   batch.delete(customersCol().doc(String(customerId)));
   openEntryIds.forEach(id => batch.delete(entriesCol().doc(String(id))));
@@ -98,7 +129,7 @@ export async function deleteCustomerBatch(customerId, openEntryIds) {
 // eId/iId/eExpId/cId counter fields living on the same document, since
 // those are only ever written via nextId()'s transaction.
 export function saveConfig() {
-  if (!state.orgId) return;
+  if (!state.orgId || state.isDemo) return;
   clearTimeout(state.configSaveTimer);
   state.configSaveTimer = setTimeout(async () => {
     try { await configRef().set(state.cfg, { merge: true }); }

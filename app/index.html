@@ -351,10 +351,24 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;" id="filter-pills"></div>
     </div>
     <div class="action-bar">
-      <button class="btn-outline" onclick="selectAll()" data-i18n="selectAll">Valitse kaikki</button>
+      <button class="btn-outline" onclick="selectAllEntries()" data-i18n="selectAll">Valitse kaikki</button>
       <button class="btn-invoice" id="build-invoice-btn" onclick="startInvoice()" data-i18n="buildInvoice">Kokoa lasku ↗</button>
     </div>
     <div id="entries-list"></div>
+    <div class="selection-bar" id="selection-bar" style="display:none;">
+      <span class="sel-count-label" id="sel-count-text">0 <span data-i18n="selectedLabel">valittu</span></span>
+      <div class="sel-dropdown" id="sel-actions-dropdown">
+        <button class="sel-dropdown-trigger" onclick="toggleSelDropdown(this,event)">
+          <span data-i18n="actionsBtn">Toiminnot</span>
+          <svg class="sel-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="sel-dropdown-menu sel-dropdown-menu-right">
+          <button onclick="closeSelDropdowns();clearSelection()" data-i18n="clearSelection">Kumoa valinnat</button>
+          <button class="danger" onclick="closeSelDropdowns();deleteSelected()" data-i18n="deleteSelected">Poista valinnat</button>
+          <button onclick="closeSelDropdowns();startInvoice()" data-i18n="buildInvoice">Kokoa lasku ↗</button>
+        </div>
+      </div>
+    </div>
     <div id="kirjanpito-expenses"></div>
   </div>
 
