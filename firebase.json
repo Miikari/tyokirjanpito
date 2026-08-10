@@ -9,19 +9,30 @@
       "runtime": "nodejs22"
     }
   ],
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "firestore.rules",
-      "**/.*",
-      "functions/**",
-      "node_modules/**",
-      ".claude/**",
-      ".agents/**",
-      "keys",
-      "skills-lock.json",
-      "README.md"
-    ]
-  }
+  "hosting": [
+    {
+      "target": "main",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "firestore.rules",
+        "**/.*",
+        "functions/**",
+        "node_modules/**",
+        ".claude/**",
+        ".agents/**",
+        "keys",
+        "skills-lock.json",
+        "README.md",
+        "legacy-redirect/**"
+      ]
+    },
+    {
+      "target": "legacy",
+      "public": "legacy-redirect",
+      "redirects": [
+        { "source": "/:path*", "destination": "https://hoyla.fi/:path*", "type": 301 }
+      ]
+    }
+  ]
 }

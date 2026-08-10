@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "tyoaikakirjanpito"
+  },
+  "targets": {
+    "tyoaikakirjanpito": {
+      "hosting": {
+        "main": [
+          "hoyla"
+        ],
+        "legacy": [
+          "tyoaikakirjanpito"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
