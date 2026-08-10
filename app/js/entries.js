@@ -206,7 +206,8 @@ export function renderEntries() {
   const active = state.entries.filter(e => !e.invoiced && matchesFilter(e));
   const all = state.entries.filter(e => !e.invoiced);
   const sel = all.filter(e => e.selected);
-  document.getElementById('s-count').textContent = active.length;
+  const activeExpenses = state.expenses.filter(e => !e.invoiced && matchesFilter(e));
+  document.getElementById('s-count').textContent = active.length + activeExpenses.length;
   document.getElementById('s-sel').textContent = sel.length;
   document.getElementById('s-total').textContent = fmtShort(all.reduce((a, e) => a + e.secs, 0));
   document.getElementById('s-val').textContent = fmtEur(all.reduce((a, e) => a + (e.secs / 3600) * (e.rate ?? state.cfg.hourly), 0));
