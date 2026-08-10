@@ -6,6 +6,7 @@ const i18n = {
     appName: 'Työtunnit', latausVirhe: 'Latausvirhe', tallennusVirhe: 'Tallennusvirhe',
     // Navigaatio
     kello: 'Työnäkymä', kirjanpito: 'Kirjaukset', arkisto: 'Laskut', raportointi: 'Raportit', asetukset: 'Asetukset',
+    workTimerTitle: 'Työaika',
     logTab: 'Kirjaa', pressBackAgainExit: 'Paina back vielä kerran poistuaksesi',
     // Kello
     clockIn: 'Aloita työ', clockOut: 'Lopeta työ', pause: '⏸ Tauko', resume: '▶ Jatka',
@@ -15,7 +16,7 @@ const i18n = {
     clockedIn: 'Kirjauduttu sisään', cannotSwitch: 'Vaihda asiakas ensin kirjautumalla ulos',
     kmDriven: 'ajetut kilometrit',
     // Kirjaukset (manuaalinen)
-    manualEntry: 'Manuaalinen kirjaus', date: 'Päivämäärä', customer: 'Asiakas',
+    manualEntry: 'Työaikakirjaus', date: 'Päivämäärä', customer: 'Asiakas',
     hours: 'Tunnit', minutes: 'Minuutit', notes: 'Merkintöjä', addEntry: '+ Lisää kirjaus',
     mNotesPlaceholder: 'Lisätietoja...',
     entryUpdated: 'Kirjaus päivitetty', entryRemoved: 'Kirjaus poistettu',
@@ -50,6 +51,7 @@ const i18n = {
     confirmMultiDayKm: 'Lisätään {count} kulukirjausta, yhteensä {total}. Jatketaanko?',
     confirmPerdiem: 'Lisätään {full} kokopäivärahaa ja {half} osapäivärahaa, yhteensä {total}. Jatketaanko?',
     // Kirjanpito-paneeli
+    overview: 'Yleiskatsaus', allInvoices: 'Kaikki laskut', customerManagement: 'Asiakkuuksien hallinta',
     entries: 'Kirjauksia', selected: 'Valittuna', total: 'Tunnit', value: 'Laskutukseen tuleva summa',
     selectAll: 'Valitse kaikki', buildInvoice: 'Kokoa lasku ↗',
     noEntries: 'Ei kirjauksia vielä.', loginFirst: 'Kirjaudu sisään tai lisää manuaalisesti.',
@@ -123,6 +125,7 @@ const i18n = {
     bankAccountRequiredForToggle: 'Lisää ensin tilinumero yritystietoihin',
     // Palvelut
     services: 'Palvelut', service: 'Palvelu', addService: '+',
+    addServiceOption: '+ Lisää palvelu', addServiceTitle: 'Lisää palvelu',
     serviceNamePlaceholder: 'esim. Editointi', noServices: 'Ei palveluita.',
     serviceAdded: 'Palvelu lisätty', serviceRemoved: 'Palvelu poistettu',
     fillServiceName: 'Anna palvelulle nimi ja hinta', minOneService: 'Vähintään yksi palvelu vaaditaan',
@@ -238,6 +241,7 @@ const i18n = {
     appName: 'Work Hours', latausVirhe: 'Loading error', tallennusVirhe: 'Save error',
     // Navigation
     kello: 'Work', kirjanpito: 'Entries', arkisto: 'Invoices', raportointi: 'Reports', asetukset: 'Settings',
+    workTimerTitle: 'Work time',
     logTab: 'Log', pressBackAgainExit: 'Press back again to exit',
     // Clock
     clockIn: 'Clock in', clockOut: 'Clock out', pause: '⏸ Pause', resume: '▶ Resume',
@@ -282,6 +286,7 @@ const i18n = {
     confirmMultiDayKm: 'Adding {count} expense entries, {total} total. Continue?',
     confirmPerdiem: 'Adding {full} full-day and {half} half-day allowances, {total} total. Continue?',
     // Entries panel
+    overview: 'Overview', allInvoices: 'All invoices', customerManagement: 'Customer management',
     entries: 'Entries', selected: 'Selected', total: 'Hours', value: 'Amount to invoice',
     selectAll: 'Select all', buildInvoice: 'Build invoice ↗',
     noEntries: 'No entries yet.', loginFirst: 'Clock in or add manually.',
@@ -355,6 +360,7 @@ const i18n = {
     bankAccountRequiredForToggle: 'Add a bank account to your company info first',
     // Services
     services: 'Services', service: 'Service', addService: '+',
+    addServiceOption: '+ Add service', addServiceTitle: 'Add service',
     serviceNamePlaceholder: 'e.g. Editing', noServices: 'No services.',
     serviceAdded: 'Service added', serviceRemoved: 'Service removed',
     fillServiceName: 'Enter a name and rate for the service', minOneService: 'At least one service is required',

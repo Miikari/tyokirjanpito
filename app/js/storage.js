@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import { fmtDate, todayLocalStr } from './utils.js';
 import { toast, updateClockBg } from './ui.js';
-import { initClockRate, renderMainBtns, renderPills, setBadge, setTimerText, syncSelectLabel, tick } from './clock.js';
+import { initClockRate, renderMainBtns, renderPills, setBadge, setTimerText, syncSelectLabel, startTicking, stopTicking } from './clock.js';
 import { renderAllSelects, renderCustChips } from './customers.js';
 import { renderEntries } from './entries.js';
 import { renderServiceSelects } from './settings.js';
@@ -161,7 +161,7 @@ export async function loadFromFirestore() {
       document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';
       state.elapsedMs = 0;
       state.clockState = 'running';
-      state.timerRaf = requestAnimationFrame(tick);
+      startTicking();
       const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
       document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
       setBadge('running', '● Töissä'); renderMainBtns(); renderPills();
@@ -195,16 +195,16 @@ export function listenActiveState() {
         document.getElementById('clock-rate-val').textContent = savedRate.toFixed(2).replace('.', ',') + ' €/h';
         state.elapsedMs = 0;
         if (state.clockState !== 'running') {
-          cancelAnimationFrame(state.timerRaf);
+          stopTicking();
           state.clockState = 'running';
-          state.timerRaf = requestAnimationFrame(tick);
+          startTicking();
         }
         const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
         document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
         setBadge('running', '● Töissä'); renderMainBtns(); renderPills();
         updateClockBg();
       } else if (state.clockState !== 'idle') {
-        cancelAnimationFrame(state.timerRaf);
+        stopTicking();
         state.clockState = 'idle'; state.elapsedMs = 0; state.startTime = null;
         state.clockInDate = null; state.activeCustomerId = null;
         setTimerText('00:00:00');

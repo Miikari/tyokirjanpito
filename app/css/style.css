@@ -126,6 +126,10 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+.clock-title {
+  font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.85); margin-bottom: 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
 .timer {
   font-size: 62px; font-weight: 200; letter-spacing: 3px;
   font-variant-numeric: tabular-nums; color: #fff; line-height: 1;
@@ -201,8 +205,12 @@ body {
   box-shadow: var(--shadow);
 }
 .card-label {
-  font-size: 11px; font-weight: 600; color: var(--text);
+  font-size: 15px; font-weight: 600; color: var(--text);
   text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px;
+}
+.page-title {
+  font-size: 20px; font-weight: 700; color: var(--text);
+  letter-spacing: -0.2px; margin-bottom: 14px;
 }
 
 /* ── FORM ── */
@@ -471,7 +479,7 @@ body {
 @media (min-width: 1200px) {
   .header h1 { font-size: 26px; }
   .tab { font-size: 15px; }
-  .card-label { font-size: 13px; }
+  .card-label { font-size: 15px; }
   .sum-label { font-size: 13px; }
   .sum-val { font-size: 26px; }
   .entry-meta { font-size: 14px; }

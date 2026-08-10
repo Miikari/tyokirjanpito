@@ -1,4 +1,4 @@
-import { state, ANIM_GIF } from './state.js';
+import { state } from './state.js';
 import { t } from './i18n.js';
 import { renderMainBtns, renderPills } from './clock.js';
 import { renderEntries } from './entries.js';
@@ -255,10 +255,7 @@ export function updateClockBg() {
   const stillEl = document.getElementById('clock-bg-still');
   const animEl = document.getElementById('clock-bg-anim');
   if (!stillEl || !animEl) return;
-  const running = state.clockState === 'running' || state.clockState === 'paused';
-  if (running) {
-    animEl.style.backgroundImage = `url('${ANIM_GIF}?t=${Date.now()}')`;
-  }
+  const running = state.clockState === 'running';
   animEl.classList.toggle('clock-bg-visible', running);
   stillEl.classList.toggle('clock-bg-visible', !running);
 }

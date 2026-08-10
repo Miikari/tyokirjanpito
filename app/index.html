@@ -167,6 +167,7 @@
         <div id="clock-bg-still" class="clock-bg-layer clock-bg-visible"></div>
         <div id="clock-bg-anim" class="clock-bg-layer"></div>
       </div>
+      <div class="clock-title" data-i18n="workTimerTitle">Työaika</div>
       <div class="timer" id="timer"><span id="timer-h">00</span><span class="timer-colon">:</span><span id="timer-m">00</span><span class="timer-colon">:</span><span id="timer-s">00</span></div>
       <div class="timer-sub" id="timer-sub">—</div>
       <span class="clock-badge cb-idle" id="clock-badge" data-i18n="idle">Ei käynnissä</span>
@@ -175,7 +176,7 @@
         <span class="clock-cust-label" id="cust-select-label"></span>
       </div>
       <div class="clock-cust-wrap" style="margin-top:8px;">
-        <select class="clock-cust-select" id="service-select" onchange="selService(this.value)"></select>
+        <select class="clock-cust-select" id="service-select" onchange="if(!handleServiceSelectChange(this))selService(this.value)"></select>
         <span class="clock-cust-label" id="service-select-label"></span>
       </div>
       <div id="clock-rate-row" style="margin:2px 0 6px;display:flex;align-items:center;justify-content:center;gap:10px;">
@@ -197,7 +198,7 @@
       <div class="btn-row" id="main-btns">
         <button class="btn btn-signin" onclick="clockIn()" data-i18n="clockIn">Aloita työ</button>
       </div>
-      <div style="margin-top:16px;">
+      <div id="notes-toggle-wrap" style="margin-top:16px;">
         <button onclick="toggleNotes()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;margin:0 auto;"><span id="notes-toggle-icon" style="font-size:18px;line-height:1;">+</span><span data-i18n="addNotes">Lisää merkintöjä</span></button>
         <div id="notes-box" style="display:none;margin-top:10px;">
           <textarea id="clock-notes" placeholder="Merkintöjä tähän kirjaukseen..." style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(136, 136, 136, 0.713);color:#fff;font-size:14px;resize:none;height:72px;outline:none;margin-bottom:8px;"></textarea>
@@ -338,6 +339,7 @@
 
   <!-- ── KIRJANPITO ── -->
   <div class="panel" id="panel-kirjanpito">
+    <div class="page-title" data-i18n="overview">Yleiskatsaus</div>
     <div class="sum-grid">
       <div class="sum-card"><div class="sum-label" data-i18n="entries">Kirjauksia</div><div class="sum-val" id="s-count">0</div></div>
       <div class="sum-card"><div class="sum-label" data-i18n="selected">Valittuna</div><div class="sum-val" id="s-sel">0</div></div>
@@ -345,7 +347,7 @@
       <div class="sum-card"><div class="sum-label" data-i18n="value">Laskutukseen tuleva summa</div><div class="sum-val" id="s-val">0€</div></div>
     </div>
     <div id="filter-pills-wrap" style="display:none;margin-bottom:12px;">
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" data-i18n="filterByCustomer">Valitse asiakkaan mukaan</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;" data-i18n="filterByCustomer">Valitse asiakkaan mukaan</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;" id="filter-pills"></div>
     </div>
     <div class="action-bar">
@@ -358,6 +360,7 @@
 
   <!-- ── ARKISTO ── -->
   <div class="panel" id="panel-arkisto">
+    <div class="page-title" data-i18n="allInvoices">Kaikki laskut</div>
     <div class="card" style="margin-bottom:14px;">
       <div class="fg">
         <label data-i18n="archSearchLabel">Haku</label>
@@ -381,6 +384,7 @@
 
   <!-- ── ASIAKKAAT ── -->
   <div class="panel" id="panel-asiakkaat">
+    <div class="page-title" data-i18n="customerManagement">Asiakkuuksien hallinta</div>
     <div class="settings-grid">
       <div class="card">
         <div class="card-label" data-i18n="customersLabel">Asiakkaat</div>
@@ -401,6 +405,7 @@
 
   <!-- ── ASETUKSET ── -->
   <div class="panel" id="panel-asetukset">
+  <div class="page-title" data-i18n="asetukset">Asetukset</div>
   <div class="settings-grid" style="margin-bottom:14px;">
     <div class="card">
       <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;" id="label-language" data-i18n="language">Kieli</div>
@@ -736,6 +741,17 @@
   </div>
 </div>
 
+<div class="modal-wrap" id="modal-service">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close-x" onclick="closeAddServiceModal()" aria-label="Sulje">&times;</button>
+    <h2 data-i18n="addServiceTitle">Lisää palvelu</h2>
+    <div class="fg"><label data-i18n="service">Palvelu</label><input type="text" id="add-svc-name" placeholder="esim. Editointi" autocomplete="off"></div>
+    <div class="fg"><label data-i18n="hourlyRate">Tuntihinta</label><input type="number" id="add-svc-rate" min="0" step="0.5" placeholder="€/h" autocomplete="off"></div>
+    <button class="modal-opt primary" id="add-svc-save-btn" onclick="saveAddServiceModal()" data-i18n="save">Tallenna</button>
+    <button class="modal-opt modal-cancel" onclick="closeAddServiceModal()" data-i18n="cancel">Peruuta</button>
+  </div>
+</div>
+
 <!-- ── HELP MODAL ── -->
 <div class="modal-wrap" id="modal-help">
   <div class="modal" style="position:relative;">
@@ -743,16 +759,16 @@
     <h2 data-i18n="helpTitle">Ohjeet</h2>
     <div style="font-size:14px;color:var(--text);line-height:1.6;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep1Title">1. Kirjaa tunnit</div>
-        <div data-i18n="helpStep1Text">Kellota työt reaaliajassa Työnäkymässä, tai lisää tunnit jälkikäteen Kirjaukset-välilehdellä.</div>
+        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep3Title">1. Lisää asiakkaat</div>
+        <div data-i18n="helpStep3Text">Syötä asiakkaan tiedot (osoite, ALV, maksuehto) kerran Asiakkaat-välilehdellä — ne tallentuvat automaattisesti joka laskulle.</div>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep2Title">2. Lisää kulut ja kilometrit</div>
-        <div data-i18n="helpStep2Text">Kulukorvaukset ja ajetut kilometrit kirjataan samaan paikkaan kuin tunnit, ja ne tulevat automaattisesti mukaan seuraavaan laskuun.</div>
+        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep2Title">2. Kirjaa tunnit</div>
+        <div data-i18n="helpStep1Text">Kellota työt reaaliajassa Työnäkymässä, tai lisää tunnit jälkikäteen kellokortin alapuolella.</div>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep3Title">3. Lisää asiakkaat</div>
-        <div data-i18n="helpStep3Text">Syötä asiakkaan tiedot (osoite, ALV, maksuehto) kerran Asiakkaat-välilehdellä — ne toistuvat automaattisesti joka laskulla.</div>
+        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep1Title">3. Lisää kulut ja kilometrit</div>
+        <div data-i18n="helpStep2Text">Kulukorvaukset(päiväraha, kilometrit sekä muut yleiset kulut) samaan paikkaan kuin tunnit, ja ne tulevat halutessasi automaattisesti mukaan seuraavaan laskuun.</div>
       </div>
       <div style="margin-bottom:16px;">
         <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep4Title">4. Kokoa lasku</div>
@@ -761,6 +777,10 @@
       <div>
         <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep5Title">5. Lähetä lasku</div>
         <div data-i18n="helpStep5Text">Valmiin laskun voi tulostaa tai tallentaa PDF:nä, tai lähettää suoraan asiakkaan sähköpostiin yhdellä klikkauksella Laskut-välilehdeltä.</div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px;" data-i18n="helpStep5Title">6. Raportointi</div>
+        <div data-i18n="helpStep5Text">Raportointi sinua ja kirjanpitäjääsi varten löytyy Työnäkymä -> Raportointi napista heti Työnäkymä-välilehden yläosasta.</div>
       </div>
     </div>
     <button class="modal-opt modal-cancel" onclick="closeHelpModal()" style="margin-top:20px;" data-i18n="close">Sulje</button>

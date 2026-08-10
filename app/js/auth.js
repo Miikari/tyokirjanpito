@@ -229,7 +229,18 @@ auth.onAuthStateChanged(async user => {
       applyLang();
       listenActiveState();
       listenOrgState();
-      if (user.isAnonymous && state.entries.length === 0 && state.invoices.length === 0) {
+      // Guest sessions are a sandbox, not real storage: every time an
+      // anonymous auth resolves, reset straight back to the canonical demo
+      // baseline rather than whatever got left over in Firestore from a
+      // previous visit. The old version only reloaded demo data when
+      // entries/invoices were both empty, which meant a guest who'd added a
+      // real customer (but no entries yet) or deleted their test entries
+      // ended up in a half-real, half-stale state on the next reload —
+      // customers silently replaced by the demo set while clock-in state
+      // pointed at IDs that no longer matched anything, blocking new
+      // entries. Always resetting makes the guest experience deterministic:
+      // it's the demo, every time, full stop.
+      if (user.isAnonymous) {
         // demo.js is never imported anywhere else, so this await is a real
         // network fetch — if the user signs out and into a different
         // (real) account while it's in flight, applying demo data here

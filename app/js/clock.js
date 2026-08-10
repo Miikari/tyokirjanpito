@@ -6,6 +6,11 @@ import { addEntry } from './entries.js';
 import { saveConfig } from './storage.js';
 import { customerName, ADD_NEW_VALUE } from './customers.js';
 
+// Sentinel option value for "+ Lisää palvelu" in #service-select — same
+// inline-add pattern as ADD_NEW_VALUE for customers, resolved in
+// handleServiceSelectChange()/saveAddServiceModal().
+const ADD_NEW_SERVICE_VALUE = '__add_new_service__';
+
 export function setTimerText(str) {
   const [h, m, s] = str.split(':');
   document.getElementById('timer-h').textContent = h;
@@ -16,7 +21,20 @@ export function setTimerText(str) {
 export function tick() {
   const total = Math.floor((state.elapsedMs + (Date.now() - state.startTime)) / 1000);
   setTimerText(fmtDur(total));
-  state.timerRaf = requestAnimationFrame(tick);
+}
+
+// Fires an immediate update (so the display doesn't sit stale for up to a
+// second after starting/resuming) plus a once-a-second interval — replaces
+// the old requestAnimationFrame loop, which redrew every frame (up to 60/s)
+// and was a measurable source of input lag on lower-end phones while the
+// clock was running.
+export function startTicking() {
+  tick();
+  state.timerInterval = setInterval(tick, 1000);
+}
+
+export function stopTicking() {
+  clearInterval(state.timerInterval);
 }
 
 function getActiveService() {
@@ -39,8 +57,49 @@ export function renderServiceOptions() {
   if (!services.some(s => s.id === state.activeServiceId)) {
     state.activeServiceId = services[0]?.id ?? null;
   }
-  el.innerHTML = services.map(s => `<option value="${s.id}"${s.id === state.activeServiceId ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  el.innerHTML = [
+    ...services.map(s => `<option value="${s.id}"${s.id === state.activeServiceId ? ' selected' : ''}>${esc(s.name)}</option>`),
+    `<option value="${ADD_NEW_SERVICE_VALUE}">${t('addServiceOption')}</option>`,
+  ].join('');
+  el.dataset.prevValue = state.activeServiceId ?? '';
   syncSelectLabel('service-select', 'service-select-label');
+}
+
+// Returns true if the change was an "add new service" pick (and was
+// intercepted); callers should skip their normal onchange handling in that
+// case. Reverts the select back to its previous value first, since the new
+// service isn't selectable yet — saveAddServiceModal() re-applies it once saved.
+function handleServiceSelectChange(selectEl) {
+  if (selectEl.value === ADD_NEW_SERVICE_VALUE) {
+    selectEl.value = selectEl.dataset.prevValue || '';
+    openAddServiceModal();
+    return true;
+  }
+  selectEl.dataset.prevValue = selectEl.value;
+  return false;
+}
+
+function openAddServiceModal() {
+  document.getElementById('add-svc-name').value = '';
+  document.getElementById('add-svc-rate').value = '';
+  document.getElementById('modal-service').classList.add('open');
+}
+
+function closeAddServiceModal() {
+  document.getElementById('modal-service').classList.remove('open');
+}
+
+function saveAddServiceModal() {
+  const name = document.getElementById('add-svc-name').value.trim();
+  const rate = parseFloat(document.getElementById('add-svc-rate').value);
+  if (!name || isNaN(rate) || rate < 0) { toast(t('fillServiceName')); return; }
+  const service = { id: Date.now(), name, rate };
+  state.cfg.services.push(service);
+  state.activeServiceId = service.id;
+  saveConfig();
+  closeAddServiceModal();
+  initClockRate();
+  toast(t('serviceAdded'));
 }
 
 const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
@@ -100,6 +159,15 @@ function confirmClockRateEdit() {
   if (!isNaN(val) && val >= 0) {
     document.getElementById('clock-rate-val').textContent = val.toFixed(2).replace('.', ',') + ' €/h';
     document.getElementById('clock-rate-input').value = val;
+    // Persists as the service's new default rate going forward, not just a
+    // one-off override for the entry this clock-in produces — mirrors
+    // updateServiceRate() in settings.js.
+    const svc = getActiveService();
+    if (svc.id != null) {
+      svc.rate = val;
+      if (state.cfg.services[0]?.id === svc.id) state.cfg.hourly = val;
+      saveConfig();
+    }
   }
   document.getElementById('clock-rate-confirm-btn').classList.remove('rate-changed');
   document.getElementById('clock-rate-display').style.display = 'flex';
@@ -116,7 +184,7 @@ function clockIn() {
       startTime: state.startTime, clockInDate: state.clockInDate.toISOString(), customerId: state.activeCustomerId, rate: clockRate, service: clockService
     });
   }
-  state.timerRaf = requestAnimationFrame(tick);
+  startTicking();
   const th = state.clockInDate.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
   document.getElementById('timer-sub').textContent = fmtDate(state.clockInDate) + ' — aloitettu ' + th;
   setBadge('running', t('working')); renderMainBtns(); renderPills();
@@ -127,12 +195,12 @@ function clockIn() {
 function togglePause() {
   if (state.clockState === 'running') {
     state.clockState = 'paused'; state.elapsedMs += Date.now() - state.startTime;
-    cancelAnimationFrame(state.timerRaf);
+    stopTicking();
     setBadge('paused', t('onBreak')); renderMainBtns(); toast(t('taukoAlkaa'));
     updateClockBg();
   } else {
     state.clockState = 'running'; state.startTime = Date.now();
-    state.timerRaf = requestAnimationFrame(tick);
+    startTicking();
     setBadge('running', t('working')); renderMainBtns(); toast(t('jatko'));
     updateClockBg();
   }
@@ -140,7 +208,7 @@ function togglePause() {
 
 async function clockOut() {
   if (state.clockState === 'running') state.elapsedMs += Date.now() - state.startTime;
-  cancelAnimationFrame(state.timerRaf);
+  stopTicking();
   const rawSecs = Math.floor(state.elapsedMs / 1000);
   if (rawSecs < 1) { toast(t('noTime')); return; }
   const secs = roundDuration(rawSecs, state.cfg);
@@ -154,7 +222,7 @@ async function clockOut() {
     // timer exactly as it was so the user can upgrade and try again.
     if (wasRunning) {
       state.startTime = Date.now();
-      state.timerRaf = requestAnimationFrame(tick);
+      startTicking();
     }
     return;
   }
@@ -185,6 +253,12 @@ export function setBadge(type, txt) {
 
 export function renderMainBtns() {
   const r = document.getElementById('main-btns');
+  // Notes/km only ever attach to the entry the running clock-in will
+  // produce, so the toggle stays hidden while idle — visibility (not
+  // display) so the clock card's layout height doesn't jump when it
+  // appears/disappears.
+  const notesWrap = document.getElementById('notes-toggle-wrap');
+  if (notesWrap) notesWrap.style.visibility = state.clockState === 'idle' ? 'hidden' : 'visible';
   if (state.clockState === 'idle') {
     r.innerHTML = `<button class="btn btn-signin" onclick="clockIn()">${t('clockIn')}</button>`;
   } else {
@@ -229,3 +303,6 @@ window.toggleHideRate = toggleHideRate;
 window.enableClockRateEdit = enableClockRateEdit;
 window.markClockRateChanged = markClockRateChanged;
 window.confirmClockRateEdit = confirmClockRateEdit;
+window.handleServiceSelectChange = handleServiceSelectChange;
+window.closeAddServiceModal = closeAddServiceModal;
+window.saveAddServiceModal = saveAddServiceModal;

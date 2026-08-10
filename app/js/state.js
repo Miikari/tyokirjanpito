@@ -28,7 +28,7 @@ export function defaultCfg() {
 
 export const state = {
   uid: null, orgId: null, accountName: '', accountPhotoURL: '',
-  timerRaf: null, startTime: null, elapsedMs: 0,
+  timerInterval: null, startTime: null, elapsedMs: 0,
   clockState: 'idle', clockInDate: null, activeCustomerId: null, activeServiceId: null,
   entries: [], invoices: [], expenses: [], customers: [], eId: 0, iId: 0, eExpId: 0, cId: 0,
   cfg: defaultCfg(),
@@ -43,4 +43,3 @@ export const state = {
   orgOwnerId: null, orgScheduledDeletionAt: null,
 };
 export const STILL_IMG = 'images/background2.jpg';
-export const ANIM_GIF  = 'images/background3.gif';
