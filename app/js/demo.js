@@ -116,70 +116,70 @@ function loadDemoDataFi() {
   // ── Laskutetut kirjaukset — kummallakin asiakkaalla oma lasku joka kuukausi ──
 
   const inv1Entries = [
-    { id: 1, date: d(monthsAgoDay(7, 8)),  secs: 43200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Projektisuunnittelu ja kickoff', rate: 50, selected: false, invoiced: true },
-    { id: 2, date: d(monthsAgoDay(7, 20)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Arkkitehtuurisuunnittelu',       rate: 50, selected: false, invoiced: true },
+    { id: 1, date: d(monthsAgoDay(7, 8)),  secs: 43200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Projektisuunnittelu ja kickoff', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 2, date: d(monthsAgoDay(7, 20)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Arkkitehtuurisuunnittelu',       rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
   const inv1bEntries = [
-    { id: 21, date: d(monthsAgoDay(7, 6)),  secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Tarvekartoitus',              rate: 50, selected: false, invoiced: true },
-    { id: 22, date: d(monthsAgoDay(7, 22)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Suunnitelman viimeistely',    rate: 50, selected: false, invoiced: true },
+    { id: 21, date: d(monthsAgoDay(7, 6)),  secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Tarvekartoitus',              rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 22, date: d(monthsAgoDay(7, 22)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Suunnitelman viimeistely',    rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
 
   const inv2Entries = [
-    { id: 3, date: d(monthsAgoDay(6, 5)),  secs: 36000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Vaatimusmäärittely',  rate: 50, selected: false, invoiced: true },
-    { id: 4, date: d(monthsAgoDay(6, 18)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Prototyypin toteutus', rate: 50, selected: false, invoiced: true },
+    { id: 3, date: d(monthsAgoDay(6, 5)),  secs: 36000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Vaatimusmäärittely',  rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 4, date: d(monthsAgoDay(6, 18)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Prototyypin toteutus', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
   const inv2bEntries = [
-    { id: 23, date: d(monthsAgoDay(6, 9)),  secs: 25200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Infra-pystytys',              rate: 50, selected: false, invoiced: true },
-    { id: 24, date: d(monthsAgoDay(6, 21)), secs: 32400, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'CI/CD-putken rakentaminen',   rate: 50, selected: false, invoiced: true },
+    { id: 23, date: d(monthsAgoDay(6, 9)),  secs: 25200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Infra-pystytys',              rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 24, date: d(monthsAgoDay(6, 21)), secs: 32400, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'CI/CD-putken rakentaminen',   rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
 
   const inv3Entries = [
-    { id: 5, date: d(monthsAgoDay(5, 10)), secs: 43200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Backend-kehitys, sprint 1', rate: 50, selected: false, invoiced: true },
-    { id: 6, date: d(monthsAgoDay(5, 24)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'API-integraatiot',          rate: 50, selected: false, invoiced: true },
+    { id: 5, date: d(monthsAgoDay(5, 10)), secs: 43200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Backend-kehitys, sprint 1', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 6, date: d(monthsAgoDay(5, 24)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'API-integraatiot',          rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
   const inv3bEntries = [
-    { id: 25, date: d(monthsAgoDay(5, 12)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Tietokantasuunnittelu', rate: 50, selected: false, invoiced: true },
-    { id: 26, date: d(monthsAgoDay(5, 26)), secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Käyttäjätestaus',        rate: 50, selected: false, invoiced: true },
+    { id: 25, date: d(monthsAgoDay(5, 12)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Tietokantasuunnittelu', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 26, date: d(monthsAgoDay(5, 26)), secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Käyttäjätestaus',        rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
 
   const inv4Entries = [
-    { id: 7,  date: d(monthsAgoDay(4, 7)),  secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Käyttöliittymäsuunnittelu', rate: 50, selected: false, invoiced: true },
-    { id: 8,  date: d(monthsAgoDay(4, 15)), secs: 36000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Frontend-kehitys',          rate: 50, selected: false, invoiced: true },
-    { id: 9,  date: d(monthsAgoDay(4, 28)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Testaus ja korjaukset',     rate: 50, selected: false, invoiced: true },
+    { id: 7,  date: d(monthsAgoDay(4, 7)),  secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Käyttöliittymäsuunnittelu', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 8,  date: d(monthsAgoDay(4, 15)), secs: 36000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Frontend-kehitys',          rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 9,  date: d(monthsAgoDay(4, 28)), secs: 21600, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Testaus ja korjaukset',     rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
   const inv4bEntries = [
-    { id: 27, date: d(monthsAgoDay(4, 6)),  secs: 36000, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Pilvipalvelun migraatio', rate: 50, selected: false, invoiced: true },
-    { id: 28, date: d(monthsAgoDay(4, 23)), secs: 21600, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Kuormatestaus',           rate: 50, selected: false, invoiced: true },
+    { id: 27, date: d(monthsAgoDay(4, 6)),  secs: 36000, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Pilvipalvelun migraatio', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 28, date: d(monthsAgoDay(4, 23)), secs: 21600, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Kuormatestaus',           rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
 
   const inv5Entries = [
-    { id: 10, date: d(monthsAgoDay(3, 6)),  secs: 57600, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Backend-kehitys, sprint 2', rate: 50, selected: false, invoiced: true },
-    { id: 11, date: d(monthsAgoDay(3, 19)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Suorituskykytestaus',        rate: 50, selected: false, invoiced: true },
+    { id: 10, date: d(monthsAgoDay(3, 6)),  secs: 57600, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Backend-kehitys, sprint 2', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 11, date: d(monthsAgoDay(3, 19)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Suorituskykytestaus',        rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
   const inv5bEntries = [
-    { id: 29, date: d(monthsAgoDay(3, 9)),  secs: 25200, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Julkaisun valmistelu',       rate: 50, selected: false, invoiced: true },
-    { id: 30, date: d(monthsAgoDay(3, 26)), secs: 18000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Dokumentaation päivitys',    rate: 50, selected: false, invoiced: true },
+    { id: 29, date: d(monthsAgoDay(3, 9)),  secs: 25200, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Julkaisun valmistelu',       rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 30, date: d(monthsAgoDay(3, 26)), secs: 18000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Dokumentaation päivitys',    rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
 
   // Viimeisin lasku — toissa kuukauden viimeinen päivä, aina erääntynyt/maksamatta
   // (maksuehto 14pv → eräpäivä osuu viime kuun 14. päivälle)
   const inv6Entries = [
-    { id: 12, date: d(monthsAgoDay(2, 20)), secs: 36000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Käyttöliittymäkehitys, viimeistely', rate: 50, selected: false, invoiced: true },
-    { id: 13, date: d(monthsAgoDay(2, 28)), secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Testaus ja julkaisu',                rate: 50, selected: false, invoiced: true },
+    { id: 12, date: d(monthsAgoDay(2, 20)), secs: 36000, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Käyttöliittymäkehitys, viimeistely', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 13, date: d(monthsAgoDay(2, 28)), secs: 28800, customer: 'Esimerkki Oy', customerId: 1, src: 'manuaalinen', notes: 'Testaus ja julkaisu',                rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
   const inv6bEntries = [
-    { id: 31, date: d(monthsAgoDay(2, 10)), secs: 21600, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Ylläpitosopimuksen uusinta', rate: 50, selected: false, invoiced: true },
-    { id: 32, date: d(monthsAgoDay(2, 24)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Integraatiotuki',            rate: 50, selected: false, invoiced: true },
+    { id: 31, date: d(monthsAgoDay(2, 10)), secs: 21600, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Ylläpitosopimuksen uusinta', rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
+    { id: 32, date: d(monthsAgoDay(2, 24)), secs: 28800, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Integraatiotuki',            rate: 50, service: 'Tuntityö', selected: false, invoiced: true },
   ];
 
   // Avoimet kirjaukset — suhteessa tähän päivään, enintään 20 päivää taaksepäin
   const openEntries = [
-    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Jälkiseuranta ja tuki',       rate: 50, selected: false, invoiced: false },
+    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Jälkiseuranta ja tuki',       rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
     { id: 17, date: daysAgo(15), secs: 18000, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Arkkitehtuurikatselmus',       rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
-    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Sopimusneuvottelu',            rate: 50, selected: false, invoiced: false },
-    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Uuden ominaisuuden toteutus',  rate: 50, selected: false, invoiced: false },
+    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Sopimusneuvottelu',            rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
+    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Uuden ominaisuuden toteutus',  rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
     { id: 20, date: daysAgo(8),  secs: 25200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Tietoturva-auditointi',        rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
-    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Tukipyyntö ja korjaukset',     rate: 50, selected: false, invoiced: false },
+    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Tukipyyntö ja korjaukset',     rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
     { id: 18, date: daysAgo(4),  secs: 7200,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Käyttöönottotuki',             rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
   ];
 
@@ -273,70 +273,70 @@ function loadDemoDataEn() {
   // ── Invoiced entries — both customers get an invoice every month ──
 
   const inv1Entries = [
-    { id: 1, date: d(monthsAgoDay(7, 8)),  secs: 43200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Project planning and kickoff', rate: 50, selected: false, invoiced: true },
-    { id: 2, date: d(monthsAgoDay(7, 20)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Architecture design',           rate: 50, selected: false, invoiced: true },
+    { id: 1, date: d(monthsAgoDay(7, 8)),  secs: 43200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Project planning and kickoff', rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 2, date: d(monthsAgoDay(7, 20)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Architecture design',           rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
   const inv1bEntries = [
-    { id: 21, date: d(monthsAgoDay(7, 6)),  secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Needs assessment',   rate: 50, selected: false, invoiced: true },
-    { id: 22, date: d(monthsAgoDay(7, 22)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Plan finalization',  rate: 50, selected: false, invoiced: true },
+    { id: 21, date: d(monthsAgoDay(7, 6)),  secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Needs assessment',   rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 22, date: d(monthsAgoDay(7, 22)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Plan finalization',  rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
 
   const inv2Entries = [
-    { id: 3, date: d(monthsAgoDay(6, 5)),  secs: 36000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Requirements specification',  rate: 50, selected: false, invoiced: true },
-    { id: 4, date: d(monthsAgoDay(6, 18)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Prototype implementation',     rate: 50, selected: false, invoiced: true },
+    { id: 3, date: d(monthsAgoDay(6, 5)),  secs: 36000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Requirements specification',  rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 4, date: d(monthsAgoDay(6, 18)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Prototype implementation',     rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
   const inv2bEntries = [
-    { id: 23, date: d(monthsAgoDay(6, 9)),  secs: 25200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Infrastructure setup',    rate: 50, selected: false, invoiced: true },
-    { id: 24, date: d(monthsAgoDay(6, 21)), secs: 32400, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'CI/CD pipeline setup',     rate: 50, selected: false, invoiced: true },
+    { id: 23, date: d(monthsAgoDay(6, 9)),  secs: 25200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Infrastructure setup',    rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 24, date: d(monthsAgoDay(6, 21)), secs: 32400, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'CI/CD pipeline setup',     rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
 
   const inv3Entries = [
-    { id: 5, date: d(monthsAgoDay(5, 10)), secs: 43200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Backend development, sprint 1', rate: 50, selected: false, invoiced: true },
-    { id: 6, date: d(monthsAgoDay(5, 24)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'API integrations',              rate: 50, selected: false, invoiced: true },
+    { id: 5, date: d(monthsAgoDay(5, 10)), secs: 43200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Backend development, sprint 1', rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 6, date: d(monthsAgoDay(5, 24)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'API integrations',              rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
   const inv3bEntries = [
-    { id: 25, date: d(monthsAgoDay(5, 12)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Database design', rate: 50, selected: false, invoiced: true },
-    { id: 26, date: d(monthsAgoDay(5, 26)), secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'User testing',     rate: 50, selected: false, invoiced: true },
+    { id: 25, date: d(monthsAgoDay(5, 12)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Database design', rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 26, date: d(monthsAgoDay(5, 26)), secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'User testing',     rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
 
   const inv4Entries = [
-    { id: 7,  date: d(monthsAgoDay(4, 7)),  secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'UI design',              rate: 50, selected: false, invoiced: true },
-    { id: 8,  date: d(monthsAgoDay(4, 15)), secs: 36000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Frontend development',    rate: 50, selected: false, invoiced: true },
-    { id: 9,  date: d(monthsAgoDay(4, 28)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Testing and fixes',       rate: 50, selected: false, invoiced: true },
+    { id: 7,  date: d(monthsAgoDay(4, 7)),  secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'UI design',              rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 8,  date: d(monthsAgoDay(4, 15)), secs: 36000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Frontend development',    rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 9,  date: d(monthsAgoDay(4, 28)), secs: 21600, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Testing and fixes',       rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
   const inv4bEntries = [
-    { id: 27, date: d(monthsAgoDay(4, 6)),  secs: 36000, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Cloud migration',   rate: 50, selected: false, invoiced: true },
-    { id: 28, date: d(monthsAgoDay(4, 23)), secs: 21600, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Load testing',       rate: 50, selected: false, invoiced: true },
+    { id: 27, date: d(monthsAgoDay(4, 6)),  secs: 36000, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Cloud migration',   rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 28, date: d(monthsAgoDay(4, 23)), secs: 21600, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Load testing',       rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
 
   const inv5Entries = [
-    { id: 10, date: d(monthsAgoDay(3, 6)),  secs: 57600, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Backend development, sprint 2', rate: 50, selected: false, invoiced: true },
-    { id: 11, date: d(monthsAgoDay(3, 19)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Performance testing',            rate: 50, selected: false, invoiced: true },
+    { id: 10, date: d(monthsAgoDay(3, 6)),  secs: 57600, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Backend development, sprint 2', rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 11, date: d(monthsAgoDay(3, 19)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Performance testing',            rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
   const inv5bEntries = [
-    { id: 29, date: d(monthsAgoDay(3, 9)),  secs: 25200, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Release preparation',   rate: 50, selected: false, invoiced: true },
-    { id: 30, date: d(monthsAgoDay(3, 26)), secs: 18000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Documentation update',  rate: 50, selected: false, invoiced: true },
+    { id: 29, date: d(monthsAgoDay(3, 9)),  secs: 25200, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Release preparation',   rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 30, date: d(monthsAgoDay(3, 26)), secs: 18000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Documentation update',  rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
 
   // Most recent invoice — last day of the month before last, always overdue/unpaid
   // (14-day terms → due date falls on the 14th of last month)
   const inv6Entries = [
-    { id: 12, date: d(monthsAgoDay(2, 20)), secs: 36000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'UI development, polish', rate: 50, selected: false, invoiced: true },
-    { id: 13, date: d(monthsAgoDay(2, 28)), secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Testing and release',    rate: 50, selected: false, invoiced: true },
+    { id: 12, date: d(monthsAgoDay(2, 20)), secs: 36000, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'UI development, polish', rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 13, date: d(monthsAgoDay(2, 28)), secs: 28800, customer: 'Example Ltd', customerId: 1, src: 'manuaalinen', notes: 'Testing and release',    rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
   const inv6bEntries = [
-    { id: 31, date: d(monthsAgoDay(2, 10)), secs: 21600, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Support contract renewal', rate: 50, selected: false, invoiced: true },
-    { id: 32, date: d(monthsAgoDay(2, 24)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Integration support',      rate: 50, selected: false, invoiced: true },
+    { id: 31, date: d(monthsAgoDay(2, 10)), secs: 21600, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Support contract renewal', rate: 50, service: 'Hourly work', selected: false, invoiced: true },
+    { id: 32, date: d(monthsAgoDay(2, 24)), secs: 28800, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Integration support',      rate: 50, service: 'Hourly work', selected: false, invoiced: true },
   ];
 
   // Open entries — relative to today, at most 20 days back
   const openEntries = [
-    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Follow-up and support',      rate: 50, selected: false, invoiced: false },
+    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Follow-up and support',      rate: 50, service: 'Hourly work', selected: false, invoiced: false },
     { id: 17, date: daysAgo(15), secs: 18000, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Architecture review',        rate: 90, service: 'Consulting', selected: false, invoiced: false },
-    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Contract negotiation',       rate: 50, selected: false, invoiced: false },
-    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'New feature implementation', rate: 50, selected: false, invoiced: false },
+    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Contract negotiation',       rate: 50, service: 'Hourly work', selected: false, invoiced: false },
+    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'New feature implementation', rate: 50, service: 'Hourly work', selected: false, invoiced: false },
     { id: 20, date: daysAgo(8),  secs: 25200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Security audit',             rate: 90, service: 'Consulting', selected: false, invoiced: false },
-    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Support request and fixes',  rate: 50, selected: false, invoiced: false },
+    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Support request and fixes',  rate: 50, service: 'Hourly work', selected: false, invoiced: false },
     { id: 18, date: daysAgo(4),  secs: 7200,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Onboarding support',          rate: 90, service: 'Consulting', selected: false, invoiced: false },
   ];
 

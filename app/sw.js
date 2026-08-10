@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v183';
+const CACHE = 'tyotunnit-v185';
 const FILES = [
   'index.html',
   'manifest.json',
@@ -29,7 +29,6 @@ const FILES = [
 // Suhteelliset polut: sama tiedosto toimii sekä hoyla.dev/app/ että
 // miikari.github.io/tyokirjanpito/app/ -asennuksissa (eri base path).
 const HTML_URLS = ['/', 'index.html'];
-
 // A visit to plain ".../app/" (the common case — every "Kirjaudu"/"Kokeile"
 // link on the marketing pages points here) and a visit to ".../app/index.html"
 // are different Request URLs, so caching each under its own key would mean
