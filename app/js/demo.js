@@ -174,13 +174,13 @@ function loadDemoDataFi() {
 
   // Avoimet kirjaukset — suhteessa tähän päivään, enintään 20 päivää taaksepäin
   const openEntries = [
-    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Jälkiseuranta ja tuki',       rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
-    { id: 17, date: daysAgo(15), secs: 18000, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Arkkitehtuurikatselmus',       rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
-    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Sopimusneuvottelu',            rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
-    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Uuden ominaisuuden toteutus',  rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
-    { id: 20, date: daysAgo(8),  secs: 25200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Tietoturva-auditointi',        rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
-    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Tukipyyntö ja korjaukset',     rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
     { id: 18, date: daysAgo(4),  secs: 7200,  customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Käyttöönottotuki',             rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
+    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Tukipyyntö ja korjaukset',     rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
+    { id: 20, date: daysAgo(8),  secs: 25200, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Tietoturva-auditointi',        rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
+    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Uuden ominaisuuden toteutus',  rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
+    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Sopimusneuvottelu',            rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
+    { id: 17, date: daysAgo(15), secs: 18000, customer: 'Demo Solutions Oy', customerId: 2, src: 'manuaalinen', notes: 'Arkkitehtuurikatselmus',       rate: 90, service: 'Konsultointi', selected: false, invoiced: false },
+    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Esimerkki Oy',      customerId: 1, src: 'manuaalinen', notes: 'Jälkiseuranta ja tuki',       rate: 50, service: 'Tuntityö', selected: false, invoiced: false },
   ];
 
   // ── Kulukorvaukset (yleinen + kilometrikorvaus) ──
@@ -331,13 +331,13 @@ function loadDemoDataEn() {
 
   // Open entries — relative to today, at most 20 days back
   const openEntries = [
-    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Follow-up and support',      rate: 50, service: 'Hourly work', selected: false, invoiced: false },
-    { id: 17, date: daysAgo(15), secs: 18000, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Architecture review',        rate: 90, service: 'Consulting', selected: false, invoiced: false },
-    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Contract negotiation',       rate: 50, service: 'Hourly work', selected: false, invoiced: false },
-    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'New feature implementation', rate: 50, service: 'Hourly work', selected: false, invoiced: false },
-    { id: 20, date: daysAgo(8),  secs: 25200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Security audit',             rate: 90, service: 'Consulting', selected: false, invoiced: false },
-    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Support request and fixes',  rate: 50, service: 'Hourly work', selected: false, invoiced: false },
     { id: 18, date: daysAgo(4),  secs: 7200,  customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Onboarding support',          rate: 90, service: 'Consulting', selected: false, invoiced: false },
+    { id: 16, date: daysAgo(6),  secs: 10800, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Support request and fixes',  rate: 50, service: 'Hourly work', selected: false, invoiced: false },
+    { id: 20, date: daysAgo(8),  secs: 25200, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Security audit',             rate: 90, service: 'Consulting', selected: false, invoiced: false },
+    { id: 15, date: daysAgo(11), secs: 25200, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'New feature implementation', rate: 50, service: 'Hourly work', selected: false, invoiced: false },
+    { id: 19, date: daysAgo(13), secs: 21600, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Contract negotiation',       rate: 50, service: 'Hourly work', selected: false, invoiced: false },
+    { id: 17, date: daysAgo(15), secs: 18000, customer: 'Demo Solutions Ltd', customerId: 2, src: 'manuaalinen', notes: 'Architecture review',        rate: 90, service: 'Consulting', selected: false, invoiced: false },
+    { id: 14, date: daysAgo(18), secs: 14400, customer: 'Example Ltd',       customerId: 1, src: 'manuaalinen', notes: 'Follow-up and support',      rate: 50, service: 'Hourly work', selected: false, invoiced: false },
   ];
 
   // ── Expenses (general + mileage reimbursement) ──
