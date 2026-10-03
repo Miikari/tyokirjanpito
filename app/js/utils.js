@@ -125,3 +125,9 @@ export function bindScrollFade(el) {
   }
   update();
 }
+
+// Customer-name snapshots from every billable line, not just hour entries —
+// an invoice can consist of expenses only, and must still show its customer.
+export function invoiceCustomerNames(inv) {
+  return [...new Set([...inv.entries, ...(inv.expenses || [])].map(e => e.customer).filter(Boolean))];
+}

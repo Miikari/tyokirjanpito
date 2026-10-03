@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDate, fmtDur, fmtEur, fmtHours, fmtShort, esc, calcViitenumero, calcErapaiva } from './utils.js';
+import { fmtDate, fmtDur, fmtEur, fmtHours, fmtShort, esc, calcViitenumero, calcErapaiva, invoiceCustomerNames } from './utils.js';
 import { toast, goTab } from './ui.js';
 import { nextId, finalizeInvoiceBatch, updateInvoiceDoc } from './storage.js';
 import { renderEntries, renderExpenses } from './entries.js';
@@ -64,7 +64,8 @@ async function finishInvoice(mode) {
     let rec = [];
     if (mode === true) rec = [...recurring];
     else if (mode === 'customer') {
-      const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+      const selExp = state.expenses.filter(e => e.selected && !e.invoiced);
+      const custs = [...new Set([...sel, ...selExp].map(e => e.customerId).filter(id => id != null))];
       rec = recurring.filter(r => r.customerId != null && custs.includes(r.customerId));
     }
     // Freeze a customer-name snapshot here too, same as entries/expenses.
@@ -78,7 +79,7 @@ async function finishInvoice(mode) {
     const kmRate = state.cfg.kmRate ?? 0.57;
     const kmAmount = totalKm * kmRate;
     const subtotal = hourly + monthly + kmAmount + expenseTotal;
-    const invoiceCustomerIds = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+    const invoiceCustomerIds = [...new Set([...sel, ...selExpenses].map(e => e.customerId).filter(id => id != null))];
     const primaryCust = invoiceCustomerIds.length === 1 ? customerById(invoiceCustomerIds[0]) : null;
     const maksuehto = primaryCust?.maksuehto ?? 10;
     const vat = primaryCust?.useCustomVat ? (primaryCust.vat ?? 0) : (state.cfg.vat || 0);
@@ -161,7 +162,7 @@ function isValidEmail(email) {
 }
 
 function resolveCustomerEmail(inv) {
-  const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+  const custs = invoiceCustomerNames(inv);
   if (!custs.length) return { error: t('noCustomerOnInvoice') };
   if (custs.length > 1) return { error: t('multipleCustomersInvoice') };
   const custObj = state.customers.find(c => c.name === custs[0]);
@@ -265,7 +266,7 @@ function filterInvoices() {
 
   return state.invoices.filter(inv => {
     if (search) {
-      const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+      const custs = invoiceCustomerNames(inv);
       const invNum = String(inv.id).padStart(3, '0');
       const haystack = (custs.join(' ') + ' ' + invNum).toLowerCase();
       if (!haystack.includes(search)) return false;
@@ -326,7 +327,7 @@ function renderInvoiceCard(inv, isOpen) {
         </div>
         <div class="inv-row-val">${fmtEur(e.amount)}</div>
       </div>`).join('');
-    const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+    const custs = invoiceCustomerNames(inv);
     const statusTag = inv.paid
       ? `<div class="inv-tag inv-tag-paid">${t('paid')}</div>`
       : overdue
@@ -413,7 +414,7 @@ function closeInvoicePopup() {
 }
 
 function getInvoiceLang(inv) {
-  const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+  const custs = invoiceCustomerNames(inv);
   if (custs.length !== 1) return state.lang;
   const cust = state.customers.find(c => c.name === custs[0]);
   return cust?.lang || state.lang;
@@ -462,15 +463,15 @@ function printInvoice(id, asAttachment) {
     </tr>` : '';
   const expPrintRows = (inv.expenses || []).map(e => `
     <tr>
-      <td>${esc(e.description)}</td>
+      <td>${fmtDate(e.date)}</td>
+      <td></td>
+      <td></td>
       <td>${t('expenseReimbursement', lang)}</td>
-      <td></td>
-      <td></td>
-      <td></td>
+      <td>${esc(e.description || '—')}</td>
       <td>${fmtEur(e.amount)}</td>
     </tr>`).join('');
 
-  const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+  const custs = invoiceCustomerNames(inv);
   const primaryCustObj = custs.length === 1 ? state.customers.find(c => c.name === custs[0]) : null;
   const custAddrLines = primaryCustObj ? [
     primaryCustObj.ytunnus ? t('ytunnus', lang) + ': ' + esc(primaryCustObj.ytunnus) : '',

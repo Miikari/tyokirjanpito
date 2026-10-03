@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { fmtDate, fmtEur, fmtShort, fmtHours, esc } from './utils.js';
+import { fmtDate, fmtEur, fmtShort, fmtHours, esc, invoiceCustomerNames } from './utils.js';
 import { customerName } from './customers.js';
 
 const PALETTE = [
@@ -29,7 +29,7 @@ function yearInvoices() {
 }
 
 function custKey(inv) {
-  const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+  const custs = invoiceCustomerNames(inv);
   return custs.length ? custs.join(', ') : '—';
 }
 
@@ -663,7 +663,7 @@ function downloadYearReport() {
 
   if (invs.length) {
     const invRows = invs.map(inv => {
-      const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+      const custs = invoiceCustomerNames(inv);
       return [t('invoicePrefix') + String(inv.id).padStart(3, '0'), fmtDate(inv.date), custs.join(', ') || '—',
         fmtShort(inv.totalSecs) + ' h', fmtEur(inv.total), fmtEur(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid')];
     });
@@ -712,7 +712,7 @@ function viewYearReport() {
     </tr>`).join('');
 
   const invRows = invs.map(inv => {
-    const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+    const custs = invoiceCustomerNames(inv);
     return `<tr>
       <td>${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}</td>
       <td>${fmtDate(inv.date)}</td>
@@ -879,7 +879,7 @@ function downloadMonthReport() {
 
   if (invs.length) {
     const invRows = invs.map(inv => {
-      const custs = [...new Set(inv.entries.map(e => e.customer).filter(Boolean))];
+      const custs = invoiceCustomerNames(inv);
       return [t('invoicePrefix') + String(inv.id).padStart(3, '0'), fmtDate(inv.date), custs.join(', ') || '—',
         fmtEur(inv.total), fmtEur(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid')];
     });
@@ -937,7 +937,7 @@ function downloadYearReportCsv() {
     [t('numberLabel'), t('date'), t('customer'), t('hours'), t('amount'), t('vatLabel'), t('statusLabel')],
     invs.map(inv => [
       `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`, fmtDate(inv.date),
-      [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
+      invoiceCustomerNames(inv).join(', '),
       csvHours(inv.totalSecs), csvNum(inv.total), csvNum(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid'),
     ])) : '';
 
@@ -975,7 +975,7 @@ function downloadMonthReportCsv() {
     [t('numberLabel'), t('date'), t('customer'), t('amount'), t('vatLabel'), t('statusLabel')],
     invs.map(inv => [
       `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`, fmtDate(inv.date),
-      [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
+      invoiceCustomerNames(inv).join(', '),
       csvNum(inv.total), csvNum(inv.vatAmount ?? 0), inv.paid ? t('paid') : t('unpaid'),
     ])) : '';
 
@@ -1001,7 +1001,7 @@ function downloadAccountantCsv(filename, invs) {
   const rows = invs.map(inv => [
     fmtDate(inv.date),
     `${t('invoicePrefix')}${String(inv.id).padStart(3, '0')}`,
-    [...new Set(inv.entries.map(e => e.customer).filter(Boolean))].join(', '),
+    invoiceCustomerNames(inv).join(', '),
     csvNum(inv.subtotal ?? 0),
     csvNum(inv.vat ?? 0),
     csvNum(inv.vatAmount ?? 0),
