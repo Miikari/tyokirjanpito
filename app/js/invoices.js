@@ -561,7 +561,15 @@ function printInvoice(id, asAttachment) {
       .pay-box { display:flex; align-items:flex-start; gap:32px; flex-wrap:wrap; background:#f5f5f5; border-radius:8px; padding:14px 18px; margin: 0 -18px 24px; }
       .pay-item-label { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; text-align:left; }
       .pay-item-val { font-size:14px; font-weight:600; color:#111; text-align:left; }
-      @media print { button { display: none; } }
+      /* Zero page margin leaves the browser no room for its own print
+         header/footer (date, title, blob: URL, page numbers); the page
+         margin comes from body padding instead, repeated on every printed
+         page via box-decoration-break so page 2+ doesn't start at the edge. */
+      @page { margin: 0; }
+      @media print {
+        button { display: none; }
+        body { padding: 15mm 18mm; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+      }
     </style>
   </head><body>
     <div class="inv-header">

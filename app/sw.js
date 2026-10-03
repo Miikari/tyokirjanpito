@@ -1,4 +1,4 @@
-const CACHE = 'tyotunnit-v203';
+const CACHE = 'tyotunnit-v205';
 const FILES = [
   'index.html',
   'manifest.json',
