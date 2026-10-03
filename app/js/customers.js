@@ -208,20 +208,23 @@ function removeCustomer(id) {
   const c = customerById(id);
   if (!c) return;
   const openEntries = state.entries.filter(e => !e.invoiced && e.customerId === id);
+  const openExpenses = state.expenses.filter(e => !e.invoiced && e.customerId === id);
 
   const doRemove = async () => {
-    const openIds = openEntries.map(e => e.id);
+    const openEntryIds = openEntries.map(e => e.id);
+    const openExpenseIds = openExpenses.map(e => e.id);
     state.entries = state.entries.filter(e => !(e.customerId === id && !e.invoiced));
+    state.expenses = state.expenses.filter(e => !(e.customerId === id && !e.invoiced));
     state.customers = state.customers.filter(x => x.id !== id);
     if (state.activeCustomerId === id) state.activeCustomerId = null;
-    await deleteCustomerBatch(id, openIds);
+    await deleteCustomerBatch(id, openEntryIds, openExpenseIds);
     renderCustChips(); renderAllSelects(); renderPills(); renderEntries(); toast(t('customerRemoved'));
   };
 
-  if (openEntries.length > 0) {
+  if (openEntries.length > 0 || openExpenses.length > 0) {
     showConfirm(
       t('deleteCustomer'),
-      `${t('customerHas')} "${c.name}" ${t('has')} ${openEntries.length} ${t('customerHasEntries')}`,
+      `${t('customerHas')} "${c.name}" ${t('has')} ${openEntries.length + openExpenses.length} ${t('customerHasEntries')}`,
       doRemove
     );
   } else {

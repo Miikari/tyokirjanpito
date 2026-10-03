@@ -113,12 +113,13 @@ export async function finalizeInvoiceBatch(invoice, entryIds, expenseIds) {
 }
 
 // Deleting a customer also deletes their still-open (not yet invoiced)
-// entries, matching the pre-migration behaviour in customers.js.
-export async function deleteCustomerBatch(customerId, openEntryIds) {
+// entries and expenses, matching the pre-migration behaviour in customers.js.
+export async function deleteCustomerBatch(customerId, openEntryIds, openExpenseIds = []) {
   if (state.isDemo) return;
   const batch = db.batch();
   batch.delete(customersCol().doc(String(customerId)));
   openEntryIds.forEach(id => batch.delete(entriesCol().doc(String(id))));
+  openExpenseIds.forEach(id => batch.delete(expensesCol().doc(String(id))));
   await batch.commit();
 }
 

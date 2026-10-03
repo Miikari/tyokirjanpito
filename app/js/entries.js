@@ -173,7 +173,9 @@ function setFilterFromSelect(value) {
 }
 
 function renderFilterPills() {
-  const customerIds = [...new Set(state.entries.filter(e => !e.invoiced && e.customerId != null).map(e => e.customerId))];
+  const entryCustomerIds = state.entries.filter(e => !e.invoiced && e.customerId != null).map(e => e.customerId);
+  const expenseCustomerIds = state.expenses.filter(e => !e.invoiced && e.customerId != null).map(e => e.customerId);
+  const customerIds = [...new Set([...entryCustomerIds, ...expenseCustomerIds])];
   const el = document.getElementById('filter-pills');
   if (!el) return;
   const wrap = document.getElementById('filter-pills-wrap');

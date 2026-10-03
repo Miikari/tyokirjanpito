@@ -16,8 +16,9 @@ let composingInvoice = false;
 function startInvoice() {
   if (composingInvoice) return;
   const sel = state.entries.filter(e => e.selected && !e.invoiced);
-  if (!sel.length) { toast(t('selectEntries')); return; }
-  const custs = [...new Set(sel.map(e => e.customerId).filter(id => id != null))];
+  const selExpenses = state.expenses.filter(e => e.selected && !e.invoiced);
+  if (!sel.length && !selExpenses.length) { toast(t('selectEntries')); return; }
+  const custs = [...new Set([...sel, ...selExpenses].map(e => e.customerId).filter(id => id != null))];
   if (custs.length !== 1) { toast(t('selectOneCustomer')); return; }
   const cust = customerById(custs[0]);
   const effectiveVat = cust?.useCustomVat ? cust.vat : state.cfg.vat;
@@ -34,7 +35,7 @@ function startInvoice() {
 
   const custNames = custs.map(id => customerName(id)).filter(Boolean);
   document.getElementById('modal-text').textContent =
-    `Valitsit ${sel.length} ${t('entries_count')} ${custNames.length ? ' (' + custNames.join(', ') + ')' : ''}.  ${t('doAddRecurring')}`;
+    `Valitsit ${sel.length + selExpenses.length} ${t('entries_count')} ${custNames.length ? ' (' + custNames.join(', ') + ')' : ''}.  ${t('doAddRecurring')}`;
 
   state.pendingRecurring = relevantRecurring;
   document.getElementById('modal').classList.add('open');
