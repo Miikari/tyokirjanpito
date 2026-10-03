@@ -153,10 +153,13 @@ async function saveCustomerModal() {
   try {
     if (editingCustomerId === null) {
       // Adding new
+      // Write first, then mutate state: if the write fails, the customer
+      // must not linger in state.customers, or it would block re-adding the
+      // same name ("customerExists") while never appearing in the list.
       const id = await nextId('customer');
       const customer = { id, ...data };
-      state.customers.push(customer);
       await createCustomer(customer);
+      state.customers.push(customer);
       toast(t('customerAdded'));
       newCustomerId = id;
       if (pendingCustomerSelectId === 'cust-select') state.activeCustomerId = id;
@@ -164,8 +167,8 @@ async function saveCustomerModal() {
       // Editing existing. Entries/expenses reference the customer by id, so
       // a rename needs no cascade into them — they keep pointing at the same
       // customer automatically.
-      state.customers[idx] = { id: editingCustomerId, ...data };
       await updateCustomer(editingCustomerId, data);
+      state.customers[idx] = { id: editingCustomerId, ...data };
       toast(t('customerUpdated'));
     }
 
@@ -185,6 +188,9 @@ async function saveCustomerModal() {
       }
     }
     pendingCustomerSelectId = null;
+  } catch (e) {
+    console.error(e);
+    toast(t('tallennusVirhe'));
   } finally {
     btn.disabled = false;
     btn.textContent = origLabel;
@@ -213,11 +219,17 @@ function removeCustomer(id) {
   const doRemove = async () => {
     const openEntryIds = openEntries.map(e => e.id);
     const openExpenseIds = openExpenses.map(e => e.id);
+    try {
+      await deleteCustomerBatch(id, openEntryIds, openExpenseIds);
+    } catch (e) {
+      console.error(e);
+      toast(t('tallennusVirhe'));
+      return;
+    }
     state.entries = state.entries.filter(e => !(e.customerId === id && !e.invoiced));
     state.expenses = state.expenses.filter(e => !(e.customerId === id && !e.invoiced));
     state.customers = state.customers.filter(x => x.id !== id);
     if (state.activeCustomerId === id) state.activeCustomerId = null;
-    await deleteCustomerBatch(id, openEntryIds, openExpenseIds);
     renderCustChips(); renderAllSelects(); renderPills(); renderEntries(); toast(t('customerRemoved'));
   };
 
