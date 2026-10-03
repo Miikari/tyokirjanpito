@@ -108,3 +108,20 @@ function ibanChecksumValid(s) {
 export function isValidIban(s) {
   return isValidIbanFormat(s) && ibanChecksumValid(s);
 }
+
+// Toggles .more-below on a scrollable list while rows remain hidden past its
+// bottom edge (drives the fade in style.css). ResizeObserver also covers the
+// list being rendered inside a hidden tab and only getting a size later.
+// Safe to call again after re-rendering the same element's contents: it then
+// just re-evaluates, since a capped list's own size doesn't change.
+const scrollFadeBound = new WeakSet();
+export function bindScrollFade(el) {
+  if (!el) return;
+  const update = () => el.classList.toggle('more-below', el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  if (!scrollFadeBound.has(el)) {
+    scrollFadeBound.add(el);
+    el.addEventListener('scroll', update, { passive: true });
+    new ResizeObserver(update).observe(el);
+  }
+  update();
+}

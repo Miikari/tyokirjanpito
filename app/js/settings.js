@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { t } from './i18n.js';
 import {
   fmtEur, esc, isValidCompanyName, isValidAddress, isValidPhone,
-  isValidEmailField, isValidYtunnus, isValidIban, todayLocalStr,
+  isValidEmailField, isValidYtunnus, isValidIban, todayLocalStr, bindScrollFade,
 } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { saveConfig } from './storage.js';
@@ -194,6 +194,7 @@ function renderServices() {
         </span>
       </div>
     </div>`).join('');
+  bindScrollFade(el);
 }
 
 export function renderServiceSelects() {
@@ -330,6 +331,7 @@ export function renderRecList() {
       </div>
     </div>`;
   }).join('') + '</div>';
+  bindScrollFade(el.querySelector('.rec-scroll-list'));
   if (editingRecurringId !== null) {
     const input = el.querySelector('input[type="number"]');
     if (input) { input.focus(); input.select(); }

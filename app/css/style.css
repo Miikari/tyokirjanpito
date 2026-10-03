@@ -442,6 +442,17 @@ body {
    instead of growing the Hinnoittelu card, which otherwise pushed it out of
    sync with Yritystiedot's (now align-self:stretch-matched) height. */
 #services-list { max-height: 148px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* Capped-height lists: always-visible thin scrollbar plus a bottom fade
+   (toggled by bindScrollFade() in utils.js) so it's obvious there are more
+   rows below — a customer hidden past the cap otherwise looked deleted. */
+.cust-list, .rec-scroll-list, #services-list { scrollbar-width: thin; scrollbar-color: var(--border3) transparent; }
+.cust-list::after, .rec-scroll-list::after, #services-list::after {
+  content: ''; display: block; flex-shrink: 0; position: sticky; bottom: 0;
+  height: 32px; margin-top: -32px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--surface));
+  opacity: 0; transition: opacity .15s;
+}
+.cust-list.more-below::after, .rec-scroll-list.more-below::after, #services-list.more-below::after { opacity: 1; }
 .cust-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 12px 4px; border-bottom: 1px solid var(--border); border-radius: var(--r-sm);

@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { t } from './i18n.js';
-import { esc } from './utils.js';
+import { esc, bindScrollFade } from './utils.js';
 import { toast, showConfirm } from './ui.js';
 import { nextId, createCustomer, updateCustomer, deleteCustomerBatch } from './storage.js';
 import { renderPills } from './clock.js';
@@ -265,6 +265,7 @@ export function renderCustChips() {
       </div>
     </div>`;
   }).join('')}</div>`;
+  bindScrollFade(el.querySelector('.cust-list'));
 }
 
 export function renderAllSelects() {
