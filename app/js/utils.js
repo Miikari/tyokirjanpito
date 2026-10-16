@@ -51,8 +51,13 @@ export function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
+// Finnish reference: base 3–19 digits + check digit, no leading zeros
+// (banks strip them, so "00327" became the invalid 3-digit "327").
+// IDs ≥ 100 keep the same reference they always had once zeros are
+// stripped; IDs < 100 are offset into a range no real invoice ID reaches.
 export function calcViitenumero(invoiceId) {
-  const base = String(invoiceId).padStart(4, '0');
+  const id = parseInt(invoiceId, 10);
+  const base = String(id >= 100 ? id : 100000 + id);
   const digits = base.split('').reverse();
   const weights = [7, 3, 1];
   let sum = 0;
